@@ -1,0 +1,11 @@
+executable  = plotSusyBkgd.py
+arguments   = $(ClusterID) $(ProcId)
+universe    = vanilla
+output      = condorLogs/plotSusyBkgd.$(ClusterId).$(ProcId).out
+error       = condorLogs/plotSusyBkgd.$(ClusterId).$(ProcId).err
+log         = condorLogs/plotSusyBkgd.$(ClusterId).log
++MaxRuntime = 10000
+
+transfer_input_files = bkgd_TTDiLept_files
+
+queue
