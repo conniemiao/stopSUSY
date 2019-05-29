@@ -152,7 +152,7 @@ if not testMode:
     gSystem.ProcessEvents()
     img = TImage.Create()
     img.FromPad(c1)
-    img.WriteImage(plotVar + "_Bkgd+Sig.png")
+    img.WriteImage("../plots/"+plotVar + "_Bkgd+Sig.png")
     print "Done."
 else:
     print "Done. Press enter to finish."
