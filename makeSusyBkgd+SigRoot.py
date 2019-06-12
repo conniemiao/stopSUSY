@@ -8,12 +8,13 @@
 
 from ROOT import TFile, TTree, TH1D, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
+from stopSelection.py import passesCut
 import numpy as np
 from math import sqrt, cos
 from array import array
 
-testMode = False # limits the number of events and files to loop over 
-cutMode = True # applying cuts
+testMode = True # limits the number of events and files to loop over 
+cutMode = False # applying cuts
 print "Test mode: " + str(testMode)
 print "Cut mode: " + str(cutMode)
 
@@ -24,7 +25,7 @@ if testMode:
     numBkgdFiles = 2 
     numSigFiles = 2
 
-outDir = "../myData/"
+outDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
 
 # assemble the outName
 outName = outDir+"stopCut_"
@@ -36,28 +37,6 @@ if not cutMode: outName += "_baseline.root"
 else: outName += ".root"
 
 outFile = TFile(outName, "recreate")
-
-#--------------------------------------------------------------------------------#
-
-# Applies the cuts on the entry. Returns True if survives, False if not.
-def passesCut(entry):
-    # if entry.pfjet_count > 4: return False
-
-    # bool pfjet_btag[jet][0, 1, 2]: 0, 1, 2 = passed loose, medium, tight cuts
-    # stored as float so > 0.5 = True
-    pfjet_btag = np.ndarray((entry.pfjet_count, 2), 'f', entry.pfjet_btag)
-    numBTagLoose = 0
-    numBTag = 0
-    numBTagTight = 0
-    for jet in range(entry.pfjet_count):
-        if pfjet_btag.item((jet, 0)) > 0.5:
-            numBTagLoose += 1
-        if pfjet_btag.item((jet, 1)) > 0.5:
-            numBTag += 1
-        # if pfjet_btag.item((jet, 2)) > 0.5:
-        #     numBTagTight += 1
-    if numBTag > 1: return False
-    return True
 
 #--------------------------------------------------------------------------------#
 # ************* Make all the arrays. *************

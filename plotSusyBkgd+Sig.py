@@ -10,7 +10,7 @@ from ROOT import gSystem, gStyle
 import numpy as np
 
 plotVar = "mtmu" # **** change this line for different vars
-allDataFile = "../myData/stopCut_04Bkgd_TTDiLept_04Sig_baseline.root" # <-- copy in the output name from running makeSusyBkgd+SigRoot.py
+allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_04Bkgd_TTDiLept_04Sig_baseline.root" # <-- copy in the output name from running makeSusyBkgd+SigRoot.py
 
 plotSettings = { #[nBins,xMin,xMax]]
         "muon_px":[100,-300,300],
@@ -40,7 +40,7 @@ plotSettings = { #[nBins,xMin,xMax]]
         "pfmet_ez":[100,-250,350],
         "genweight":[100,2.980,2.995],
         }
-numSigFiles = int(allDataFile[18:20])
+numSigFiles = int(allDataFile[64:66])
 testMode = True 
 if numSigFiles > 10: testMode = False 
 nBins = plotSettings[plotVar][0]
@@ -69,8 +69,7 @@ print("nentries={0:d}".format(nentries))
 
 for count, entry in enumerate(inTree):
     if count % 500000 == 0: print("count = {0:d}".format(count))
-    # *************** CHANGE BELOW FOR DIFFERENT PLOT VARS ************
-    val = entry.mtmu # <----- CHANGE HERE
+    val = getattr(entry, getVar)
     if val <= xMax:
         histBkgd.Fill(val, 1)
     else: # overflow
@@ -121,8 +120,7 @@ for fileNum, line in enumerate(sigDataListFile):
     
     for count, entry in enumerate(inTree):
         if count % 500000 == 0: print("count={0:d}".format(count))
-        # *************** CHANGE BELOW FOR DIFFERENT PLOT VARS ************
-        val = entry.mtmu # <----- CHANGE HERE
+        val = getattr(entry, plotVar)
         if val <= xMax:
             histSigArr[fileNum].Fill(val, 1)
         else: # overflow
