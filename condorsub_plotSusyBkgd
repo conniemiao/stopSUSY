@@ -1,11 +1,11 @@
-executable  = plotSusyBkgd.py
+executable  = makeSusyBkgd+SigRoot.py 
 arguments   = $(ClusterID) $(ProcId)
 universe    = vanilla
-output      = condorLogs/plotSusyBkgd.$(ClusterId).$(ProcId).out
-error       = condorLogs/plotSusyBkgd.$(ClusterId).$(ProcId).err
-log         = condorLogs/plotSusyBkgd.$(ClusterId).log
+output      = condorLogs/makeSusyBkgd+SigRoot.$(ClusterId).$(ProcId).out
+error       = condorLogs/makeSusyBkgd+SigRoot.$(ClusterId).$(ProcId).err
+log         = condorLogs/makeSusyBkgd+SigRoot.$(ClusterId).log
 +MaxRuntime = 10000
 
-transfer_input_files = bkgd_TTDiLept_files
+transfer_input_files = bkgd_TTDiLept_files, sig_SingleStop_files
 
 queue

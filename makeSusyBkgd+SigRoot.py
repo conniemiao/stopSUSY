@@ -12,8 +12,10 @@ import numpy as np
 from math import sqrt, cos
 from array import array
 
-testMode = True # limits the number of events and files to loop over 
+testMode = False # limits the number of events and files to loop over 
 cutMode = True # applying cuts
+print "Test mode: " + str(testMode)
+print "Cut mode: " + str(cutMode)
 
 # max number of files to process
 numBkgdFiles = 27  # max 27
@@ -34,12 +36,13 @@ if not cutMode: outName += "_baseline.root"
 else: outName += ".root"
 
 outFile = TFile(outName, "recreate")
-print "Now creating " + outName + "\n"
 
 #--------------------------------------------------------------------------------#
 
 # Applies the cuts on the entry. Returns True if survives, False if not.
 def passesCut(entry):
+    # if entry.pfjet_count > 4: return False
+
     # bool pfjet_btag[jet][0, 1, 2]: 0, 1, 2 = passed loose, medium, tight cuts
     # stored as float so > 0.5 = True
     pfjet_btag = np.ndarray((entry.pfjet_count, 2), 'f', entry.pfjet_btag)
@@ -151,26 +154,32 @@ for fileNum, line in enumerate(bkgdDataListFile):
         if count > nMax : break
         if count % 500000 == 0: print("count={0:d}".format(count))
 
-        # ************* Selecting muon, electron, jet ************
+        # *** Selecting muon, electron, jet, must be same for sig and bkgd. *** 
         mIndex = -1
+        maxPt = 0
         for im in range(entry.muon_count):
-            if list(entry.muon_pt)[im] > 25: 
+            pt = list(entry.muon_pt)[im]
+            if pt > 25 and pt > maxPt and abs(list(entry.muon_eta)[im]) < 2.4: 
+                maxPt = pt
                 mIndex = im
-                break
         if mIndex == -1: continue
 
         eIndex = -1
+        maxPt = 0
         for ie in range(entry.electron_count):
-            if list(entry.electron_pt)[ie] > 25:
+            pt = list(entry.electron_pt)[ie]
+            if pt > 25 and pt > maxPt and abs(list(entry.electron_eta)[ie]) < 2.4:
+                maxPt = pt
                 eIndex = ie
-                break
         if eIndex == -1: continue
 
         jIndex = -1
+        maxPt = 0
         for ij in range(entry.pfjet_count):
-            if list(entry.pfjet_pt)[ij] > 25:
+            pt = list(entry.pfjet_pt)[ij]
+            if pt > 25 and pt > maxPt and abs(list(entry.pfjet_eta)[ij]) < 2.4:
+                maxPt = pt
                 jIndex = ij
-                break
         if jIndex == -1: continue
 
         # ************* CUTS: must be same as for sig and bkgd ************
@@ -187,8 +196,8 @@ for fileNum, line in enumerate(bkgdDataListFile):
         muon_pt[0] = list(entry.muon_pt)[mIndex]
         muon_eta[0] = list(entry.muon_eta)[mIndex]
         muon_phi[0] = list(entry.muon_phi)[mIndex]
-        mtmu[0] = sqrt(2 * muon_pt[mIndex] * entry.pfmet_pt * \
-                (1 - cos(muon_phi[mIndex] - entry.pfmet_phi)))
+        mtmu[0] = sqrt(2 * muon_pt[0] * entry.pfmet_pt * \
+                (1 - cos(muon_phi[0] - entry.pfmet_phi)))
 
         electron_count[0] = entry.electron_count
         assert eIndex > -1
@@ -198,8 +207,8 @@ for fileNum, line in enumerate(bkgdDataListFile):
         electron_pt[0] = list(entry.electron_pt)[eIndex]
         electron_eta[0] = list(entry.electron_eta)[eIndex]
         electron_phi[0] = list(entry.electron_phi)[eIndex]
-        mtel[0] = sqrt(2 * electron_pt[eIndex] * entry.pfmet_pt * \
-                (1 - cos(electron_phi[eIndex] - entry.pfmet_phi)))
+        mtel[0] = sqrt(2 * electron_pt[0] * entry.pfmet_pt * \
+                (1 - cos(electron_phi[0] - entry.pfmet_phi)))
 
         pfjet_count[0] = entry.pfjet_count
         assert jIndex > -1
@@ -288,26 +297,32 @@ for fileNum, line in enumerate(sigDataListFile):
         if count > nMax : break
         if count % 500000 == 0: print("count={0:d}".format(count))
 
-        # ************* Selecting muon, electron, jet ************
+        # *** Selecting muon, electron, jet, must be same for sig and bkgd. *** 
         mIndex = -1
+        maxPt = 0
         for im in range(entry.muon_count):
-            if list(entry.muon_pt)[im] > 25: 
+            pt = list(entry.muon_pt)[im]
+            if pt > 25 and pt > maxPt and abs(list(entry.muon_eta)[im]) < 2.4: 
+                maxPt = pt
                 mIndex = im
-                break
         if mIndex == -1: continue
 
         eIndex = -1
+        maxPt = 0
         for ie in range(entry.electron_count):
-            if list(entry.electron_pt)[ie] > 25:
+            pt = list(entry.electron_pt)[ie]
+            if pt > 25 and pt > maxPt and abs(list(entry.electron_eta)[ie]) < 2.4:
+                maxPt = pt
                 eIndex = ie
-                break
         if eIndex == -1: continue
 
         jIndex = -1
+        maxPt = 0
         for ij in range(entry.pfjet_count):
-            if list(entry.pfjet_pt)[ij] > 25:
+            pt = list(entry.pfjet_pt)[ij]
+            if pt > 25 and pt > maxPt and abs(list(entry.pfjet_eta)[ij]) < 2.4:
+                maxPt = pt
                 jIndex = ij
-                break
         if jIndex == -1: continue
 
         # ************* CUTS: must be same as for sig and bkgd ************
@@ -315,6 +330,7 @@ for fileNum, line in enumerate(sigDataListFile):
             if not passesCut(entry): continue
 
         # *********** STORE THE DATA *************
+        # only events that pass all cuts will be stored
         muon_count[0] = entry.muon_count
         assert mIndex > -1
         # muon_px[0] = list(entry.muon_px)[mIndex]
@@ -323,8 +339,8 @@ for fileNum, line in enumerate(sigDataListFile):
         muon_pt[0] = list(entry.muon_pt)[mIndex]
         muon_eta[0] = list(entry.muon_eta)[mIndex]
         muon_phi[0] = list(entry.muon_phi)[mIndex]
-        mtmu[0] = sqrt(2 * muon_pt[mIndex] * entry.pfmet_pt * \
-                (1 - cos(muon_phi[mIndex] - entry.pfmet_phi)))
+        mtmu[0] = sqrt(2 * muon_pt[0] * entry.pfmet_pt * \
+                (1 - cos(muon_phi[0] - entry.pfmet_phi)))
 
         electron_count[0] = entry.electron_count
         assert eIndex > -1
@@ -334,8 +350,8 @@ for fileNum, line in enumerate(sigDataListFile):
         electron_pt[0] = list(entry.electron_pt)[eIndex]
         electron_eta[0] = list(entry.electron_eta)[eIndex]
         electron_phi[0] = list(entry.electron_phi)[eIndex]
-        mtel[0] = sqrt(2 * electron_pt[eIndex] * entry.pfmet_pt * \
-                (1 - cos(electron_phi[eIndex] - entry.pfmet_phi)))
+        mtel[0] = sqrt(2 * electron_pt[0] * entry.pfmet_pt * \
+                (1 - cos(electron_phi[0] - entry.pfmet_phi)))
 
         pfjet_count[0] = entry.pfjet_count
         assert jIndex > -1
@@ -368,5 +384,6 @@ outFile.Close()
 # for entry in t:
 #     print entry.muon_pt
 
+print "Finished creating " + outName + "\n"
 print "Done."
 

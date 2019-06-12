@@ -10,7 +10,7 @@ from ROOT import gSystem, gStyle
 import numpy as np
 
 plotVar = "mtmu" # **** change this line for different vars
-allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig.root"
+allDataFile = "../myData/stopCut_04Bkgd_TTDiLept_04Sig_baseline.root" # <-- copy in the output name from running makeSusyBkgd+SigRoot.py
 
 plotSettings = { #[nBins,xMin,xMax]]
         "muon_px":[100,-300,300],
@@ -40,7 +40,7 @@ plotSettings = { #[nBins,xMin,xMax]]
         "pfmet_ez":[100,-250,350],
         "genweight":[100,2.980,2.995],
         }
-numSigFiles = int(allDataFile[64:66])
+numSigFiles = int(allDataFile[18:20])
 testMode = True 
 if numSigFiles > 10: testMode = False 
 nBins = plotSettings[plotVar][0]
@@ -99,6 +99,10 @@ print "Plotting " + plotVar + " from signal."
 sigDataDir = "/eos/user/a/alkaloge/HLLHC/Skims/v2/SingleStop/"
 sigDataListFile = open("sig_SingleStop_files")
 
+coloropts = [2,4,3,6,7,9,28,46] # some good colors for lines
+markeropts = [1,20,21,22,23] # some good marker styles for lines
+linestyleopts = [1,2,3,7,9] # some good styles for lines
+
 histSigArr = [] # one hist for each signal file 
 for fileNum, line in enumerate(sigDataListFile):
     if fileNum + 1 > numSigFiles: break
@@ -126,12 +130,19 @@ for fileNum, line in enumerate(sigDataListFile):
 
     histSigArr[fileNum].SetDirectory(0) # necessary to keep hist from closing
 
-    histcolor = (fileNum + 1) % 3 + 2 # use colors 2 (red), 3 (green), 4 (blue)
+    histcolor = coloropts[fileNum % len(coloropts)]
+    histSigArr[fileNum].SetLineColor(histcolor) 
+    histmarkerstyle = markeropts[(fileNum/len(coloropts)) % len(markeropts)]
+    histSigArr[fileNum].SetMarkerStyle(histmarkerstyle)
+    histSigArr[fileNum].SetMarkerColor(histcolor)
+    histlinestyle = linestyleopts[(fileNum/len(coloropts)/len(markeropts)) % \
+            len(linestyleopts)]
+    histSigArr[fileNum].SetLineStyle(histlinestyle)
+
     histSigArr[fileNum].Sumw2()
     histSigArr[fileNum].Scale(xsec * lumi /
             histSigArr[fileNum].GetSumOfWeights())
-    histSigArr[fileNum].SetLineColor(histcolor) 
-    histSigArr[fileNum].Draw("hist same") # same pad
+    histSigArr[fileNum].Draw("hist same") # same pad, draw marker
     c1.Update()
 
 
@@ -139,20 +150,20 @@ for fileNum, line in enumerate(sigDataListFile):
 # *************** Wrap up. *******************
 
 legend = TLegend(.75,.80,.95,.95)
-legend.AddEntry(histBkgd, histBkgd.GetTitle() + "_bkgd");
+legend.AddEntry(histBkgd, histBkgd.GetTitle() + "_bkgd")
 for fileNum, hist in enumerate(histSigArr):
-    legend.AddEntry(histSigArr[fileNum], histSigArr[fileNum].GetTitle());
+    legend.AddEntry(histSigArr[fileNum], histSigArr[fileNum].GetTitle())
 legend.Draw("same")
 
-c1.SetLogy();
-c1.Update();
+c1.SetLogy()
+c1.Update()
 
 if not testMode:
     print "Saving image."
     gSystem.ProcessEvents()
     img = TImage.Create()
     img.FromPad(c1)
-    img.WriteImage("../plots/"+plotVar + "_Bkgd+Sig.png")
+    img.WriteImage(plotVar + "_Bkgd+Sig.png")
     print "Done."
 else:
     print "Done. Press enter to finish."
