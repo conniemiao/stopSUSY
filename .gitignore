@@ -2,3 +2,4 @@ condorLogs/
 *.png
 *.swp
 cmiao.cc
+*.pyc

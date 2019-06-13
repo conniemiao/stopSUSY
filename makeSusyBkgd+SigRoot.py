@@ -8,7 +8,7 @@
 
 from ROOT import TFile, TTree, TH1D, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
-from stopSelection.py import passesCut
+from stopSelection import selectSameFlavLepts, passesCut, findValidJets
 import numpy as np
 from math import sqrt, cos
 from array import array
@@ -17,6 +17,19 @@ testMode = True # limits the number of events and files to loop over
 cutMode = False # applying cuts
 print "Test mode: " + str(testMode)
 print "Cut mode: " + str(cutMode)
+
+findingSameFlavor = True # selecting for either mu-mu or el-el
+findingMuons = True # selecting for mu-mu
+if findingSameFlavor:
+    if findingMuons: 
+        l1Flav = "muon"
+        l2Flav = "muon"
+        print "Selecting for pair of 2 muons."
+    else: 
+        l1Flav = "electron"
+        l2Flav = "electron"
+        print "Selecting for pair of 2 electrons."
+else: print "Selecting for pair of opposite flavor leptons."
 
 # max number of files to process
 numBkgdFiles = 27  # max 27
@@ -40,37 +53,37 @@ outFile = TFile(outName, "recreate")
 
 #--------------------------------------------------------------------------------#
 # ************* Make all the arrays. *************
-muon_count = array('f',[0.])
-# muon_px = array('f',[0.])
-# muon_py = array('f',[0.])
-# muon_pz = array('f',[0.])
-muon_pt = array('f',[0.])
-muon_eta = array('f',[0.])
-muon_phi = array('f',[0.])
+lep1_count = array('f',[0.])
+# lep1_px = array('f',[0.])
+# lep1_py = array('f',[0.])
+# lep1_pz = array('f',[0.])
+lep1_pt = array('f',[0.])
+lep1_eta = array('f',[0.])
+lep1_phi = array('f',[0.])
 pfjet_count = array('i',[0])
-# pfjet_px = array('f',[0])
-# pfjet_py = array('f',[0])
-# pfjet_pz = array('f',[0])
-pfjet_pt = array('f',[0])
-pfjet_eta = array('f',[0])
-pfjet_phi = array('f',[0])
+# pfjet_px = np.zeros(20)
+# pfjet_py = np.zeros(20)
+# pfjet_pz = np.zeros(20)
+pfjet_pt = np.zeros(20)
+pfjet_eta = np.zeros(20)
+pfjet_phi = np.zeros(20)
 # pfjet_flavour = array('f',[0])
 # pfjet_btag = array('f',[0])
-electron_count = array('i',[0])
-# electron_px = array('f',[0.])
-# electron_py = array('f',[0.])
-# electron_pz = array('f',[0.])
-electron_pt = array('f',[0.])
-electron_eta = array('f',[0.])
-electron_phi = array('f',[0.])
+lep2_count = array('i',[0])
+# lep2_px = array('f',[0.])
+# lep2_py = array('f',[0.])
+# lep2_pz = array('f',[0.])
+lep2_pt = array('f',[0.])
+lep2_eta = array('f',[0.])
+lep2_phi = array('f',[0.])
 # pfmet_ex = array('f',[0.])
 # pfmet_ey = array('f',[0.])
 # pfmet_ez = array('f',[0.])
 pfmet_pt = array('f',[0.])
 pfmet_phi = array('f',[0.])
 # genweight = array('f',[0.])
-mtel = array('f',[0.])
-mtmu = array('f',[0.])
+mtlep2 = array('f',[0.])
+mtlep1 = array('f',[0.])
 #--------------------------------------------------------------------------------#
 
 # ********************** Filling bkgd data summed together  **********************
@@ -80,31 +93,31 @@ bkgdDataListFile = open("bkgd_TTDiLept_files")
 
 # SET UP THE OUTPUT TREE
 tBkgd = TTree("tBkgd", "SUSY stop cut events")
-tBkgd.Branch("muon_count", muon_count, "muon_count/F")
-# tBkgd.Branch("muon_px", muon_px, "muon_px/F")
-# tBkgd.Branch("muon_py", muon_py, "muon_py/F")
-# tBkgd.Branch("muon_pz", muon_pz, "muon_pz/F")
-tBkgd.Branch("muon_pt", muon_pt, "muon_pt/F")
-tBkgd.Branch("muon_eta", muon_eta, "muon_eta/F")
-tBkgd.Branch("muon_phi", muon_phi, "muon_phi/F")
+tBkgd.Branch("lep1_count", lep1_count, "lep1_count/F")
+# tBkgd.Branch("lep1_px", lep1_px, "lep1_px/F")
+# tBkgd.Branch("lep1_py", lep1_py, "lep1_py/F")
+# tBkgd.Branch("lep1_pz", lep1_pz, "lep1_pz/F")
+tBkgd.Branch("lep1_pt", lep1_pt, "lep1_pt/F")
+tBkgd.Branch("lep1_eta", lep1_eta, "lep1_eta/F")
+tBkgd.Branch("lep1_phi", lep1_phi, "lep1_phi/F")
 
 tBkgd.Branch("pfjet_count", pfjet_count, "pfjet_count/i")
-# tBkgd.Branch("pfjet_px", pfjet_px, "pfjet_px/F")
-# tBkgd.Branch("pfjet_py", pfjet_py, "pfjet_py/F")
-# tBkgd.Branch("pfjet_pz", pfjet_pz, "pfjet_pz/F")
-tBkgd.Branch("pfjet_pt", pfjet_pt, "pfjet_pt/F")
-tBkgd.Branch("pfjet_eta", pfjet_eta, "pfjet_eta/F")
-tBkgd.Branch("pfjet_phi", pfjet_phi, "pfjet_phi/F")
+# tBkgd.Branch("pfjet_px", pfjet_px, "pfjet_px[20]/F")
+# tBkgd.Branch("pfjet_py", pfjet_py, "pfjet_py[20]/F")
+# tBkgd.Branch("pfjet_pz", pfjet_pz, "pfjet_pz[20]/F")
+tBkgd.Branch("pfjet_pt", pfjet_pt, "pfjet_pt[20]/F")
+tBkgd.Branch("pfjet_eta", pfjet_eta, "pfjet_eta[20]/F")
+tBkgd.Branch("pfjet_phi", pfjet_phi, "pfjet_phi[20]/F")
 # tBkgd.Branch("pfjet_flavour", pfjet_flavour, "pfjet_flavour/F")
 # tBkgd.Branch("pfjet_btag", pfjet_btag, "pfjet_btag/F")
 
-tBkgd.Branch("electron_count", electron_count, "electron_count/i")
-# tBkgd.Branch("electron_px", electron_px, "electron_px/F")
-# tBkgd.Branch("electron_py", electron_py, "electron_py/F")
-# tBkgd.Branch("electron_pz", electron_pz, "electron_pz/F")
-tBkgd.Branch("electron_pt", electron_pt, "electron_pt/F")
-tBkgd.Branch("electron_eta", electron_eta, "electron_eta/F")
-tBkgd.Branch("electron_phi", electron_phi, "electron_phi/F")
+tBkgd.Branch("lep2_count", lep2_count, "lep2_count/i")
+# tBkgd.Branch("lep2_px", lep2_px, "lep2_px/F")
+# tBkgd.Branch("lep2_py", lep2_py, "lep2_py/F")
+# tBkgd.Branch("lep2_pz", lep2_pz, "lep2_pz/F")
+tBkgd.Branch("lep2_pt", lep2_pt, "lep2_pt/F")
+tBkgd.Branch("lep2_eta", lep2_eta, "lep2_eta/F")
+tBkgd.Branch("lep2_phi", lep2_phi, "lep2_phi/F")
 
 # tBkgd.Branch("pfmet_ex", pfmet_ex, "pfmet_ex/F")
 # tBkgd.Branch("pfmet_ey", pfmet_ey, "pfmet_ey/F")
@@ -114,8 +127,8 @@ tBkgd.Branch("pfmet_phi", pfmet_phi, "pfmet_phi/F")
 
 # tBkgd.Branch("genweight", genweight, "genweight/F")
 
-tBkgd.Branch("mtmu", mtmu, "mtmu/F")
-tBkgd.Branch("mtel", mtel, "mtel/F")
+tBkgd.Branch("mtlep1", mtlep1, "mtlep1/F")
+tBkgd.Branch("mtlep2", mtlep2, "mtlep2/F")
 
 for fileNum, line in enumerate(bkgdDataListFile):
     if fileNum + 1 > numSigFiles: break
@@ -129,82 +142,66 @@ for fileNum, line in enumerate(bkgdDataListFile):
 
     nMax = nentries
     if testMode: nMax = 5000
-    for count, entry in enumerate(inTree):
+    for count, event in enumerate(inTree):
         if count > nMax : break
         if count % 500000 == 0: print("count={0:d}".format(count))
 
-        # *** Selecting muon, electron, jet, must be same for sig and bkgd. *** 
-        mIndex = -1
-        maxPt = 0
-        for im in range(entry.muon_count):
-            pt = list(entry.muon_pt)[im]
-            if pt > 25 and pt > maxPt and abs(list(entry.muon_eta)[im]) < 2.4: 
-                maxPt = pt
-                mIndex = im
-        if mIndex == -1: continue
+        # *** Selecting lep1, lep2, jet, must be same for sig and bkgd. *** 
+        if findingSameFlavor:
+            arr = selectSameFlavLepts(event, findingMuons)
+            if arr is None: continue
+            else:
+                l1Index = arr[0]
+                l2Index = arr[1]
+        else: assert False, "haven't implemented this yet."
 
-        eIndex = -1
-        maxPt = 0
-        for ie in range(entry.electron_count):
-            pt = list(entry.electron_pt)[ie]
-            if pt > 25 and pt > maxPt and abs(list(entry.electron_eta)[ie]) < 2.4:
-                maxPt = pt
-                eIndex = ie
-        if eIndex == -1: continue
-
-        jIndex = -1
-        maxPt = 0
-        for ij in range(entry.pfjet_count):
-            pt = list(entry.pfjet_pt)[ij]
-            if pt > 25 and pt > maxPt and abs(list(entry.pfjet_eta)[ij]) < 2.4:
-                maxPt = pt
-                jIndex = ij
-        if jIndex == -1: continue
-
+        jets = findValidJets(event)
+        
         # ************* CUTS: must be same as for sig and bkgd ************
         if cutMode:
-            if not passesCut(entry): continue
+            if not passesCut(event): continue
 
         # *********** STORE THE DATA *************
         # only events that pass all cuts will be stored
-        muon_count[0] = entry.muon_count
-        assert mIndex > -1
-        # muon_px[0] = list(entry.muon_px)[mIndex]
-        # muon_py[0] = list(entry.muon_py)[mIndex]
-        # muon_pz[0] = list(entry.muon_pz)[mIndex]
-        muon_pt[0] = list(entry.muon_pt)[mIndex]
-        muon_eta[0] = list(entry.muon_eta)[mIndex]
-        muon_phi[0] = list(entry.muon_phi)[mIndex]
-        mtmu[0] = sqrt(2 * muon_pt[0] * entry.pfmet_pt * \
-                (1 - cos(muon_phi[0] - entry.pfmet_phi)))
+        lep1_count[0] = getattr(event, l1Flav+"_count")
+        assert l1Index > -1
+        # lep1_px[0] = list(getattr(event, l1Flav+"_px)[l1Index]
+        # lep1_py[0] = list(getattr(event, l1Flav+"_py)[l1Index]
+        # lep1_pz[0] = list(getattr(event, l1Flav+"_pz)[l1Index]
+        lep1_pt[0] = list(getattr(event, l1Flav+"_pt"))[l1Index]
+        lep1_eta[0] = list(getattr(event, l1Flav+"_eta"))[l1Index]
+        lep1_phi[0] = list(getattr(event, l1Flav+"_phi"))[l1Index]
+        mtlep1[0] = sqrt(2 * lep1_pt[0] * event.pfmet_pt * \
+                (1 - cos(lep1_phi[0] - event.pfmet_phi)))
 
-        electron_count[0] = entry.electron_count
-        assert eIndex > -1
-        # electron_px[0] = list(entry.electron_px)[eIndex]
-        # electron_py[0] = list(entry.electron_py)[eIndex]
-        # electron_pz[0] = list(entry.electron_pz)[eIndex]
-        electron_pt[0] = list(entry.electron_pt)[eIndex]
-        electron_eta[0] = list(entry.electron_eta)[eIndex]
-        electron_phi[0] = list(entry.electron_phi)[eIndex]
-        mtel[0] = sqrt(2 * electron_pt[0] * entry.pfmet_pt * \
-                (1 - cos(electron_phi[0] - entry.pfmet_phi)))
+        lep2_count[0] = getattr(event, l2Flav+"_count")
+        assert l2Index > -1
+        # lep2_px[0] = list(getattr(event, l2Flav+"_px"))[l2Index]
+        # lep2_py[0] = list(getattr(event, l2Flav+"_py"))[l2Index]
+        # lep2_pz[0] = list(getattr(event, l2Flav+"_pz"))[l2Index]
+        lep2_pt[0] = list(getattr(event, l2Flav+"_pt"))[l2Index]
+        lep2_eta[0] = list(getattr(event, l2Flav+"_eta"))[l2Index]
+        lep2_phi[0] = list(getattr(event, l2Flav+"_phi"))[l2Index]
+        mtlep2[0] = sqrt(2 * lep2_pt[0] * event.pfmet_pt * \
+                (1 - cos(lep2_phi[0] - event.pfmet_phi)))
 
-        pfjet_count[0] = entry.pfjet_count
-        assert jIndex > -1
-        # pfjet_px[0] = list(entry.pfjet_px)[jIndex]
-        # pfjet_py[0] = list(entry.pfjet_py)[jIndex]
-        # pfjet_pz[0] = list(entry.pfjet_pz)[jIndex]
-        pfjet_pt[0] = list(entry.pfjet_pt)[jIndex]
-        pfjet_eta[0] = list(entry.pfjet_eta)[jIndex]
-        pfjet_phi[0] = list(entry.pfjet_phi)[jIndex]
-        # pfjet_flavour[0] = list(entry.pfjet_flavour)[jIndex]
+        pfjet_count[0] = len(jets)
+        for j in range(pfjet_count[0]):
+            jIndex = jets[j]
+            # pfjet_px[j] = list(event.pfjet_px)[jIndex]
+            # pfjet_py[j] = list(event.pfjet_py)[jIndex]
+            # pfjet_pz[j] = list(event.pfjet_pz)[jIndex]
+            pfjet_pt[j] = list(event.pfjet_pt)[jIndex]
+            pfjet_eta[j] = list(event.pfjet_eta)[jIndex]
+            pfjet_phi[j] = list(event.pfjet_phi)[jIndex]
+            # pfjet_flavour[j] = list(event.pfjet_flavour)[jIndex]
 
-        # pfmet_ex[0] = entry.pfmet_ex
-        # pfmet_ey[0] = entry.pfmet_ey
-        # pfmet_ez[0] = entry.pfmet_ez
-        pfmet_pt[0] = entry.pfmet_pt
-        pfmet_phi[0] = entry.pfmet_phi
-        # genweight[0] = entry.genweight
+        # pfmet_ex[0] = event.pfmet_ex
+        # pfmet_ey[0] = event.pfmet_ey
+        # pfmet_ez[0] = event.pfmet_ez
+        pfmet_pt[0] = event.pfmet_pt
+        pfmet_phi[0] = event.pfmet_phi
+        # genweight[0] = event.genweight
 
         tBkgd.Fill()
 
@@ -223,13 +220,13 @@ for fileNum, line in enumerate(sigDataListFile):
 
     # SET UP THE OUTPUT TREE
     tSig = TTree("tSig"+str(fileNum), "SUSY stop cut events")
-    tSig.Branch("muon_count", muon_count, "muon_count/F")
-    # tSig.Branch("muon_px", muon_px, "muon_px/F")
-    # tSig.Branch("muon_py", muon_py, "muon_py/F")
-    # tSig.Branch("muon_pz", muon_pz, "muon_pz/F")
-    tSig.Branch("muon_pt", muon_pt, "muon_pt/F")
-    tSig.Branch("muon_eta", muon_eta, "muon_eta/F")
-    tSig.Branch("muon_phi", muon_phi, "muon_phi/F")
+    tSig.Branch("lep1_count", lep1_count, "lep1_count/F")
+    # tSig.Branch("lep1_px", lep1_px, "lep1_px/F")
+    # tSig.Branch("lep1_py", lep1_py, "lep1_py/F")
+    # tSig.Branch("lep1_pz", lep1_pz, "lep1_pz/F")
+    tSig.Branch("lep1_pt", lep1_pt, "lep1_pt/F")
+    tSig.Branch("lep1_eta", lep1_eta, "lep1_eta/F")
+    tSig.Branch("lep1_phi", lep1_phi, "lep1_phi/F")
     
     tSig.Branch("pfjet_count", pfjet_count, "pfjet_count/i")
     # tSig.Branch("pfjet_px", pfjet_px, "pfjet_px/F")
@@ -241,24 +238,24 @@ for fileNum, line in enumerate(sigDataListFile):
     # tSig.Branch("pfjet_flavour", pfjet_flavour, "pfjet_flavour/F")
     # tSig.Branch("pfjet_btag", pfjet_btag, "pfjet_btag/F")
     
-    tSig.Branch("electron_count", electron_count, "electron_count/i")
-    # tSig.Branch("electron_px", electron_px, "electron_px/F")
-    # tSig.Branch("electron_py", electron_py, "electron_py/F")
-    # tSig.Branch("electron_pz", electron_pz, "electron_pz/F")
-    tSig.Branch("electron_pt", electron_pt, "electron_pt/F")
-    tSig.Branch("electron_eta", electron_eta, "electron_eta/F")
-    tSig.Branch("electron_phi", electron_phi, "electron_phi/F")
+    tSig.Branch("lep2_count", lep2_count, "lep2_count/i")
+    # tSig.Branch("lep2_px", lep2_px, "lep2_px/F")
+    # tSig.Branch("lep2_py", lep2_py, "lep2_py/F")
+    # tSig.Branch("lep2_pz", lep2_pz, "lep2_pz/F")
+    tSig.Branch("lep2_pt", lep2_pt, "lep2_pt/F")
+    tSig.Branch("lep2_eta", lep2_eta, "lep2_eta/F")
+    tSig.Branch("lep2_phi", lep2_phi, "lep2_phi/F")
     
-    # tSig.Branch("pfmet_ex", pfmet_ex, "pfmet_ex/F")
-    # tSig.Branch("pfmet_ey", pfmet_ey, "pfmet_ey/F")
-    # tSig.Branch("pfmet_ez", pfmet_ez, "pfmet_ez/F")
-    tSig.Branch("pfmet_pt", pfmet_pt, "pfmet_pt/F")
-    tSig.Branch("pfmet_phi", pfmet_phi, "pfmet_phi/F")
+    # tSig.Branch("pfmet_ex", pfmet_ex, "pfmet_ex[20]/F")
+    # tSig.Branch("pfmet_ey", pfmet_ey, "pfmet_ey[20]/F")
+    # tSig.Branch("pfmet_ez", pfmet_ez, "pfmet_ez[20]/F")
+    tSig.Branch("pfmet_pt", pfmet_pt, "pfmet_pt[20]/F")
+    tSig.Branch("pfmet_phi", pfmet_phi, "pfmet_phi[20]/F")
 
     # tSig.Branch("genweight", genweight, "genweight/F")
 
-    tSig.Branch("mtmu", mtmu, "mtmu/F")
-    tSig.Branch("mtel", mtel, "mtel/F")
+    tSig.Branch("mtlep1", mtlep1, "mtlep1/F")
+    tSig.Branch("mtlep2", mtlep2, "mtlep2/F")
 
     # ************ BEGIN LOOPING OVER EVENTS **********
     line = line.rstrip('\n')
@@ -272,82 +269,66 @@ for fileNum, line in enumerate(sigDataListFile):
     print("nentries={0:d}".format(nentries))
     nMax = nentries
     if testMode: nMax = 5000
-    for count, entry in enumerate(inTree):
+    for count, event in enumerate(inTree):
         if count > nMax : break
         if count % 500000 == 0: print("count={0:d}".format(count))
 
-        # *** Selecting muon, electron, jet, must be same for sig and bkgd. *** 
-        mIndex = -1
-        maxPt = 0
-        for im in range(entry.muon_count):
-            pt = list(entry.muon_pt)[im]
-            if pt > 25 and pt > maxPt and abs(list(entry.muon_eta)[im]) < 2.4: 
-                maxPt = pt
-                mIndex = im
-        if mIndex == -1: continue
+        # *** Selecting lep1, lep2, jet, must be same for sig and bkgd. *** 
+        if findingSameFlavor:
+            arr = selectSameFlavLepts(event, findingMuons)
+            if arr is None: continue
+            else:
+                l1Index = arr[0]
+                l2Index = arr[1]
+        else: assert False, "haven't implemented this yet."
 
-        eIndex = -1
-        maxPt = 0
-        for ie in range(entry.electron_count):
-            pt = list(entry.electron_pt)[ie]
-            if pt > 25 and pt > maxPt and abs(list(entry.electron_eta)[ie]) < 2.4:
-                maxPt = pt
-                eIndex = ie
-        if eIndex == -1: continue
-
-        jIndex = -1
-        maxPt = 0
-        for ij in range(entry.pfjet_count):
-            pt = list(entry.pfjet_pt)[ij]
-            if pt > 25 and pt > maxPt and abs(list(entry.pfjet_eta)[ij]) < 2.4:
-                maxPt = pt
-                jIndex = ij
-        if jIndex == -1: continue
-
+        jets = findValidJets(event)
+        
         # ************* CUTS: must be same as for sig and bkgd ************
         if cutMode:
-            if not passesCut(entry): continue
+            if not passesCut(event): continue
 
         # *********** STORE THE DATA *************
         # only events that pass all cuts will be stored
-        muon_count[0] = entry.muon_count
-        assert mIndex > -1
-        # muon_px[0] = list(entry.muon_px)[mIndex]
-        # muon_py[0] = list(entry.muon_py)[mIndex]
-        # muon_pz[0] = list(entry.muon_pz)[mIndex]
-        muon_pt[0] = list(entry.muon_pt)[mIndex]
-        muon_eta[0] = list(entry.muon_eta)[mIndex]
-        muon_phi[0] = list(entry.muon_phi)[mIndex]
-        mtmu[0] = sqrt(2 * muon_pt[0] * entry.pfmet_pt * \
-                (1 - cos(muon_phi[0] - entry.pfmet_phi)))
+        lep1_count[0] = getattr(event, l1Flav+"_count")
+        assert l1Index > -1
+        # lep1_px[0] = list(getattr(event, l1Flav+"_px)[l1Index]
+        # lep1_py[0] = list(getattr(event, l1Flav+"_py)[l1Index]
+        # lep1_pz[0] = list(getattr(event, l1Flav+"_pz)[l1Index]
+        lep1_pt[0] = list(getattr(event, l1Flav+"_pt"))[l1Index]
+        lep1_eta[0] = list(getattr(event, l1Flav+"_eta"))[l1Index]
+        lep1_phi[0] = list(getattr(event, l1Flav+"_phi"))[l1Index]
+        mtlep1[0] = sqrt(2 * lep1_pt[0] * event.pfmet_pt * \
+                (1 - cos(lep1_phi[0] - event.pfmet_phi)))
 
-        electron_count[0] = entry.electron_count
-        assert eIndex > -1
-        # electron_px[0] = list(entry.electron_px)[eIndex]
-        # electron_py[0] = list(entry.electron_py)[eIndex]
-        # electron_pz[0] = list(entry.electron_pz)[eIndex]
-        electron_pt[0] = list(entry.electron_pt)[eIndex]
-        electron_eta[0] = list(entry.electron_eta)[eIndex]
-        electron_phi[0] = list(entry.electron_phi)[eIndex]
-        mtel[0] = sqrt(2 * electron_pt[0] * entry.pfmet_pt * \
-                (1 - cos(electron_phi[0] - entry.pfmet_phi)))
+        lep2_count[0] = getattr(event, l2Flav+"_count")
+        assert l2Index > -1
+        # lep2_px[0] = list(getattr(event, l2Flav+"_px"))[l2Index]
+        # lep2_py[0] = list(getattr(event, l2Flav+"_py"))[l2Index]
+        # lep2_pz[0] = list(getattr(event, l2Flav+"_pz"))[l2Index]
+        lep2_pt[0] = list(getattr(event, l2Flav+"_pt"))[l2Index]
+        lep2_eta[0] = list(getattr(event, l2Flav+"_eta"))[l2Index]
+        lep2_phi[0] = list(getattr(event, l2Flav+"_phi"))[l2Index]
+        mtlep2[0] = sqrt(2 * lep2_pt[0] * event.pfmet_pt * \
+                (1 - cos(lep2_phi[0] - event.pfmet_phi)))
 
-        pfjet_count[0] = entry.pfjet_count
-        assert jIndex > -1
-        # pfjet_px[0] = list(entry.pfjet_px)[jIndex]
-        # pfjet_py[0] = list(entry.pfjet_py)[jIndex]
-        # pfjet_pz[0] = list(entry.pfjet_pz)[jIndex]
-        pfjet_pt[0] = list(entry.pfjet_pt)[jIndex]
-        pfjet_eta[0] = list(entry.pfjet_eta)[jIndex]
-        pfjet_phi[0] = list(entry.pfjet_phi)[jIndex]
-        # pfjet_flavour[0] = list(entry.pfjet_flavour)[jIndex]
+        pfjet_count[0] = len(jets)
+        for j in range(pfjet_count[0]):
+            jIndex = jets[j]
+            # pfjet_px[j] = list(event.pfjet_px)[jIndex]
+            # pfjet_py[j] = list(event.pfjet_py)[jIndex]
+            # pfjet_pz[j] = list(event.pfjet_pz)[jIndex]
+            pfjet_pt[j] = list(event.pfjet_pt)[jIndex]
+            pfjet_eta[j] = list(event.pfjet_eta)[jIndex]
+            pfjet_phi[j] = list(event.pfjet_phi)[jIndex]
+            # pfjet_flavour[j] = list(event.pfjet_flavour)[jIndex]
 
-        # pfmet_ex[0] = entry.pfmet_ex
-        # pfmet_ey[0] = entry.pfmet_ey
-        # pfmet_ez[0] = entry.pfmet_ez
-        pfmet_pt[0] = entry.pfmet_pt
-        pfmet_phi[0] = entry.pfmet_phi
-        # genweight[0] = entry.genweight
+        # pfmet_ex[0] = event.pfmet_ex
+        # pfmet_ey[0] = event.pfmet_ey
+        # pfmet_ez[0] = event.pfmet_ez
+        pfmet_pt[0] = event.pfmet_pt
+        pfmet_phi[0] = event.pfmet_phi
+        # genweight[0] = event.genweight
 
         tSig.Fill()
 
@@ -360,8 +341,8 @@ outFile.Close()
 
 # f = TFile.Open(outName, "READ")
 # t = f.Get("tBkgd")
-# for entry in t:
-#     print entry.muon_pt
+# for event in t:
+#     print event.muon_pt
 
 print "Finished creating " + outName + "\n"
 print "Done."
