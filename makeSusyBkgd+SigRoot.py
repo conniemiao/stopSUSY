@@ -14,7 +14,7 @@ from math import sqrt, cos
 from array import array
 
 testMode = True # limits the number of events and files to loop over 
-cutMode = False # applying cuts
+cutMode = True # applying cuts
 print "Test mode: " + str(testMode)
 print "Cut mode: " + str(cutMode)
 
@@ -44,8 +44,8 @@ outDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
 outName = outDir+"stopCut_"
 if numBkgdFiles < 10: outName += "0"+str(numBkgdFiles)+"Bkgd_TTDiLept_"
 else: outName += str(numBkgdFiles)+"Bkgd_TTDiLept_"
-if numSigFiles < 10: outName += "0"+str(numSigFiles)+"Sig"
-else: outName += str(numSigFiles)+"Sig"
+if numSigFiles < 10: outName += "0"+str(numSigFiles)+"Sig_"+l1Flav[:2]+l2Flav[:2]
+else: outName += str(numSigFiles)+"Sig_"+l1Flav[:2]+l2Flav[:2]
 if not cutMode: outName += "_baseline.root"
 else: outName += ".root"
 
@@ -53,7 +53,6 @@ outFile = TFile(outName, "recreate")
 
 #--------------------------------------------------------------------------------#
 # ************* Make all the arrays. *************
-lep1_count = array('f',[0.])
 # lep1_px = array('f',[0.])
 # lep1_py = array('f',[0.])
 # lep1_pz = array('f',[0.])
@@ -61,15 +60,14 @@ lep1_pt = array('f',[0.])
 lep1_eta = array('f',[0.])
 lep1_phi = array('f',[0.])
 pfjet_count = array('i',[0])
-# pfjet_px = np.zeros(20)
-# pfjet_py = np.zeros(20)
-# pfjet_pz = np.zeros(20)
-pfjet_pt = np.zeros(20)
-pfjet_eta = np.zeros(20)
-pfjet_phi = np.zeros(20)
+# pfjet_px = np.zeros(20, dtype=np.float32)
+# pfjet_py = np.zeros(20, dtype=np.float32)
+# pfjet_pz = np.zeros(20, dtype=np.float32)
+pfjet_pt = np.zeros(20, dtype=np.float32)
+pfjet_eta = np.zeros(20, dtype=np.float32)
+pfjet_phi = np.zeros(20, dtype=np.float32)
 # pfjet_flavour = array('f',[0])
 # pfjet_btag = array('f',[0])
-lep2_count = array('i',[0])
 # lep2_px = array('f',[0.])
 # lep2_py = array('f',[0.])
 # lep2_pz = array('f',[0.])
@@ -93,7 +91,6 @@ bkgdDataListFile = open("bkgd_TTDiLept_files")
 
 # SET UP THE OUTPUT TREE
 tBkgd = TTree("tBkgd", "SUSY stop cut events")
-tBkgd.Branch("lep1_count", lep1_count, "lep1_count/F")
 # tBkgd.Branch("lep1_px", lep1_px, "lep1_px/F")
 # tBkgd.Branch("lep1_py", lep1_py, "lep1_py/F")
 # tBkgd.Branch("lep1_pz", lep1_pz, "lep1_pz/F")
@@ -111,7 +108,6 @@ tBkgd.Branch("pfjet_phi", pfjet_phi, "pfjet_phi[20]/F")
 # tBkgd.Branch("pfjet_flavour", pfjet_flavour, "pfjet_flavour/F")
 # tBkgd.Branch("pfjet_btag", pfjet_btag, "pfjet_btag/F")
 
-tBkgd.Branch("lep2_count", lep2_count, "lep2_count/i")
 # tBkgd.Branch("lep2_px", lep2_px, "lep2_px/F")
 # tBkgd.Branch("lep2_py", lep2_py, "lep2_py/F")
 # tBkgd.Branch("lep2_pz", lep2_pz, "lep2_pz/F")
@@ -141,7 +137,7 @@ for fileNum, line in enumerate(bkgdDataListFile):
     print("nentries={0:d}".format(nentries))
 
     nMax = nentries
-    if testMode: nMax = 5000
+    if testMode: nMax = 100000
     for count, event in enumerate(inTree):
         if count > nMax : break
         if count % 500000 == 0: print("count={0:d}".format(count))
@@ -156,6 +152,7 @@ for fileNum, line in enumerate(bkgdDataListFile):
         else: assert False, "haven't implemented this yet."
 
         jets = findValidJets(event)
+        if len(jets) == 0: continue
         
         # ************* CUTS: must be same as for sig and bkgd ************
         if cutMode:
@@ -163,7 +160,6 @@ for fileNum, line in enumerate(bkgdDataListFile):
 
         # *********** STORE THE DATA *************
         # only events that pass all cuts will be stored
-        lep1_count[0] = getattr(event, l1Flav+"_count")
         assert l1Index > -1
         # lep1_px[0] = list(getattr(event, l1Flav+"_px)[l1Index]
         # lep1_py[0] = list(getattr(event, l1Flav+"_py)[l1Index]
@@ -174,7 +170,6 @@ for fileNum, line in enumerate(bkgdDataListFile):
         mtlep1[0] = sqrt(2 * lep1_pt[0] * event.pfmet_pt * \
                 (1 - cos(lep1_phi[0] - event.pfmet_phi)))
 
-        lep2_count[0] = getattr(event, l2Flav+"_count")
         assert l2Index > -1
         # lep2_px[0] = list(getattr(event, l2Flav+"_px"))[l2Index]
         # lep2_py[0] = list(getattr(event, l2Flav+"_py"))[l2Index]
@@ -185,6 +180,12 @@ for fileNum, line in enumerate(bkgdDataListFile):
         mtlep2[0] = sqrt(2 * lep2_pt[0] * event.pfmet_pt * \
                 (1 - cos(lep2_phi[0] - event.pfmet_phi)))
 
+        # pfjet_px.fill(0)
+        # pfjet_py.fill(0)
+        # pfjet_pz.fill(0)
+        pfjet_pt.fill(0)
+        pfjet_eta.fill(0)
+        pfjet_phi.fill(0)
         pfjet_count[0] = len(jets)
         for j in range(pfjet_count[0]):
             jIndex = jets[j]
@@ -218,9 +219,9 @@ sigDataListFile = open("sig_SingleStop_files")
 for fileNum, line in enumerate(sigDataListFile):
     if fileNum + 1 > numSigFiles: break
 
+
     # SET UP THE OUTPUT TREE
     tSig = TTree("tSig"+str(fileNum), "SUSY stop cut events")
-    tSig.Branch("lep1_count", lep1_count, "lep1_count/F")
     # tSig.Branch("lep1_px", lep1_px, "lep1_px/F")
     # tSig.Branch("lep1_py", lep1_py, "lep1_py/F")
     # tSig.Branch("lep1_pz", lep1_pz, "lep1_pz/F")
@@ -229,16 +230,15 @@ for fileNum, line in enumerate(sigDataListFile):
     tSig.Branch("lep1_phi", lep1_phi, "lep1_phi/F")
     
     tSig.Branch("pfjet_count", pfjet_count, "pfjet_count/i")
-    # tSig.Branch("pfjet_px", pfjet_px, "pfjet_px/F")
-    # tSig.Branch("pfjet_py", pfjet_py, "pfjet_py/F")
-    # tSig.Branch("pfjet_pz", pfjet_pz, "pfjet_pz/F")
-    tSig.Branch("pfjet_pt", pfjet_pt, "pfjet_pt/F")
-    tSig.Branch("pfjet_eta", pfjet_eta, "pfjet_eta/F")
-    tSig.Branch("pfjet_phi", pfjet_phi, "pfjet_phi/F")
-    # tSig.Branch("pfjet_flavour", pfjet_flavour, "pfjet_flavour/F")
-    # tSig.Branch("pfjet_btag", pfjet_btag, "pfjet_btag/F")
+    # tSig.Branch("pfjet_px", pfjet_px, "pfjet_px[20]/F")
+    # tSig.Branch("pfjet_py", pfjet_py, "pfjet_py[20]/F")
+    # tSig.Branch("pfjet_pz", pfjet_pz, "pfjet_pz[20]/F")
+    tSig.Branch("pfjet_pt", pfjet_pt, "pfjet_pt[20]/F")
+    tSig.Branch("pfjet_eta", pfjet_eta, "pfjet_eta[20]/F")
+    tSig.Branch("pfjet_phi", pfjet_phi, "pfjet_phi[20]/F")
+    # tSig.Branch("pfjet_flavour", pfjet_flavour, "pfjet_flavour[20]/F")
+    # tSig.Branch("pfjet_btag", pfjet_btag, "pfjet_btag[20]/F")
     
-    tSig.Branch("lep2_count", lep2_count, "lep2_count/i")
     # tSig.Branch("lep2_px", lep2_px, "lep2_px/F")
     # tSig.Branch("lep2_py", lep2_py, "lep2_py/F")
     # tSig.Branch("lep2_pz", lep2_pz, "lep2_pz/F")
@@ -246,11 +246,11 @@ for fileNum, line in enumerate(sigDataListFile):
     tSig.Branch("lep2_eta", lep2_eta, "lep2_eta/F")
     tSig.Branch("lep2_phi", lep2_phi, "lep2_phi/F")
     
-    # tSig.Branch("pfmet_ex", pfmet_ex, "pfmet_ex[20]/F")
-    # tSig.Branch("pfmet_ey", pfmet_ey, "pfmet_ey[20]/F")
-    # tSig.Branch("pfmet_ez", pfmet_ez, "pfmet_ez[20]/F")
-    tSig.Branch("pfmet_pt", pfmet_pt, "pfmet_pt[20]/F")
-    tSig.Branch("pfmet_phi", pfmet_phi, "pfmet_phi[20]/F")
+    # tSig.Branch("pfmet_ex", pfmet_ex, "pfmet_ex/F")
+    # tSig.Branch("pfmet_ey", pfmet_ey, "pfmet_ey/F")
+    # tSig.Branch("pfmet_ez", pfmet_ez, "pfmet_ez/F")
+    tSig.Branch("pfmet_pt", pfmet_pt, "pfmet_pt/F")
+    tSig.Branch("pfmet_phi", pfmet_phi, "pfmet_phi/F")
 
     # tSig.Branch("genweight", genweight, "genweight/F")
 
@@ -268,7 +268,7 @@ for fileNum, line in enumerate(sigDataListFile):
     nentries = inTree.GetEntries()
     print("nentries={0:d}".format(nentries))
     nMax = nentries
-    if testMode: nMax = 5000
+    if testMode: nMax = 100000
     for count, event in enumerate(inTree):
         if count > nMax : break
         if count % 500000 == 0: print("count={0:d}".format(count))
@@ -283,6 +283,7 @@ for fileNum, line in enumerate(sigDataListFile):
         else: assert False, "haven't implemented this yet."
 
         jets = findValidJets(event)
+        if len(jets) == 0: continue
         
         # ************* CUTS: must be same as for sig and bkgd ************
         if cutMode:
@@ -290,7 +291,6 @@ for fileNum, line in enumerate(sigDataListFile):
 
         # *********** STORE THE DATA *************
         # only events that pass all cuts will be stored
-        lep1_count[0] = getattr(event, l1Flav+"_count")
         assert l1Index > -1
         # lep1_px[0] = list(getattr(event, l1Flav+"_px)[l1Index]
         # lep1_py[0] = list(getattr(event, l1Flav+"_py)[l1Index]
@@ -301,7 +301,6 @@ for fileNum, line in enumerate(sigDataListFile):
         mtlep1[0] = sqrt(2 * lep1_pt[0] * event.pfmet_pt * \
                 (1 - cos(lep1_phi[0] - event.pfmet_phi)))
 
-        lep2_count[0] = getattr(event, l2Flav+"_count")
         assert l2Index > -1
         # lep2_px[0] = list(getattr(event, l2Flav+"_px"))[l2Index]
         # lep2_py[0] = list(getattr(event, l2Flav+"_py"))[l2Index]
@@ -312,6 +311,12 @@ for fileNum, line in enumerate(sigDataListFile):
         mtlep2[0] = sqrt(2 * lep2_pt[0] * event.pfmet_pt * \
                 (1 - cos(lep2_phi[0] - event.pfmet_phi)))
 
+        # pfjet_px.fill(0)
+        # pfjet_py.fill(0)
+        # pfjet_pz.fill(0)
+        pfjet_pt.fill(0)
+        pfjet_eta.fill(0)
+        pfjet_phi.fill(0)
         pfjet_count[0] = len(jets)
         for j in range(pfjet_count[0]):
             jIndex = jets[j]
@@ -342,7 +347,8 @@ outFile.Close()
 # f = TFile.Open(outName, "READ")
 # t = f.Get("tBkgd")
 # for event in t:
-#     print event.muon_pt
+#     for j in range(event.pfjet_count):
+#         print event.pfjet_pt[j]
 
 print "Finished creating " + outName + "\n"
 print "Done."

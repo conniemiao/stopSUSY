@@ -9,16 +9,19 @@ from ROOT import TFile, TTree, TH1D, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
 import numpy as np
 
-plotVar = "mtmu" # **** change this line for different vars
-allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_04Bkgd_TTDiLept_04Sig_baseline.root" # <-- copy in the output name from running makeSusyBkgd+SigRoot.py
+plotVar = "mtlep1" # **** change this line for different vars
+
+# copy in the output name from running makeSusyBkgd+SigRoot.py:
+allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_mumu.root"
+print "Plotting from "+allDataFile
 
 plotSettings = { #[nBins,xMin,xMax]]
-        "muon_px":[100,-300,300],
-        "muon_py":[100,-300,300],
-        "muon_pz":[100,-700,700],
-        "muon_pt":[100,0,400], 
-        "muon_eta":[100,-3,3],
-        "muon_phi":[100,-4,4],
+        "lep1_px":[100,-300,300],
+        "lep1_py":[100,-300,300],
+        "lep1_pz":[100,-700,700],
+        "lep1_pt":[100,0,400], 
+        "lep1_eta":[100,-3,3],
+        "lep1_phi":[100,-4,4],
         "pfjet_px":[100,-300,300],
         "pfjet_py":[100,-300,300],
         "pfjet_pz":[100,-700,700],
@@ -26,14 +29,14 @@ plotSettings = { #[nBins,xMin,xMax]]
         "pfjet_eta":[100,-3,3],
         "pfjet_phi":[100,-4,4],
         "pfjet_btag":[10,0,10],
-        "electron_px":[100,-300,300],
-        "electron_py":[100,-300,300],
-        "electron_pz":[100,-700,700],
-        "electron_pt":[100,0,400],
-        "electron_eta":[100,-4,4],
-        "electron_phi":[100,-4,4],
-        "mtmu":[100,0,500],
-        "mtel":[100,0,500],
+        "lep2_px":[100,-300,300],
+        "lep2_py":[100,-300,300],
+        "lep2_pz":[100,-700,700],
+        "lep2_pt":[100,0,400],
+        "lep2_eta":[100,-4,4],
+        "lep2_phi":[100,-4,4],
+        "mtlep1":[100,0,500],
+        "mtlep2":[100,0,500],
         "pfmet_pt":[100,0,500],
         "pfmet_ex":[100,-350,500],
         "pfmet_ey":[100,-250,350],
@@ -67,13 +70,23 @@ inTree = inFile.Get("tBkgd")
 nentries = inTree.GetEntries()
 print("nentries={0:d}".format(nentries))
 
-for count, entry in enumerate(inTree):
-    if count % 500000 == 0: print("count = {0:d}".format(count))
-    val = getattr(entry, getVar)
-    if val <= xMax:
-        histBkgd.Fill(val, 1)
-    else: # overflow
-        histBkgd.Fill(xMax + binwidth/2, 1)
+for count, event in enumerate(inTree):
+    if count % 500000 == 0: print("count={0:d}".format(count))
+    val = getattr(event, plotVar)
+    if plotVar[:5] == "pfjet":
+        numjets = event.pfjet_count
+        val = np.reshape(val, 20)
+        for j in range(numjets):
+            pfjetval = val[j]
+            if pfjetval <= xMax:
+                histBkgd.Fill(pfjetval, 1)
+            else: # overflow
+                histBkgd.Fill(xMax + binwidth/2, 1)
+    else:
+        if val <= xMax:
+            histBkgd.Fill(val, 1)
+        else: # overflow
+            histBkgd.Fill(xMax + binwidth/2, 1)
 histBkgd.Sumw2()
 
 # rebinning
@@ -83,7 +96,7 @@ histBkgd.Sumw2()
 #     print rebinned
 
 histBkgd.SetTitle(plotVar)
-histBkgd.GetXaxis().SetTitle(plotVar + " (normalized to 150000 /pb)")
+histBkgd.GetXaxis().SetTitle(plotVar+" ("+allDataFile[70:74]+", normalized to 150000 /pb)")
 histBkgd.GetYaxis().SetTitle("Number of Events")
 histBkgd.Scale(xsec*lumi/histBkgd.GetSumOfWeights())
 histBkgd.SetLineColor(1) # black
@@ -118,13 +131,23 @@ for fileNum, line in enumerate(sigDataListFile):
     histSigArr.append(TH1D(plotVar + "_sig_" + filename, plotVar + "_sig_" + \
             filename[19:24], nBins + 1, xMin, xMax + binwidth))
     
-    for count, entry in enumerate(inTree):
+    for count, event in enumerate(inTree):
         if count % 500000 == 0: print("count={0:d}".format(count))
-        val = getattr(entry, plotVar)
-        if val <= xMax:
-            histSigArr[fileNum].Fill(val, 1)
-        else: # overflow
-            histSigArr[fileNum].Fill(xMax + binwidth/2, 1)
+        val = getattr(event, plotVar)
+        if plotVar[:5] == "pfjet":
+            numjets = event.pfjet_count
+            val = np.reshape(val, 20)
+            for j in range(numjets):
+                pfjetval = val[j]
+                if pfjetval <= xMax:
+                    histSigArr[fileNum].Fill(pfjetval, 1)
+                else: # overflow
+                    histSigArr[fileNum].Fill(xMax + binwidth/2, 1)
+        else:
+            if val <= xMax:
+                histSigArr[fileNum].Fill(val, 1)
+            else: # overflow
+                histSigArr[fileNum].Fill(xMax + binwidth/2, 1)
 
     histSigArr[fileNum].SetDirectory(0) # necessary to keep hist from closing
 
