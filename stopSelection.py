@@ -73,11 +73,11 @@ def passesCut(event):
     numBTag = 0
     numBTagTight = 0
     for jet in range(event.pfjet_count):
-        if pfjet_btag.item((jet, 0)) > 0.5:
+        if pfjet_btag[jet, 0] > 0.5:
             numBTagLoose += 1
-        if pfjet_btag.item((jet, 1)) > 0.5:
+        if pfjet_btag[jet, 1] > 0.5:
             numBTag += 1
-        if pfjet_btag.item((jet, 2)) > 0.5:
+        if pfjet_btag[jet, 2] > 0.5:
             numBTagTight += 1
     if numBTag > 1: return False
     return True
