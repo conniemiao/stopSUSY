@@ -124,8 +124,7 @@ def findValidJets(event):
 #--------------------------------------------------------------------------------#
     
 # performs btag cuts on an event. returns True if passes, False if not.
-def passesCut(event):
-    if event.pfjet_count > 4: return False
+def passesBTags(event):
 
     # bool pfjet_btag[jet][0, 1, 2]: 0, 1, 2 = passed loose, medium, tight cuts
     # stored as float so > 0.5 = True

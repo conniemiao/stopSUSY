@@ -6,15 +6,15 @@
 # The bkgd output tree tBkgd is the sum of all files listed in bkgd_TTDiLept_files.
 # Each signal tree tSig{i} corresponds to a file listed in sig_SingleStop_files.
 
-from ROOT import TFile, TTree, TH1D, TCanvas, TLorentzVector, TImage, TLegend
+from ROOT import TFile, TTree, TH1F, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
-from stopSelection import selectLepts, passesCut, findValidJets
+from stopSelection import selectLepts, passesBTags, findValidJets
 import numpy as np
 from math import sqrt, cos
 from array import array
 
 testMode = True # limits the number of events and files to loop over 
-cutMode = False # applying cuts
+cutMode = True # applying cuts
 print "Test mode: " + str(testMode)
 print "Cut mode: " + str(cutMode)
 
@@ -57,6 +57,9 @@ if not cutMode: outName += "_baseline.root"
 else: outName += ".root"
 
 outFile = TFile(outName, "recreate")
+
+# number of events surviving after each cut.
+cuts = ["no cut", "dilepton", "no 3rd lepton", "njets<4", "nbtag<2"]
 
 #--------------------------------------------------------------------------------#
 # ************* Make all the arrays. *************
@@ -133,6 +136,10 @@ tBkgd.Branch("pfmet_phi", pfmet_phi, "pfmet_phi/F")
 tBkgd.Branch("mtlep1", mtlep1, "mtlep1/F")
 tBkgd.Branch("mtlep2", mtlep2, "mtlep2/F")
 
+bkgd_cutflow_hist = TH1F("bkgd_cutflow","bkgd_cutflow", len(cuts), 0, len(cuts))
+for i in range(len(cuts)):
+    bkgd_cutflow_hist.GetXaxis().SetBinLabel(i+1, cuts[i])
+
 for fileNum, line in enumerate(bkgdDataListFile):
     if fileNum + 1 > numSigFiles: break
     filename = line.rstrip()
@@ -149,10 +156,14 @@ for fileNum, line in enumerate(bkgdDataListFile):
         if count > nMax : break
         if count % 500000 == 0: print("count={0:d}".format(count))
 
+        bkgd_cutflow_hist.Fill(0) # no cut
+
         # *** Selecting lep1, lep2, jet, must be same for sig and bkgd. *** 
         if findingSameFlavor:
             lepIndices = selectLepts(event, True, muPreference)
             if lepIndices is None: continue
+            bkgd_cutflow_hist.Fill(1) # dilepton
+
             # veto checks:
             if muPreference: # mumu
                 # event should not give valid lead mu, trail el pair
@@ -160,6 +171,8 @@ for fileNum, line in enumerate(bkgdDataListFile):
             else: # elel
                 # event should not give valid lead el, trail mu pair
                 if not selectLepts(event, False, False) is None: continue
+            bkgd_cutflow_hist.Fill(2) # no 3rd lepton 
+
         else:
             lepIndices = selectLepts(event, False, True)
             l1Flav = "muon"
@@ -169,26 +182,31 @@ for fileNum, line in enumerate(bkgdDataListFile):
                 if lepIndices is None: continue
                 l1Flav = "electron"
                 l2Flav = "muon"
+            bkgd_cutflow_hist.Fill(1) # dilepton
+
             # veto check: event should not give valid mumu or elel pair
             if not selectLepts(event, True, True) is None: continue
             if not selectLepts(event, True, False) is None: continue
+            bkgd_cutflow_hist.Fill(2) # no 3rd lepton
 
         l1Index = lepIndices[0]
         l2Index = lepIndices[1]
 
         jets = findValidJets(event)
-        if len(jets) == 0: continue
         
         # ************* CUTS: must be same as for sig and bkgd ************
         if cutMode:
-            if not passesCut(event): continue
+            if event.pfjet_count > 4: continue
+            bkgd_cutflow_hist.Fill(3) # njets < 4
+            if not passesBTags(event): continue
+            bkgd_cutflow_hist.Fill(4) # nbtag < 2
 
         # *********** STORE THE DATA *************
         # only events that pass all cuts will be stored
         assert l1Index > -1
-        # lep1_px[0] = list(getattr(event, l1Flav+"_px)[l1Index]
-        # lep1_py[0] = list(getattr(event, l1Flav+"_py)[l1Index]
-        # lep1_pz[0] = list(getattr(event, l1Flav+"_pz)[l1Index]
+        # lep1_px[0] = list(getattr(event, l1Flav+"_px")[l1Index]
+        # lep1_py[0] = list(getattr(event, l1Flav+"_py")[l1Index]
+        # lep1_pz[0] = list(getattr(event, l1Flav+"_pz")[l1Index]
         lep1_pt[0] = list(getattr(event, l1Flav+"_pt"))[l1Index]
         lep1_eta[0] = list(getattr(event, l1Flav+"_eta"))[l1Index]
         lep1_phi[0] = list(getattr(event, l1Flav+"_phi"))[l1Index]
@@ -233,6 +251,7 @@ for fileNum, line in enumerate(bkgdDataListFile):
 
 outFile.cd() # cd to outFile to write to it
 tBkgd.Write()
+bkgd_cutflow_hist.Write()
 
 
 #--------------------------------------------------------------------------------#
@@ -241,6 +260,7 @@ print "Storing variables from signal."
 sigDataDir = "/eos/user/a/alkaloge/HLLHC/Skims/v2/SingleStop/"
 sigDataListFile = open("sig_SingleStop_files")
 
+sig_cutflow_hists = []
 for fileNum, line in enumerate(sigDataListFile):
     if fileNum + 1 > numSigFiles: break
 
@@ -282,6 +302,7 @@ for fileNum, line in enumerate(sigDataListFile):
     tSig.Branch("mtlep1", mtlep1, "mtlep1/F")
     tSig.Branch("mtlep2", mtlep2, "mtlep2/F")
 
+
     # ************ BEGIN LOOPING OVER EVENTS **********
     line = line.rstrip('\n')
     filename, xsec = line.split(" ")
@@ -294,14 +315,24 @@ for fileNum, line in enumerate(sigDataListFile):
     print("nentries={0:d}".format(nentries))
     nMax = nentries
     if testMode: nMax = 5000
+
+    sig_cutflow_hists.append(TH1F("sig_"+filename[19:24]+"_cutflow",\
+            "sig_"+filename[19:24]+"_cutflow", len(cuts), 0, len(cuts)))
+    for i in range(len(cuts)):
+        sig_cutflow_hists[fileNum].GetXaxis().SetBinLabel(i+1, cuts[i])
+
     for count, event in enumerate(inTree):
         if count > nMax : break
         if count % 500000 == 0: print("count={0:d}".format(count))
+
+        sig_cutflow_hists[fileNum].Fill(0) # no cuts
 
         # *** Selecting lep1, lep2, jet, must be same for sig and bkgd. *** 
         if findingSameFlavor:
             lepIndices = selectLepts(event, True, muPreference)
             if lepIndices is None: continue
+            sig_cutflow_hists[fileNum].Fill(1) # dilepton
+
             # veto checks:
             if muPreference: # mumu
                 # event should not give valid lead mu, trail el pair
@@ -309,6 +340,8 @@ for fileNum, line in enumerate(sigDataListFile):
             else: # elel
                 # event should not give valid lead el, trail mu pair
                 if not selectLepts(event, False, False) is None: continue
+            sig_cutflow_hists[fileNum].Fill(2) # no 3rd lepton
+
         else:
             lepIndices = selectLepts(event, False, True)
             l1Flav = "muon"
@@ -318,26 +351,31 @@ for fileNum, line in enumerate(sigDataListFile):
                 if lepIndices is None: continue
                 l1Flav = "electron"
                 l2Flav = "muon"
+            sig_cutflow_hists[fileNum].Fill(1) # dilepton
+
             # veto check: event should not give valid mumu or elel pair
             if not selectLepts(event, True, True) is None: continue
             if not selectLepts(event, True, False) is None: continue
+            sig_cutflow_hists[fileNum].Fill(2) # no 3rd lepton
 
         l1Index = lepIndices[0]
         l2Index = lepIndices[1]
 
         jets = findValidJets(event)
-        if len(jets) == 0: continue
         
         # ************* CUTS: must be same as for sig and bkgd ************
         if cutMode:
-            if not passesCut(event): continue
+            if event.pfjet_count > 4: continue
+            sig_cutflow_hists[fileNum].Fill(3) # njets < 4
+            if not passesBTags(event): continue
+            sig_cutflow_hists[fileNum].Fill(4) # nbtag < 2
 
         # *********** STORE THE DATA *************
         # only events that pass all cuts will be stored
         assert l1Index > -1
-        # lep1_px[0] = list(getattr(event, l1Flav+"_px)[l1Index]
-        # lep1_py[0] = list(getattr(event, l1Flav+"_py)[l1Index]
-        # lep1_pz[0] = list(getattr(event, l1Flav+"_pz)[l1Index]
+        # lep1_px[0] = list(getattr(event, l1Flav+"_px")[l1Index]
+        # lep1_py[0] = list(getattr(event, l1Flav+"_py")[l1Index]
+        # lep1_pz[0] = list(getattr(event, l1Flav+"_pz")[l1Index]
         lep1_pt[0] = list(getattr(event, l1Flav+"_pt"))[l1Index]
         lep1_eta[0] = list(getattr(event, l1Flav+"_eta"))[l1Index]
         lep1_phi[0] = list(getattr(event, l1Flav+"_phi"))[l1Index]
@@ -382,6 +420,7 @@ for fileNum, line in enumerate(sigDataListFile):
 
     outFile.cd() # cd to outfile to write to it
     tSig.Write()
+    sig_cutflow_hists[fileNum].Write()
 
 #--------------------------------------------------------------------------------#
 
@@ -392,6 +431,10 @@ outFile.Close()
 # for event in t:
 #     for j in range(event.pfjet_count):
 #         print event.pfjet_pt[j]
+# h = f.Get("bkgd_cutflow")
+# h.Sumw2()
+# h.Draw()
+# raw_input()
 
 print "Finished creating " + outName + "\n"
 print "Done."

@@ -52,7 +52,7 @@ xMin = plotSettings[plotVar][1]
 xMax = plotSettings[plotVar][2]
 
 binwidth = (xMax - xMin)/nBins # include overflow bin
-histBkgd = TH1D(plotVar + "_bkgd", plotVar + "_bkgd", nBins + 1, \
+hBkgd = TH1D(plotVar + "_bkgd", plotVar + "_bkgd", nBins + 1, \
         xMin, xMax + binwidth)
 lumi = 3000000 # luminosity = 3000 /pb = 3,000,000 /fb
 
@@ -79,29 +79,29 @@ for count, event in enumerate(inTree):
         for j in range(numjets):
             pfjetval = val[j]
             if pfjetval <= xMax:
-                histBkgd.Fill(pfjetval, 1)
+                hBkgd.Fill(pfjetval, 1)
             else: # overflow
-                histBkgd.Fill(xMax + binwidth/2, 1)
+                hBkgd.Fill(xMax + binwidth/2, 1)
     else:
         if val <= xMax:
-            histBkgd.Fill(val, 1)
+            hBkgd.Fill(val, 1)
         else: # overflow
-            histBkgd.Fill(xMax + binwidth/2, 1)
-histBkgd.Sumw2()
+            hBkgd.Fill(xMax + binwidth/2, 1)
+hBkgd.Sumw2()
 
 # rebinning
-# print histBkgd.GetBinError((xMax+xMin)/2)/histBkgd.GetSumOfWeights()
-# while histBkgd.GetBinError((xMax+xMin)/2) > 0.1*histBkgd.GetSumOfWeights():
-#     histBkgd.Rebin(2)
+# print hBkgd.GetBinError((xMax+xMin)/2)/hBkgd.GetSumOfWeights()
+# while hBkgd.GetBinError((xMax+xMin)/2) > 0.1*hBkgd.GetSumOfWeights():
+#     hBkgd.Rebin(2)
 #     print rebinned
 
-histBkgd.SetTitle(plotVar)
-histBkgd.GetXaxis().SetTitle(plotVar+" [GeV] ("+allDataFile[70:74]+", normalized to 3000 /pb)")
-histBkgd.GetYaxis().SetTitle("Number of Events")
-histBkgd.Scale(xsec*lumi/histBkgd.GetSumOfWeights())
-histBkgd.SetLineColor(1) # black
-# histBkgd.SetStats(0)
-histBkgd.Draw("hist")
+hBkgd.SetTitle(plotVar + " ("+allDataFile[70:74]+", normalized to 3000 /pb)")
+hBkgd.GetXaxis().SetTitle(plotVar+" [GeV]")
+hBkgd.GetYaxis().SetTitle("Number of Events")
+hBkgd.Scale(xsec*lumi/hBkgd.GetSumOfWeights())
+hBkgd.SetLineColor(1) # black
+# hBkgd.SetStats(0)
+hBkgd.Draw("h")
 
 c1.Update()
 
@@ -115,7 +115,7 @@ coloropts = [2,4,3,6,7,9,28,46] # some good colors for lines
 markeropts = [1,20,21,22,23] # some good marker styles for lines
 linestyleopts = [1,2,3,7,9] # some good styles for lines
 
-histSigArr = [] # one hist for each signal file 
+hSigArr = [] # one hist for each signal file 
 for fileNum, line in enumerate(sigDataListFile):
     if fileNum + 1 > numSigFiles: break
 
@@ -128,7 +128,7 @@ for fileNum, line in enumerate(sigDataListFile):
     nentries = inTree.GetEntries()
     print("nentries={0:d}".format(nentries))
 
-    histSigArr.append(TH1D(plotVar + "_sig_" + filename, plotVar + "_sig_" + \
+    hSigArr.append(TH1D(plotVar + "_sig_" + filename, plotVar + "_sig_" + \
             filename[19:24], nBins + 1, xMin, xMax + binwidth))
     
     for count, event in enumerate(inTree):
@@ -140,40 +140,40 @@ for fileNum, line in enumerate(sigDataListFile):
             for j in range(numjets):
                 pfjetval = val[j]
                 if pfjetval <= xMax:
-                    histSigArr[fileNum].Fill(pfjetval, 1)
+                    hSigArr[fileNum].Fill(pfjetval, 1)
                 else: # overflow
-                    histSigArr[fileNum].Fill(xMax + binwidth/2, 1)
+                    hSigArr[fileNum].Fill(xMax + binwidth/2, 1)
         else:
             if val <= xMax:
-                histSigArr[fileNum].Fill(val, 1)
+                hSigArr[fileNum].Fill(val, 1)
             else: # overflow
-                histSigArr[fileNum].Fill(xMax + binwidth/2, 1)
+                hSigArr[fileNum].Fill(xMax + binwidth/2, 1)
 
-    histSigArr[fileNum].SetDirectory(0) # necessary to keep hist from closing
+    hSigArr[fileNum].SetDirectory(0) # necessary to keep hist from closing
 
-    histcolor = coloropts[fileNum % len(coloropts)]
-    histSigArr[fileNum].SetLineColor(histcolor) 
-    histmarkerstyle = markeropts[(fileNum/len(coloropts)) % len(markeropts)]
-    histSigArr[fileNum].SetMarkerStyle(histmarkerstyle)
-    histSigArr[fileNum].SetMarkerColor(histcolor)
-    histlinestyle = linestyleopts[(fileNum/len(coloropts)/len(markeropts)) % \
+    hcolor = coloropts[fileNum % len(coloropts)]
+    hSigArr[fileNum].SetLineColor(hcolor) 
+    hmarkerstyle = markeropts[(fileNum/len(coloropts)) % len(markeropts)]
+    hSigArr[fileNum].SetMarkerStyle(hmarkerstyle)
+    hSigArr[fileNum].SetMarkerColor(hcolor)
+    hlinestyle = linestyleopts[(fileNum/len(coloropts)/len(markeropts)) % \
             len(linestyleopts)]
-    histSigArr[fileNum].SetLineStyle(histlinestyle)
+    hSigArr[fileNum].SetLineStyle(hlinestyle)
 
-    histSigArr[fileNum].Sumw2()
-    histSigArr[fileNum].Scale(xsec * lumi /
-            histSigArr[fileNum].GetSumOfWeights())
-    histSigArr[fileNum].Draw("hist same") # same pad, draw marker
+    hSigArr[fileNum].Sumw2()
+    hSigArr[fileNum].Scale(xsec * lumi / hSigArr[fileNum].GetSumOfWeights())
+    hSigArr[fileNum].Draw("hist same") # same pad, draw marker
     c1.Update()
 
 
 #--------------------------------------------------------------------------------#
 # *************** Wrap up. *******************
 
-legend = TLegend(.75,.80,.95,.95)
-legend.AddEntry(histBkgd, histBkgd.GetTitle() + "_bkgd")
-for fileNum, hist in enumerate(histSigArr):
-    legend.AddEntry(histSigArr[fileNum], histSigArr[fileNum].GetTitle())
+legend = TLegend(.70,.75,.90,.90)
+legend.AddEntry(hBkgd, plotVar + "_bkgd")
+legend.SetTextSize(0.02)
+for fileNum, h in enumerate(hSigArr):
+    legend.AddEntry(hSigArr[fileNum], hSigArr[fileNum].GetTitle())
 legend.Draw("same")
 
 c1.SetLogy()
