@@ -73,7 +73,7 @@ print("nentries={0:d}".format(nentries))
 for count, event in enumerate(inTree):
     if count % 500000 == 0: print("count={0:d}".format(count))
     val = getattr(event, plotVar)
-    if plotVar[:5] == "pfjet":
+    if plotVar[:5] == "pfjet" and not plotVar[:11] == "pfjet_count":
         numjets = event.pfjet_count
         val = np.reshape(val, 20)
         for j in range(numjets):
@@ -134,7 +134,7 @@ for fileNum, line in enumerate(sigDataListFile):
     for count, event in enumerate(inTree):
         if count % 500000 == 0: print("count={0:d}".format(count))
         val = getattr(event, plotVar)
-        if plotVar[:5] == "pfjet":
+        if plotVar[:5] == "pfjet" and not plotVar[:11] == "pfjet_count":
             numjets = event.pfjet_count
             val = np.reshape(val, 20)
             for j in range(numjets):

@@ -8,7 +8,7 @@
 
 from ROOT import TFile, TTree, TH1D, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
-from stopSelection import selectSameFlavLepts, passesCut, findValidJets
+from stopSelection import selectLepts, passesCut, findValidJets
 import numpy as np
 from math import sqrt, cos
 from array import array
@@ -18,10 +18,12 @@ cutMode = True # applying cuts
 print "Test mode: " + str(testMode)
 print "Cut mode: " + str(cutMode)
 
-findingSameFlavor = True # selecting for either mu-mu or el-el
-findingMuons = True # selecting for mu-mu
+findingSameFlavor = False 
+# selecting for either mu-mu or el-el (as opposed to mu-el or el-mu)
+muPreference = True 
+# only applies if findingSameFlav; selects for mu-mu as opposed to el-el
 if findingSameFlavor:
-    if findingMuons: 
+    if muPreference: 
         l1Flav = "muon"
         l2Flav = "muon"
         print "Selecting for pair of 2 muons."
@@ -29,7 +31,12 @@ if findingSameFlavor:
         l1Flav = "electron"
         l2Flav = "electron"
         print "Selecting for pair of 2 electrons."
-else: print "Selecting for pair of opposite flavor leptons."
+else: 
+    print "Selecting for pair of opposite flavor leptons."
+    # these 2 lines just matter for creating the outFile name; actual 
+    # selection of leading/trailing flavors occurs when looping over events:
+    l1Flav = "muon"
+    l2Flav = "electron"
 
 # max number of files to process
 numBkgdFiles = 27  # max 27
@@ -137,19 +144,28 @@ for fileNum, line in enumerate(bkgdDataListFile):
     print("nentries={0:d}".format(nentries))
 
     nMax = nentries
-    if testMode: nMax = 100000
+    if testMode: nMax = 5000
     for count, event in enumerate(inTree):
         if count > nMax : break
         if count % 500000 == 0: print("count={0:d}".format(count))
 
         # *** Selecting lep1, lep2, jet, must be same for sig and bkgd. *** 
         if findingSameFlavor:
-            arr = selectSameFlavLepts(event, findingMuons)
-            if arr is None: continue
-            else:
-                l1Index = arr[0]
-                l2Index = arr[1]
-        else: assert False, "haven't implemented this yet."
+            lepIndices = selectLepts(event, True, muPreference)
+            if lepIndices is None: continue
+            l1Index = lepIndices[0]
+            l2Index = lepIndices[1]
+        else:
+            lepIndices = selectLepts(event, False, True)
+            l1Flav = "muon"
+            l2Flav = "electron"
+            if lepIndices is None:
+                lepIndices = selectLepts(event, False, False)
+                if lepIndices is None: continue
+                l1Flav = "electron"
+                l2Flav = "muon"
+            l1Index = lepIndices[0]
+            l2Index = lepIndices[1]
 
         jets = findValidJets(event)
         if len(jets) == 0: continue
@@ -268,19 +284,28 @@ for fileNum, line in enumerate(sigDataListFile):
     nentries = inTree.GetEntries()
     print("nentries={0:d}".format(nentries))
     nMax = nentries
-    if testMode: nMax = 100000
+    if testMode: nMax = 5000
     for count, event in enumerate(inTree):
         if count > nMax : break
         if count % 500000 == 0: print("count={0:d}".format(count))
 
         # *** Selecting lep1, lep2, jet, must be same for sig and bkgd. *** 
         if findingSameFlavor:
-            arr = selectSameFlavLepts(event, findingMuons)
-            if arr is None: continue
-            else:
-                l1Index = arr[0]
-                l2Index = arr[1]
-        else: assert False, "haven't implemented this yet."
+            lepIndices = selectLepts(event, True, muPreference)
+            if lepIndices is None: continue
+            l1Index = lepIndices[0]
+            l2Index = lepIndices[1]
+        else:
+            lepIndices = selectLepts(event, False, True)
+            l1Flav = "muon"
+            l2Flav = "electron"
+            if lepIndices is None:
+                lepIndices = selectLepts(event, False, False)
+                if lepIndices is None: continue
+                l1Flav = "electron"
+                l2Flav = "muon"
+            l1Index = lepIndices[0]
+            l2Index = lepIndices[1]
 
         jets = findValidJets(event)
         if len(jets) == 0: continue
