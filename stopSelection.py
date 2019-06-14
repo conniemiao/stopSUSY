@@ -30,27 +30,27 @@ def deltaR(event, l1Flav, l1Index, l2Flav, l2Index):
 def selectLepts(event, findingSameFlav, muPreference):
     if findingSameFlav:
         if muPreference: # mumu
-            flav1 = "muon"
-            flav2 = "muon"
+            l1Flav = "muon"
+            l2Flav = "muon"
             maxL1OkEta = 2.4
             maxL2OkEta = 2.4
         else: # elel
-            flav2 = "electron"
-            flav2 = "electron"
-            maxL2OkEta = 1.6
+            l1Flav = "electron"
+            l2Flav = "electron"
+            maxL1OkEta = 1.6
             maxL2OkEta = 1.6
         l1MinOkPt = 30
         l2MinOkPt = 0
         maxOkIso = 0.1
     else:
         if muPreference: # muel
-            flav1 = "muon"
-            flav2 = "electron"
+            l1Flav = "muon"
+            l2Flav = "electron"
             maxL1OkEta = 2.4
             maxL2OkEta = 1.6 
         else: # elmu
-            flav1 = "electron"
-            flav2 = "muon"
+            l1Flav = "electron"
+            l2Flav = "muon"
             maxL1OkEta = 1.6
             maxL2OkEta = 2.4
         l1MinOkPt = 25 
@@ -61,11 +61,11 @@ def selectLepts(event, findingSameFlav, muPreference):
     l1Index = -1
     minFoundIso = 1
     maxFoundPt = 0
-    l1count = getattr(event, flav1+"_count")
+    l1count = getattr(event, l1Flav+"_count")
     for i1 in range(l1count):
-        pt = list(getattr(event, flav1+"_pt"))[i1]
-        iso = list(getattr(event, flav1+"_relIso"))[i1]
-        absEta = abs(list(getattr(event, flav1+"_eta"))[i1])
+        pt = list(getattr(event, l1Flav+"_pt"))[i1]
+        iso = list(getattr(event, l1Flav+"_relIso"))[i1]
+        absEta = abs(list(getattr(event, l1Flav+"_eta"))[i1])
         if pt > l1MinOkPt and iso < maxOkIso and absEta < maxL1OkEta \
                 and ((iso < minFoundIso) or (iso == minFoundIso \
                 and pt > maxFoundPt)):
@@ -74,20 +74,20 @@ def selectLepts(event, findingSameFlav, muPreference):
             l1Index = i1
     if l1Index == -1: return None
 
-    l1Charge = list(getattr(event, flav1+"_charge"))[l1Index]
+    l1Charge = list(getattr(event, l1Flav+"_charge"))[l1Index]
 
     # select trailing lepton
     l2Index = -1
     minFoundIso = 1
     maxFoundPt = 0
-    l2count = getattr(event, flav2+"_count")
+    l2count = getattr(event, l2Flav+"_count")
     for i2 in range(l2count):
-        iso = list(getattr(event, flav2+"_relIso"))[i2]
-        absEta = abs(list(getattr(event, flav2+"_eta"))[i2])
-        l2Charge = list(getattr(event, flav2+"_charge"))[i2]
+        iso = list(getattr(event, l2Flav+"_relIso"))[i2]
+        absEta = abs(list(getattr(event, l2Flav+"_eta"))[i2])
+        l2Charge = list(getattr(event, l2Flav+"_charge"))[i2]
         if l1Charge*l2Charge < 0 and pt > l2MinOkPt and absEta < maxL2OkEta \
                 and iso < maxOkIso:
-            pt = list(getattr(event, flav2+"_pt"))[i2]
+            pt = list(getattr(event, l2Flav+"_pt"))[i2]
             if (iso < minFoundIso) or (iso == minFoundIso and pt > maxFoundPt):
                 minFoundIso = iso
                 maxFoundPt = pt
@@ -98,13 +98,13 @@ def selectLepts(event, findingSameFlav, muPreference):
     if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: return None
 
     # print
-    # print "l1 pt: " + str(list(getattr(event, flav1+"_pt"))[l1Index])
-    # print "l1 eta: " + str(list(getattr(event, flav1+"_eta"))[l1Index])
-    # print "l1 relIso: " + str(list(getattr(event, flav1+"_relIso"))[l1Index])
+    # print "l1 pt: " + str(list(getattr(event, l1Flav+"_pt"))[l1Index])
+    # print "l1 eta: " + str(list(getattr(event, l1Flav+"_eta"))[l1Index])
+    # print "l1 relIso: " + str(list(getattr(event, l1Flav+"_relIso"))[l1Index])
 
-    # print "l2 pt: " + str(list(getattr(event, flav2+"_pt"))[l2Index])
-    # print "l2 eta: " + str(list(getattr(event, flav2+"_eta"))[l2Index])
-    # print "l2 relIso: " + str(list(getattr(event, flav2+"_relIso"))[l2Index])
+    # print "l2 pt: " + str(list(getattr(event, l2Flav+"_pt"))[l2Index])
+    # print "l2 eta: " + str(list(getattr(event, l2Flav+"_eta"))[l2Index])
+    # print "l2 relIso: " + str(list(getattr(event, l2Flav+"_relIso"))[l2Index])
 
     return [l1Index, l2Index]
 

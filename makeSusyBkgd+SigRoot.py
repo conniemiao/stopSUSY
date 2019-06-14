@@ -10,6 +10,7 @@ from ROOT import TFile, TTree, TH1D, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
 from stopSelection import selectLepts, passesCut, findValidJets
 import numpy as np
+from math import sqrt, cos
 from array import array
 
 testMode = True # limits the number of events and files to loop over 
@@ -170,7 +171,7 @@ for fileNum, line in enumerate(bkgdDataListFile):
                 l2Flav = "muon"
             # veto check: event should not give valid mumu or elel pair
             if not selectLepts(event, True, True) is None: continue
-            if not selectLpts(event, True, False) is None: continue
+            if not selectLepts(event, True, False) is None: continue
 
         l1Index = lepIndices[0]
         l2Index = lepIndices[1]
@@ -319,7 +320,7 @@ for fileNum, line in enumerate(sigDataListFile):
                 l2Flav = "muon"
             # veto check: event should not give valid mumu or elel pair
             if not selectLepts(event, True, True) is None: continue
-            if not selectLpts(event, True, False) is None: continue
+            if not selectLepts(event, True, False) is None: continue
 
         l1Index = lepIndices[0]
         l2Index = lepIndices[1]
