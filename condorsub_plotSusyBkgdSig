@@ -6,6 +6,6 @@ error       = condorLogs/makeSusyBkgd+SigRoot.$(ClusterId).$(ProcId).err
 log         = condorLogs/makeSusyBkgd+SigRoot.$(ClusterId).log
 +MaxRuntime = 10000
 
-transfer_input_files = bkgd_TTDiLept_files, sig_SingleStop_files
+transfer_input_files = stopSelection.py, bkgd_TTDiLept_files, sig_SingleStop_files
 
 queue

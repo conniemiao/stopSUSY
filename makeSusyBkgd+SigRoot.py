@@ -10,11 +10,10 @@ from ROOT import TFile, TTree, TH1D, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
 from stopSelection import selectLepts, passesCut, findValidJets
 import numpy as np
-from math import sqrt, cos
 from array import array
 
 testMode = True # limits the number of events and files to loop over 
-cutMode = True # applying cuts
+cutMode = False # applying cuts
 print "Test mode: " + str(testMode)
 print "Cut mode: " + str(cutMode)
 
@@ -153,8 +152,13 @@ for fileNum, line in enumerate(bkgdDataListFile):
         if findingSameFlavor:
             lepIndices = selectLepts(event, True, muPreference)
             if lepIndices is None: continue
-            l1Index = lepIndices[0]
-            l2Index = lepIndices[1]
+            # veto checks:
+            if muPreference: # mumu
+                # event should not give valid lead mu, trail el pair
+                if not selectLepts(event, False, True) is None: continue
+            else: # elel
+                # event should not give valid lead el, trail mu pair
+                if not selectLepts(event, False, False) is None: continue
         else:
             lepIndices = selectLepts(event, False, True)
             l1Flav = "muon"
@@ -164,8 +168,12 @@ for fileNum, line in enumerate(bkgdDataListFile):
                 if lepIndices is None: continue
                 l1Flav = "electron"
                 l2Flav = "muon"
-            l1Index = lepIndices[0]
-            l2Index = lepIndices[1]
+            # veto check: event should not give valid mumu or elel pair
+            if not selectLepts(event, True, True) is None: continue
+            if not selectLpts(event, True, False) is None: continue
+
+        l1Index = lepIndices[0]
+        l2Index = lepIndices[1]
 
         jets = findValidJets(event)
         if len(jets) == 0: continue

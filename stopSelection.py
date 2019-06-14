@@ -1,22 +1,40 @@
-# defines functions to perform object and event selection.
+# Defines functions to perform object and event selection.
 
 import numpy as np
+from math import sqrt, cos
+
+#--------------------------------------------------------------------------------#
+
+# returns delta R for an event, given a lep1 flavor, lep1 index, lep2 flavor,
+# lep2 index. flavor values must be either "muon" or "electron"
+def deltaR(event, l1Flav, l1Index, l2Flav, l2Index):
+    assert l1Flav == "muon" or l1Flav == "electron"
+    assert l2Flav == "muon" or l2Flav == "electron"
+    
+    l1Eta = list(getattr(event, l1Flav+"_eta"))[l1Index]
+    l2Eta = list(getattr(event, l2Flav+"_eta"))[l2Index]
+    l1Phi = list(getattr(event, l1Flav+"_phi"))[l1Index]
+    l2Phi = list(getattr(event, l2Flav+"_phi"))[l2Index]
+    
+    return sqrt((l1Eta-l2Eta)*(l1Eta-l2Eta)+(l1Phi-l2Phi)*(l1Phi-l2Phi))
+    
+#--------------------------------------------------------------------------------#
 
 # selects a pair of leptons from an event. 
 # if findingSameFlav is True: selects for pair of muons if muPreference is True, 
 # or for pair of electrons if False. 
 # if findingSameFlav is False: selects for leading mu and trailing el if
 # muPreference is True, or for leading el and trailing mu if False.
-# returns an array of 2 entries where a[0] = l1Index, a[1] = l2Index, where in the
-# case of finding opposite flavors, l1 = leading, l2 = trailing.
+# returns an array of 2 entries where a[0] = l1Index, a[1] = l2Index, where 
+# l1 is always the leading (higher pt) lepton, l2 is trailing.
 def selectLepts(event, findingSameFlav, muPreference):
     if findingSameFlav:
-        if muPreference: # mu-mu
+        if muPreference: # mumu
             flav1 = "muon"
             flav2 = "muon"
             maxL1OkEta = 2.4
             maxL2OkEta = 2.4
-        else: # el-el
+        else: # elel
             flav2 = "electron"
             flav2 = "electron"
             maxL2OkEta = 1.6
@@ -25,12 +43,12 @@ def selectLepts(event, findingSameFlav, muPreference):
         l2MinOkPt = 0
         maxOkIso = 0.1
     else:
-        if muPreference: # mu-el
+        if muPreference: # muel
             flav1 = "muon"
             flav2 = "electron"
             maxL1OkEta = 2.4
             maxL2OkEta = 1.6 
-        else: # el-mu
+        else: # elmu
             flav1 = "electron"
             flav2 = "muon"
             maxL1OkEta = 1.6
@@ -39,7 +57,7 @@ def selectLepts(event, findingSameFlav, muPreference):
         l2MinOkPt = 15
         maxOkIso = 0.2
 
-
+    # select leading lepton
     l1Index = -1
     minFoundIso = 1
     maxFoundPt = 0
@@ -58,6 +76,7 @@ def selectLepts(event, findingSameFlav, muPreference):
 
     l1Charge = list(getattr(event, flav1+"_charge"))[l1Index]
 
+    # select trailing lepton
     l2Index = -1
     minFoundIso = 1
     maxFoundPt = 0
@@ -75,16 +94,21 @@ def selectLepts(event, findingSameFlav, muPreference):
                 l2Index = i2
     if l2Index == -1: return None
 
-    print
-    print "l1 pt: " + str(list(getattr(event, flav1+"_pt"))[l1Index])
-    print "l1 eta: " + str(list(getattr(event, flav1+"_eta"))[l1Index])
-    print "l1 relIso: " + str(list(getattr(event, flav1+"_relIso"))[l1Index])
+    # check minimum separation
+    if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: return None
 
-    print "l2 pt: " + str(list(getattr(event, flav2+"_pt"))[l2Index])
-    print "l2 eta: " + str(list(getattr(event, flav2+"_eta"))[l2Index])
-    print "l2 relIso: " + str(list(getattr(event, flav2+"_relIso"))[l2Index])
+    # print
+    # print "l1 pt: " + str(list(getattr(event, flav1+"_pt"))[l1Index])
+    # print "l1 eta: " + str(list(getattr(event, flav1+"_eta"))[l1Index])
+    # print "l1 relIso: " + str(list(getattr(event, flav1+"_relIso"))[l1Index])
+
+    # print "l2 pt: " + str(list(getattr(event, flav2+"_pt"))[l2Index])
+    # print "l2 eta: " + str(list(getattr(event, flav2+"_eta"))[l2Index])
+    # print "l2 relIso: " + str(list(getattr(event, flav2+"_relIso"))[l2Index])
+
     return [l1Index, l2Index]
 
+#--------------------------------------------------------------------------------#
 
 # loops over all jets for this event and returns an array of all the indices
 # that contain valid jets
@@ -97,10 +121,11 @@ def findValidJets(event):
             jets.append(i)
     return jets
 
+#--------------------------------------------------------------------------------#
     
 # performs btag cuts on an event. returns True if passes, False if not.
 def passesCut(event):
-    # if event.pfjet_count > 4: return False
+    if event.pfjet_count > 4: return False
 
     # bool pfjet_btag[jet][0, 1, 2]: 0, 1, 2 = passed loose, medium, tight cuts
     # stored as float so > 0.5 = True
@@ -117,4 +142,6 @@ def passesCut(event):
             numBTagTight += 1
     if numBTag > 1: return False
     return True
+
+#--------------------------------------------------------------------------------#
 

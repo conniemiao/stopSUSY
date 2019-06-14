@@ -9,10 +9,10 @@ from ROOT import TFile, TTree, TH1D, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
 import numpy as np
 
-plotVar = "mtlep1" # **** change this line for different vars
+plotVar = "pfmet_pt" # **** change this line for different vars
 
 # copy in the output name from running makeSusyBkgd+SigRoot.py:
-allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_mumu.root"
+allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_muel_baseline.root"
 print "Plotting from "+allDataFile
 
 plotSettings = { #[nBins,xMin,xMax]]
@@ -54,7 +54,7 @@ xMax = plotSettings[plotVar][2]
 binwidth = (xMax - xMin)/nBins # include overflow bin
 histBkgd = TH1D(plotVar + "_bkgd", plotVar + "_bkgd", nBins + 1, \
         xMin, xMax + binwidth)
-lumi = 150000 # luminosity = 150 /pb = 150,000 /fb
+lumi = 3000000 # luminosity = 3000 /pb = 3,000,000 /fb
 
 c1 = TCanvas("c1","Plot",10,20,1000,700)
 gStyle.SetOptStat(0) # don't show any stats
@@ -96,7 +96,7 @@ histBkgd.Sumw2()
 #     print rebinned
 
 histBkgd.SetTitle(plotVar)
-histBkgd.GetXaxis().SetTitle(plotVar+" ("+allDataFile[70:74]+", normalized to 150000 /pb)")
+histBkgd.GetXaxis().SetTitle(plotVar+" [GeV] ("+allDataFile[70:74]+", normalized to 3000 /pb)")
 histBkgd.GetYaxis().SetTitle("Number of Events")
 histBkgd.Scale(xsec*lumi/histBkgd.GetSumOfWeights())
 histBkgd.SetLineColor(1) # black
