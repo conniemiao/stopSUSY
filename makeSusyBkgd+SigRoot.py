@@ -301,8 +301,13 @@ for fileNum, line in enumerate(sigDataListFile):
         if findingSameFlavor:
             lepIndices = selectLepts(event, True, muPreference)
             if lepIndices is None: continue
-            l1Index = lepIndices[0]
-            l2Index = lepIndices[1]
+            # veto checks:
+            if muPreference: # mumu
+                # event should not give valid lead mu, trail el pair
+                if not selectLepts(event, False, True) is None: continue
+            else: # elel
+                # event should not give valid lead el, trail mu pair
+                if not selectLepts(event, False, False) is None: continue
         else:
             lepIndices = selectLepts(event, False, True)
             l1Flav = "muon"
@@ -312,8 +317,12 @@ for fileNum, line in enumerate(sigDataListFile):
                 if lepIndices is None: continue
                 l1Flav = "electron"
                 l2Flav = "muon"
-            l1Index = lepIndices[0]
-            l2Index = lepIndices[1]
+            # veto check: event should not give valid mumu or elel pair
+            if not selectLepts(event, True, True) is None: continue
+            if not selectLpts(event, True, False) is None: continue
+
+        l1Index = lepIndices[0]
+        l2Index = lepIndices[1]
 
         jets = findValidJets(event)
         if len(jets) == 0: continue
