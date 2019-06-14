@@ -12,7 +12,7 @@ import numpy as np
 plotVar = "pfmet_pt" # **** change this line for different vars
 
 # copy in the output name from running makeSusyBkgd+SigRoot.py:
-allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_muel_baseline.root"
+allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_mumu.root"
 print "Plotting from "+allDataFile
 
 plotSettings = { #[nBins,xMin,xMax]]
@@ -95,14 +95,18 @@ hBkgd.Sumw2()
 #     hBkgd.Rebin(2)
 #     print rebinned
 
-hBkgd.SetTitle(plotVar + " ("+allDataFile[70:74]+", normalized to 3000 /pb)")
+title = plotVar + " ("+allDataFile[70:74]+", normalized to 3000 /pb)"
+if allDataFile[-13:-5] == "baseline": title += ", baseline"
+else: title += ", with cuts"
+hBkgd.SetTitle(title)
 hBkgd.GetXaxis().SetTitle(plotVar+" [GeV]")
 hBkgd.GetYaxis().SetTitle("Number of Events")
 hBkgd.Scale(xsec*lumi/hBkgd.GetSumOfWeights())
+hBkgd.SetMinimum(1)
+hBkgd.SetMaximum(10**12)
 hBkgd.SetLineColor(1) # black
 # hBkgd.SetStats(0)
-hBkgd.Draw("h")
-
+hBkgd.Draw("hist")
 c1.Update()
 
 #--------------------------------------------------------------------------------#
@@ -162,6 +166,8 @@ for fileNum, line in enumerate(sigDataListFile):
 
     hSigArr[fileNum].Sumw2()
     hSigArr[fileNum].Scale(xsec * lumi / hSigArr[fileNum].GetSumOfWeights())
+    hSigArr[fileNum].SetMinimum(1)
+    hSigArr[fileNum].SetMaximum(10**12)
     hSigArr[fileNum].Draw("hist same") # same pad, draw marker
     c1.Update()
 

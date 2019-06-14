@@ -18,7 +18,7 @@ cutMode = True # applying cuts
 print "Test mode: " + str(testMode)
 print "Cut mode: " + str(cutMode)
 
-findingSameFlavor = False 
+findingSameFlavor = True 
 # selecting for either mu-mu or el-el (as opposed to mu-el or el-mu)
 muPreference = True 
 # only applies if findingSameFlav; selects for mu-mu as opposed to el-el
@@ -151,7 +151,7 @@ for fileNum, line in enumerate(bkgdDataListFile):
     print("nentries={0:d}".format(nentries))
 
     nMax = nentries
-    if testMode: nMax = 5000
+    if testMode: nMax = 100000
     for count, event in enumerate(inTree):
         if count > nMax : break
         if count % 500000 == 0: print("count={0:d}".format(count))
@@ -196,9 +196,9 @@ for fileNum, line in enumerate(bkgdDataListFile):
         
         # ************* CUTS: must be same as for sig and bkgd ************
         if cutMode:
-            if event.pfjet_count > 4: continue
+            if event.pfjet_count >= 4: continue
             bkgd_cutflow_hist.Fill(3) # njets < 4
-            if not passesBTags(event): continue
+            if not passesBTags(event, jets): continue
             bkgd_cutflow_hist.Fill(4) # nbtag < 2
 
         # *********** STORE THE DATA *************
@@ -314,7 +314,7 @@ for fileNum, line in enumerate(sigDataListFile):
     nentries = inTree.GetEntries()
     print("nentries={0:d}".format(nentries))
     nMax = nentries
-    if testMode: nMax = 5000
+    if testMode: nMax = 100000
 
     sig_cutflow_hists.append(TH1F("sig_"+filename[19:24]+"_cutflow",\
             "sig_"+filename[19:24]+"_cutflow", len(cuts), 0, len(cuts)))
@@ -365,9 +365,9 @@ for fileNum, line in enumerate(sigDataListFile):
         
         # ************* CUTS: must be same as for sig and bkgd ************
         if cutMode:
-            if event.pfjet_count > 4: continue
+            if event.pfjet_count >= 4: continue
             sig_cutflow_hists[fileNum].Fill(3) # njets < 4
-            if not passesBTags(event): continue
+            if not passesBTags(event, jets): continue
             sig_cutflow_hists[fileNum].Fill(4) # nbtag < 2
 
         # *********** STORE THE DATA *************

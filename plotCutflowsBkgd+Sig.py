@@ -23,11 +23,12 @@ xsec = 67.75 # production cross section
 
 hBkgd = inFile.Get("bkgd_cutflow")
 hBkgd.Sumw2()
-hBkgd.SetTitle("Cutflow (normalized to 3000 /pb)")
+hBkgd.SetTitle("Cutflow ("+allDataFile[70:74]+", norm to 3000 /pb)")
 hBkgd.GetYaxis().SetTitle("Number of Events")
 hBkgd.Scale(xsec*lumi/hBkgd.GetSumOfWeights())
 hBkgd.SetLineColor(1) # black
-# hBkgd.SetStats(0)
+hBkgd.SetMinimum(1)
+hBkgd.SetMaximum(10**12)
 hBkgd.Draw("hist")
 c1.Update()
 
@@ -59,6 +60,8 @@ for fileNum, line in enumerate(sigDataListFile):
     hSigArr[fileNum].Sumw2()
     hSigArr[fileNum].Scale(xsec * lumi /
             hSigArr[fileNum].GetSumOfWeights())
+    hSigArr[fileNum].SetMinimum(1)
+    hSigArr[fileNum].SetMaximum(10**12)
     hSigArr[fileNum].Draw("hist same") # same pad, draw marker
     c1.Update()
 
@@ -72,4 +75,5 @@ legend.Draw("same")
 c1.SetLogy()
 c1.Update()
 
+print "Done. Press enter to finish."
 raw_input()

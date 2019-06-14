@@ -123,21 +123,21 @@ def findValidJets(event):
 
 #--------------------------------------------------------------------------------#
     
-# performs btag cuts on an event. returns True if passes, False if not.
-def passesBTags(event):
-
+# performs btag cuts on an event, given the jets array containing the indices of
+# the accepted jets. returns True if passes, False if not.
+def passesBTags(event, jets):
     # bool pfjet_btag[jet][0, 1, 2]: 0, 1, 2 = passed loose, medium, tight cuts
     # stored as float so > 0.5 = True
     pfjet_btag = np.reshape(event.pfjet_btag, (event.pfjet_count,10))
     numBTagLoose = 0
     numBTag = 0
     numBTagTight = 0
-    for jet in range(event.pfjet_count):
-        if pfjet_btag[jet, 0] > 0.5:
+    for jIndex in jets:
+        if pfjet_btag[jIndex, 0] > 0.5:
             numBTagLoose += 1
-        if pfjet_btag[jet, 1] > 0.5:
+        if pfjet_btag[jIndex, 1] > 0.5:
             numBTag += 1
-        if pfjet_btag[jet, 2] > 0.5:
+        if pfjet_btag[jIndex, 2] > 0.5:
             numBTagTight += 1
     if numBTag > 1: return False
     return True
