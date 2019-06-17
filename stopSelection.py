@@ -5,18 +5,20 @@ from math import sqrt, cos
 
 #--------------------------------------------------------------------------------#
 
-# returns delta R for an event, given a lep1 flavor, lep1 index, lep2 flavor,
-# lep2 index. flavor values must be either "muon" or "electron"
-def deltaR(event, l1Flav, l1Index, l2Flav, l2Index):
-    assert l1Flav == "muon" or l1Flav == "electron"
-    assert l2Flav == "muon" or l2Flav == "electron"
+# returns delta R for an event between 2 leptons or a lepton and a jet, given a 
+# 2 types (type1, type2) and the indices of the 2 objects within the list of all
+# objets of that type (index1, index2). types allowed are "muon", "electron", or
+# "pfjet"
+def deltaR(event, type1, index1, type2, index2):
+    assert type1 == "muon" or type1 == "electron" or type1 == "pfjet"
+    assert type2 == "muon" or type2 == "electron" or type2 == "pfjet"
     
-    l1Eta = list(getattr(event, l1Flav+"_eta"))[l1Index]
-    l2Eta = list(getattr(event, l2Flav+"_eta"))[l2Index]
-    l1Phi = list(getattr(event, l1Flav+"_phi"))[l1Index]
-    l2Phi = list(getattr(event, l2Flav+"_phi"))[l2Index]
+    eta1 = list(getattr(event, type1+"_eta"))[index1]
+    eta2 = list(getattr(event, type2+"_eta"))[index2]
+    phi1 = list(getattr(event, type1+"_phi"))[index1]
+    phi2 = list(getattr(event, type2+"_phi"))[index2]
     
-    return sqrt((l1Eta-l2Eta)*(l1Eta-l2Eta)+(l1Phi-l2Phi)*(l1Phi-l2Phi))
+    return sqrt((eta1-eta2)*(eta1-eta2)+(phi1-phi2)*(phi1-phi2))
     
 #--------------------------------------------------------------------------------#
 
@@ -40,7 +42,7 @@ def selectLepts(event, findingSameFlav, muPreference):
             maxL1OkEta = 1.6
             maxL2OkEta = 1.6
         l1MinOkPt = 30
-        l2MinOkPt = 0
+        l2MinOkPt = -0.01 
         maxOkIso = 0.1
     else:
         if muPreference: # muel
@@ -94,9 +96,6 @@ def selectLepts(event, findingSameFlav, muPreference):
                 l2Index = i2
     if l2Index == -1: return None
 
-    # check minimum separation
-    if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: return None
-
     # print
     # print "l1 pt: " + str(list(getattr(event, l1Flav+"_pt"))[l1Index])
     # print "l1 eta: " + str(list(getattr(event, l1Flav+"_eta"))[l1Index])
@@ -117,6 +116,10 @@ def findValidJets(event):
     numJets = event.pfjet_count
     for i in range(numJets):
         pt = list(event.pfjet_pt)[i]
+        # pt0 = list(event.pfjet_pt)[0]
+        # if pt != pt0: 
+        #     print "pt",pt,"pt0",pt0,
+        # print "pt", pt, "eta", list(event.pfjet_eta)[i],
         if pt > 20 and abs(list(event.pfjet_eta)[i]) < 2.4:
             jets.append(i)
     return jets
@@ -124,8 +127,8 @@ def findValidJets(event):
 #--------------------------------------------------------------------------------#
     
 # performs btag cuts on an event, given the jets array containing the indices of
-# the accepted jets. returns True if passes, False if not.
-def passesBTags(event, jets):
+# the accepted jets. returns number of medium cut btags.
+def getNumBtag(event, jets):
     # bool pfjet_btag[jet][0, 1, 2]: 0, 1, 2 = passed loose, medium, tight cuts
     # stored as float so > 0.5 = True
     pfjet_btag = np.reshape(event.pfjet_btag, (event.pfjet_count,10))
@@ -139,8 +142,7 @@ def passesBTags(event, jets):
             numBTag += 1
         if pfjet_btag[jIndex, 2] > 0.5:
             numBTagTight += 1
-    if numBTag > 1: return False
-    return True
+    return numBTag
 
 #--------------------------------------------------------------------------------#
 

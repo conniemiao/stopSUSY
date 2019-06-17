@@ -9,39 +9,33 @@ from ROOT import TFile, TTree, TH1D, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
 import numpy as np
 
-plotVar = "pfmet_pt" # **** change this line for different vars
+plotVar = "deltaR_lep1_jet" # **** change this line for different vars
 
 # copy in the output name from running makeSusyBkgd+SigRoot.py:
 allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_mumu.root"
 print "Plotting from "+allDataFile
 
-plotSettings = { #[nBins,xMin,xMax]]
-        "lep1_px":[100,-300,300],
-        "lep1_py":[100,-300,300],
-        "lep1_pz":[100,-700,700],
-        "lep1_pt":[100,0,400], 
-        "lep1_eta":[100,-3,3],
-        "lep1_phi":[100,-4,4],
-        "pfjet_px":[100,-300,300],
-        "pfjet_py":[100,-300,300],
-        "pfjet_pz":[100,-700,700],
-        "pfjet_pt":[100,0,400], 
-        "pfjet_eta":[100,-3,3],
-        "pfjet_phi":[100,-4,4],
-        "pfjet_btag":[10,0,10],
-        "lep2_px":[100,-300,300],
-        "lep2_py":[100,-300,300],
-        "lep2_pz":[100,-700,700],
-        "lep2_pt":[100,0,400],
-        "lep2_eta":[100,-4,4],
-        "lep2_phi":[100,-4,4],
-        "mtlep1":[100,0,500],
-        "mtlep2":[100,0,500],
-        "pfmet_pt":[100,0,500],
-        "pfmet_ex":[100,-350,500],
-        "pfmet_ey":[100,-250,350],
-        "pfmet_ez":[100,-250,350],
-        "genweight":[100,2.980,2.995],
+plotSettings = { #[nBins,xMin,xMax,listForm]]
+        "lep1_pt":[100,0,400,False], 
+        "lep1_eta":[100,-3,3,False],
+        "lep1_phi":[100,-4,4,False],
+        "lep1_relIso":[100,0,0.3,False],
+        "lep2_pt":[100,0,400,False],
+        "lep2_eta":[100,-4,4,False],
+        "lep2_phi":[100,-4,4,False],
+        "lep2_relIso":[100,0,0.3,False],
+        "njets":[5,0,5,False],
+        "jet_pt":[100,0,400,True], 
+        "jet_eta":[100,-3,3,True],
+        "jet_phi":[100,-4,4,True],
+        "nbtag":[10,0,10,False],
+        "deltaR_lep1_jet":[100,0,7,False],
+        "deltaR_lep2_jet":[100,0,7,False],
+        "mtlep1":[100,0,500,False],
+        "mtlep2":[100,0,500,False],
+        "met_pt":[100,0,500,False],
+        "met_phi":[100,-4,-4,False],
+        "genweight":[100,2.980,2.995,False],
         }
 numSigFiles = int(allDataFile[64:66])
 testMode = True 
@@ -50,6 +44,7 @@ nBins = plotSettings[plotVar][0]
 if not testMode and nBins > 20: nBins = nBins * 5
 xMin = plotSettings[plotVar][1]
 xMax = plotSettings[plotVar][2]
+listForm = plotSettings[plotVar][3] # only for some of the jet stuff
 
 binwidth = (xMax - xMin)/nBins # include overflow bin
 hBkgd = TH1D(plotVar + "_bkgd", plotVar + "_bkgd", nBins + 1, \
@@ -69,17 +64,18 @@ inTree = inFile.Get("tBkgd")
 
 nentries = inTree.GetEntries()
 print("nentries={0:d}".format(nentries))
+assert nentries > 0, "You have no events in your tree..."
 
 for count, event in enumerate(inTree):
     if count % 500000 == 0: print("count={0:d}".format(count))
     val = getattr(event, plotVar)
-    if plotVar[:5] == "pfjet" and not plotVar[:11] == "pfjet_count":
-        numjets = event.pfjet_count
+    if listForm:
+        numjets = event.njets
         val = np.reshape(val, 20)
         for j in range(numjets):
-            pfjetval = val[j]
-            if pfjetval <= xMax:
-                hBkgd.Fill(pfjetval, 1)
+            jetval = val[j]
+            if jetval <= xMax:
+                hBkgd.Fill(jetval, 1)
             else: # overflow
                 hBkgd.Fill(xMax + binwidth/2, 1)
     else:
@@ -131,6 +127,7 @@ for fileNum, line in enumerate(sigDataListFile):
     inTree = inFile.Get("tSig"+str(fileNum))
     nentries = inTree.GetEntries()
     print("nentries={0:d}".format(nentries))
+    assert nentries > 0, "You have no events in your tree..."
 
     hSigArr.append(TH1D(plotVar + "_sig_" + filename, plotVar + "_sig_" + \
             filename[19:24], nBins + 1, xMin, xMax + binwidth))
@@ -138,13 +135,13 @@ for fileNum, line in enumerate(sigDataListFile):
     for count, event in enumerate(inTree):
         if count % 500000 == 0: print("count={0:d}".format(count))
         val = getattr(event, plotVar)
-        if plotVar[:5] == "pfjet" and not plotVar[:11] == "pfjet_count":
-            numjets = event.pfjet_count
+        if listForm:
+            numjets = event.njets
             val = np.reshape(val, 20)
             for j in range(numjets):
-                pfjetval = val[j]
-                if pfjetval <= xMax:
-                    hSigArr[fileNum].Fill(pfjetval, 1)
+                jetval = val[j]
+                if jetval <= xMax:
+                    hSigArr[fileNum].Fill(jetval, 1)
                 else: # overflow
                     hSigArr[fileNum].Fill(xMax + binwidth/2, 1)
         else:
