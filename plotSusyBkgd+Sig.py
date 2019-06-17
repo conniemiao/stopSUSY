@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-# Draws hist for data corresponding to some variable for the summed bkgd data and
-# for each of the signal files.
+# Draws 1D hist for data for some variable, for the summed bkgd data and for each 
+# of the signal files.
 # Uses the root file outputted by makeSusyBkgd+SigRoot.py
 # Uses xsec info from sig_SingleStop_files
 
@@ -9,22 +9,22 @@ from ROOT import TFile, TTree, TH1D, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
 import numpy as np
 
-plotVar = "deltaR_lep1_jet" # **** change this line for different vars
+plotVar = "met_pt" # **** change this line for different vars
 
 # copy in the output name from running makeSusyBkgd+SigRoot.py:
-allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_mumu.root"
+allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_muel_baseline.root"
 print "Plotting from "+allDataFile
 
-plotSettings = { #[nBins,xMin,xMax,listForm]]
+plotSettings = { # [nBins,xMin,xMax,listForm]
         "lep1_pt":[100,0,400,False], 
         "lep1_eta":[100,-3,3,False],
         "lep1_phi":[100,-4,4,False],
-        "lep1_relIso":[100,0,0.3,False],
+        "lep1_relIso":[100,0,0.1,False],
         "lep2_pt":[100,0,400,False],
         "lep2_eta":[100,-4,4,False],
         "lep2_phi":[100,-4,4,False],
-        "lep2_relIso":[100,0,0.3,False],
-        "njets":[5,0,5,False],
+        "lep2_relIso":[100,0,0.1,False],
+        "njets":[15,0,15,False],
         "jet_pt":[100,0,400,True], 
         "jet_eta":[100,-3,3,True],
         "jet_phi":[100,-4,4,True],
@@ -44,7 +44,7 @@ nBins = plotSettings[plotVar][0]
 if not testMode and nBins > 20: nBins = nBins * 5
 xMin = plotSettings[plotVar][1]
 xMax = plotSettings[plotVar][2]
-listForm = plotSettings[plotVar][3] # only for some of the jet stuff
+listForm = plotSettings[plotVar][3] # only for some of the jet variables 
 
 binwidth = (xMax - xMin)/nBins # include overflow bin
 hBkgd = TH1D(plotVar + "_bkgd", plotVar + "_bkgd", nBins + 1, \
@@ -165,7 +165,7 @@ for fileNum, line in enumerate(sigDataListFile):
     hSigArr[fileNum].Scale(xsec * lumi / hSigArr[fileNum].GetSumOfWeights())
     hSigArr[fileNum].SetMinimum(1)
     hSigArr[fileNum].SetMaximum(10**12)
-    hSigArr[fileNum].Draw("hist same") # same pad, draw marker
+    hSigArr[fileNum].Draw("hist same") # same pad
     c1.Update()
 
 
@@ -182,14 +182,12 @@ legend.Draw("same")
 c1.SetLogy()
 c1.Update()
 
-if not testMode:
-    print "Saving image."
-    gSystem.ProcessEvents()
-    img = TImage.Create()
-    img.FromPad(c1)
-    img.WriteImage(plotVar + "_Bkgd+Sig.png")
-    print "Done."
-else:
-    print "Done. Press enter to finish."
-    raw_input()
+# if not testMode:
+#     print "Saving image."
+#     gSystem.ProcessEvents()
+#     img = TImage.Create()
+#     img.FromPad(c1)
+#     img.WriteImage(plotVar + "_Bkgd+Sig.png")
+print "Done. Press enter to finish."
+raw_input()
 

@@ -9,7 +9,7 @@ from ROOT import gSystem, gStyle
 import numpy as np
 
 # copy in the output name from running makeSusyBkgd+SigRoot.py:
-allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_mumu.root"
+allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_muel.root"
 print "Plotting from "+allDataFile
 
 numSigFiles = int(allDataFile[64:66])

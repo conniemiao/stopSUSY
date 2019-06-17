@@ -15,10 +15,10 @@ from array import array
 
 testMode = True # limits the number of events and files to loop over 
 cutMode = True # applying cuts
-print "Test mode: " + str(testMode)
-print "Cut mode: " + str(cutMode)
+print "Test mode: ", testMode
+print "Cut mode: ", cutMode
 
-findingSameFlavor = True 
+findingSameFlavor = False 
 # selecting for either mu-mu or el-el (as opposed to mu-el or el-mu)
 muPreference = True 
 # only applies if findingSameFlav; selects for mu-mu as opposed to el-el
