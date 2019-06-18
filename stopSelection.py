@@ -112,17 +112,20 @@ def selectLepts(event, findingSameFlav, muPreference):
 
 # loops over all jets for this event and returns an array of all the indices
 # that contain valid jets
-def findValidJets(event):
+def findValidJets(event, l1Flav, l1Index, l2Flav, l2Index):
     jets = []
     numJets = event.pfjet_count
-    for i in range(numJets):
-        pt = list(event.pfjet_pt)[i]
+    for j in range(numJets):
+        pt = list(event.pfjet_pt)[j]
         # pt0 = list(event.pfjet_pt)[0]
         # if pt != pt0: 
         #     print "pt",pt,"pt0",pt0,
         # print "pt", pt, "eta", list(event.pfjet_eta)[i],
-        if pt > 20 and abs(list(event.pfjet_eta)[i]) < 2.4:
-            jets.append(i)
+        dRl1 = deltaR(event, l1Flav, l1Index, "pfjet", j)
+        dRl2 = deltaR(event, l2Flav, l2Index, "pfjet", j)
+        if pt > 20 and abs(list(event.pfjet_eta)[j]) < 2.4\
+                and dRl1 > 0.5 and dRl2 > 0.5:
+            jets.append(j)
     return jets
 
 #--------------------------------------------------------------------------------#
