@@ -54,8 +54,8 @@ else: outName += ".root"
 outFile = TFile(outName, "recreate")
 
 # number of events surviving after each cut.
-cuts = ["no cut","dilepton","no 3rd lepton","deltaR(ll)>0.3","njets<5","nbtag<2",\
-        "MET>80"]
+cuts = {"no cut":0, "dilepton":1, "no 3rd lepton":2, "deltaR(ll)>0.3":3,\
+        "njets<4":4, "nbtag<2":5, "MET>80":6}
 
 #--------------------------------------------------------------------------------#
 # ************* Make all the arrays. *************
@@ -142,19 +142,19 @@ for fileNum, line in enumerate(sigDataListFile):
         if count > nMax : break
         if count % 500000 == 0: print("count={0:d}".format(count))
 
-        sigCutflowHists[fileNum].Fill(0) # no cuts
+        sigCutflowHists[fileNum].Fill(cuts["no cut"])
 
         # *** Selecting lep1, lep2, jet, must be same for sig and bkgd. *** 
         if findingSameFlavor:
             lepIndices = selectLepts(event, True, muPreference)
             if lepIndices is None: continue
-            sigCutflowHists[fileNum].Fill(1) # dilepton
+            sigCutflowHists[fileNum].Fill(cuts["dilepton"])
 
             # veto checks:
             # event should not give valid muel or elmu pair
             if selectLepts(event, False, True) is not None: continue
             if selectLepts(event, False, False) is not None: continue
-            sigCutflowHists[fileNum].Fill(2) # no 3rd lepton
+            sigCutflowHists[fileNum].Fill(cuts["no 3rd lepton"])
 
         else:
             lepIndices = selectLepts(event, False, True)
@@ -165,30 +165,30 @@ for fileNum, line in enumerate(sigDataListFile):
                 if lepIndices is None: continue
                 l1Flav = "electron"
                 l2Flav = "muon"
-            sigCutflowHists[fileNum].Fill(1) # dilepton
+            sigCutflowHists[fileNum].Fill(cuts["dilepton"])
 
             # veto check: event should not give valid mumu or elel pair
             if selectLepts(event, True, True) is not None: continue
             if selectLepts(event, True, False) is not None: continue
-            sigCutflowHists[fileNum].Fill(2) # no 3rd lepton
+            sigCutflowHists[fileNum].Fill(cuts["no 3rd lepton"])
 
         l1Index = lepIndices[0]
         l2Index = lepIndices[1]
 
         if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
-        sigCutflowHists[fileNum].Fill(3) # deltaR > 0.3
+        sigCutflowHists[fileNum].Fill(cuts["deltaR(ll)>0.3"])
 
         jets = findValidJets(event)
         numJets = len(jets)
         
         # ****************** CUTS: ********************
         if cutMode:
-            if numJets > 4: continue
-            sigCutflowHists[fileNum].Fill(4) # njets < 5
+            if numJets >= 4: continue
+            sigCutflowHists[fileNum].Fill(cuts["njets<4"])
             if getNumBtag(event, jets) > 1: continue
-            sigCutflowHists[fileNum].Fill(5) # nbtag < 2
+            sigCutflowHists[fileNum].Fill(cuts["nbtag<2"])
             if event.pfmet_pt < 80: continue
-            sigCutflowHists[fileNum].Fill(6) # MET > 80
+            sigCutflowHists[fileNum].Fill(cuts["MET>80"])
 
         # *********** STORE THE DATA *************
         # only events that pass all cuts will be stored

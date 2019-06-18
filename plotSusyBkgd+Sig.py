@@ -16,7 +16,7 @@ allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_0
 print "Plotting from "+allDataFile
 
 plotSettings = { # [nBins,xMin,xMax,listForm]
-        "lep1_pt":[100,0,400,False], 
+        "lep1_pt":[100,0,400,False],
         "lep1_eta":[100,-3,3,False],
         "lep1_phi":[100,-4,4,False],
         "lep1_relIso":[10,0,0.2,False],
