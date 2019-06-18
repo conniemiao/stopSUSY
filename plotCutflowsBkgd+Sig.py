@@ -7,6 +7,7 @@
 from ROOT import TFile, TTree, TH1F, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
 import numpy as np
+from math import sqrt
 
 # copy in the output name from running makeSusyBkgd+SigRoot.py:
 allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_muel.root"
@@ -64,6 +65,13 @@ for fileNum, line in enumerate(sigDataListFile):
     hSigArr[fileNum].SetMaximum(10**12)
     hSigArr[fileNum].Draw("hist same") # same pad, draw marker
     c1.Update()
+
+    print
+    print "Sig", fileNum, "stats:" 
+    for i in range(1,hBkgd.GetNbinsX()):
+        print hBkgd.GetXaxis().GetBinLabel(i+1),"S/sqrt(B):",\
+                hSigArr[fileNum].GetBinContent(i+1)/sqrt(hBkgd.GetBinContent(i+1))
+    print
 
 legend = TLegend(.70,.75,.90,.90)
 legend.AddEntry(hBkgd, "bkgd_cutflow")

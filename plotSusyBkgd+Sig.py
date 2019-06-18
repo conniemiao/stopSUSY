@@ -9,21 +9,21 @@ from ROOT import TFile, TTree, TH1D, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
 import numpy as np
 
-plotVar = "met_pt" # **** change this line for different vars
+plotVar = "lep1_relIso" # **** change this line for different vars
 
 # copy in the output name from running makeSusyBkgd+SigRoot.py:
-allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_muel_baseline.root"
+allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_muel.root"
 print "Plotting from "+allDataFile
 
 plotSettings = { # [nBins,xMin,xMax,listForm]
         "lep1_pt":[100,0,400,False], 
         "lep1_eta":[100,-3,3,False],
         "lep1_phi":[100,-4,4,False],
-        "lep1_relIso":[100,0,0.1,False],
+        "lep1_relIso":[10,0,0.2,False],
         "lep2_pt":[100,0,400,False],
         "lep2_eta":[100,-4,4,False],
         "lep2_phi":[100,-4,4,False],
-        "lep2_relIso":[100,0,0.1,False],
+        "lep2_relIso":[10,0,0.2,False],
         "njets":[15,0,15,False],
         "jet_pt":[100,0,400,True], 
         "jet_eta":[100,-3,3,True],
