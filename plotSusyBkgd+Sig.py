@@ -2,18 +2,23 @@
 
 # Draws 1D hist for data for some variable, for the summed bkgd data and for each 
 # of the signal files.
-# Uses the root file outputted by makeSusyBkgd+SigRoot.py
+# Uses the root files outputted by makeNtupleBkgd.py and makeNtupleSigs.py
 # Uses xsec info from sig_SingleStop_files
 
 from ROOT import TFile, TTree, TH1D, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
 import numpy as np
 
-plotVar = "njets" # **** change this line for different vars
+plotVar = "met_pt" # **** change this line for different vars
 
-# copy in the output name from running makeSusyBkgd+SigRoot.py:
-allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_muel_baseline.root"
-print "Plotting from "+allDataFile
+# copy in the bkgd and sigs filenames from makeNtupleBkgd.py and makeNtupleSigs.py
+bkgdNtupleAdr = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_muel_withcuts.root"
+sigsNtupleAdr = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Sig_muel_withcuts.root"
+
+assert bkgdNtupleAdr[50:54] == "Bkgd", "bkgdNtupleAdr not bkgd"
+assert sigsNtupleAdr[50:53] == "Sig", "sigsNtupleAdr not sigs"
+assert bkgdNtupleAdr[-18:] == sigsNtupleAdr[-18:]
+print "Plotting from",bkgdNtupleAdr,"and",sigsNtupleAdr
 
 plotSettings = { # [nBins,xMin,xMax,listForm]
         "lep1_pt":[100,0,400,False],
@@ -37,7 +42,7 @@ plotSettings = { # [nBins,xMin,xMax,listForm]
         "met_phi":[100,-4,-4,False],
         "genweight":[100,2.980,2.995,False],
         }
-numSigFiles = int(allDataFile[64:66])
+numSigFiles = int(sigsNtupleAdr[48:50])
 testMode = True 
 if numSigFiles > 10: testMode = False 
 nBins = plotSettings[plotVar][0]
@@ -54,19 +59,18 @@ lumi = 3000000 # luminosity = 3000 /pb = 3,000,000 /fb
 c1 = TCanvas("c1","Plot",10,20,1000,700)
 gStyle.SetOptStat(0) # don't show any stats
 
-inFile = TFile.Open(allDataFile)
-
 #--------------------------------------------------------------------------------#
 # *************** Filling bkgd data summed together  ************
 print "Plotting", plotVar, "from background."
 xsec = 67.75 # production cross section
-inTree = inFile.Get("tBkgd")
+bkgdFile = TFile.Open(bkgdNtupleAdr, "READ")
+tBkgd = bkgdFile.Get("tBkgd")
 
-nentries = inTree.GetEntries()
+nentries = tBkgd.GetEntries()
 print("nentries={0:d}".format(nentries))
 assert nentries > 0, "You have no events in your tree..."
 
-for count, event in enumerate(inTree):
+for count, event in enumerate(tBkgd):
     if count % 500000 == 0: print("count={0:d}".format(count))
     val = getattr(event, plotVar)
     if listForm:
@@ -91,9 +95,8 @@ hBkgd.Sumw2()
 #     hBkgd.Rebin(2)
 #     print rebinned
 
-title = plotVar + " ("+allDataFile[70:74]+", normalized to 3000 /pb)"
-if allDataFile[-13:-5] == "baseline": title += ", baseline"
-else: title += ", with cuts"
+title = plotVar + " ("+bkgdNtupleAdr[-18:-14]+", normalized to 3000 /pb)"
+title += ", "+bkgdNtupleAdr[-13:-5]
 hBkgd.SetTitle(title)
 hBkgd.GetXaxis().SetTitle(plotVar+" [GeV]")
 hBkgd.GetYaxis().SetTitle("Number of Events")
@@ -104,11 +107,11 @@ hBkgd.SetLineColor(1) # black
 # hBkgd.SetStats(0)
 hBkgd.Draw("hist")
 c1.Update()
+bkgdFile.Close()
 
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal data in a separate hist  ************
 print "Plotting " + plotVar + " from signal."
-sigDataDir = "/eos/user/a/alkaloge/HLLHC/Skims/v2/SingleStop/"
 sigDataListFile = open("sig_SingleStop_files")
 
 coloropts = [2,4,3,6,7,9,28,46] # some good colors for lines
@@ -124,15 +127,16 @@ for fileNum, line in enumerate(sigDataListFile):
     xsec = float(xsec)
     print filename
 
-    inTree = inFile.Get("tSig"+str(fileNum))
-    nentries = inTree.GetEntries()
+    sigFile = TFile.Open(sigsNtupleAdr, "READ")
+    tSig = sigFile.Get("tSig"+str(fileNum))
+    nentries = tSig.GetEntries()
     print("nentries={0:d}".format(nentries))
     assert nentries > 0, "You have no events in your tree..."
 
     hSigArr.append(TH1D(plotVar + "_sig_" + filename, plotVar + "_sig_" + \
             filename[19:24], nBins + 1, xMin, xMax + binwidth))
     
-    for count, event in enumerate(inTree):
+    for count, event in enumerate(tSig):
         if count % 500000 == 0: print("count={0:d}".format(count))
         val = getattr(event, plotVar)
         if listForm:
@@ -167,6 +171,7 @@ for fileNum, line in enumerate(sigDataListFile):
     hSigArr[fileNum].SetMaximum(10**12)
     hSigArr[fileNum].Draw("hist same") # same pad
     c1.Update()
+    sigFile.Close()
 
 
 #--------------------------------------------------------------------------------#

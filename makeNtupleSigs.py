@@ -50,7 +50,7 @@ if numSigFiles < 10: outName += "0"+str(numSigFiles)
 else: outName += str(numSigFiles)
 outName += "Sig_"+l1Flav[:2]+l2Flav[:2]
 if not cutMode: outName += "_baseline.root"
-else: outName += ".root"
+else: outName += "_withcuts.root"
 
 outFile = TFile(outName, "recreate")
 
@@ -132,7 +132,7 @@ for fileNum, line in enumerate(sigDataListFile):
     if testMode: nMax = 5000 
 
     sigCutflowHists.append(TH1F("sig_"+filename[21:31]+"_cutflow",\
-            "sig_"+filename[19:24]+"_cutflow", len(cuts), 0, len(cuts)))
+            "sig_"+filename[21:31]+"_cutflow", len(cuts), 0, len(cuts)))
     for i, cut in enumerate(cuts, start=1):
         sigCutflowHists[fileNum].GetXaxis().SetBinLabel(i, cut)
 

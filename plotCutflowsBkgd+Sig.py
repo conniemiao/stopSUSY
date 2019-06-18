@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Overlays the cutflow hists for bkgd and each of the signal files.
-# Uses the root file outputted by makeSusyBkgd+SigRoot.py
+# Uses the root files outputted by makeNtupleBkgd.py and makeNtupleSigs.py
 # Uses xsec info from sig_SingleStop_files
 
 from ROOT import TFile, TTree, TH1F, TCanvas, TLorentzVector, TImage, TLegend
@@ -9,22 +9,27 @@ from ROOT import gSystem, gStyle
 import numpy as np
 from math import sqrt
 
-# copy in the output name from running makeSusyBkgd+SigRoot.py:
-allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_muel.root"
-print "Plotting from "+allDataFile
+# copy in the bkgd and sigs filenames from makeNtupleBkgd.py and makeNtupleSigs.py
+bkgdNtupleAdr = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_muel_withcuts.root"
+sigsNtupleAdr = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Sig_muel_withcuts.root"
 
-numSigFiles = int(allDataFile[64:66])
+assert bkgdNtupleAdr[50:54] == "Bkgd", "bkgdNtupleAdr not bkgd"
+assert sigsNtupleAdr[50:53] == "Sig", "sigsNtupleAdr not sigs"
+assert bkgdNtupleAdr[-18:] == sigsNtupleAdr[-18:]
+print "Plotting from",bkgdNtupleAdr,"and",sigsNtupleAdr
+
+numSigFiles = int(sigsNtupleAdr[48:50])
 
 lumi = 3000000 # luminosity = 3000 /pb = 3,000,000 /fb
 c1 = TCanvas("c1","Plot",10,20,1000,700)
 gStyle.SetOptStat(0) # don't show any stats
 
-inFile = TFile.Open(allDataFile, "READ")
 xsec = 67.75 # production cross section
 
-hBkgd = inFile.Get("bkgd_cutflow")
+bkgdFile = TFile.Open(bkgdNtupleAdr, "READ")
+hBkgd = bkgdFile.Get("bkgd_cutflow")
 hBkgd.Sumw2()
-hBkgd.SetTitle("Cutflow ("+allDataFile[70:74]+", norm to 3000 /pb)")
+hBkgd.SetTitle("Cutflow ("+bkgdNtupleAdr[-18:-14]+", norm to 3000 /pb)")
 hBkgd.GetYaxis().SetTitle("Number of Events")
 hBkgd.Scale(xsec*lumi/hBkgd.GetSumOfWeights())
 hBkgd.SetLineColor(1) # black
@@ -46,7 +51,8 @@ for fileNum, line in enumerate(sigDataListFile):
     filename, xsec = line.split(" ")
     xsec = float(xsec)
 
-    hSigArr.append(inFile.Get("sig_"+filename[19:24]+"_cutflow"))
+    sigFile = TFile.Open(sigsNtupleAdr, "READ")
+    hSigArr.append(sigFile.Get("sig_"+filename[21:31]+"_cutflow"))
     hSigArr[fileNum].SetDirectory(0)
 
     hcolor = coloropts[fileNum % len(coloropts)]
@@ -67,15 +73,17 @@ for fileNum, line in enumerate(sigDataListFile):
     c1.Update()
 
     print
-    print "Sig", fileNum, "stats:" 
+    print "Num surviving events after each cut from sig %s:" % filename 
     for i in range(1,hBkgd.GetNbinsX()):
         # print hBkgd.GetXaxis().GetBinLabel(i+1),"S/sqrt(B):",\
         #         hSigArr[fileNum].GetBinContent(i+1)/sqrt(hBkgd.GetBinContent(i+1))
-        print hBkgd.GetXaxis().GetBinLabel(i+1),"S: ",hSigArr[fileNum].GetBinContent(i+1)
+        print hBkgd.GetXaxis().GetBinLabel(i+1),hSigArr[fileNum].GetBinContent(i+1)
     print
 
+print "Num surviving events after each cut from bkgd:" 
 for i in range(1,hBkgd.GetNbinsX()):
-    print hBkgd.GetXaxis().GetBinLabel(i+1),"S: ",hBkgd.GetBinContent(i+1)
+    print hBkgd.GetXaxis().GetBinLabel(i+1),hBkgd.GetBinContent(i+1)
+print
 
 legend = TLegend(.70,.75,.90,.90)
 legend.AddEntry(hBkgd, "bkgd_cutflow")

@@ -52,7 +52,7 @@ if numBkgdFiles < 10: outName += "0"+str(numBkgdFiles)+"Bkgd_TTDiLept_"
 else: outName += str(numBkgdFiles)+"Bkgd_TTDiLept_"
 outName += l1Flav[:2]+l2Flav[:2]
 if not cutMode: outName += "_baseline.root"
-else: outName += ".root"
+else: outName += "_withcuts.root"
 
 outFile = TFile(outName, "recreate")
 
