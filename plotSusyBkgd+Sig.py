@@ -9,10 +9,10 @@ from ROOT import TFile, TTree, TH1D, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
 import numpy as np
 
-plotVar = "lep1_relIso" # **** change this line for different vars
+plotVar = "njets" # **** change this line for different vars
 
 # copy in the output name from running makeSusyBkgd+SigRoot.py:
-allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_muel.root"
+allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_muel_baseline.root"
 print "Plotting from "+allDataFile
 
 plotSettings = { # [nBins,xMin,xMax,listForm]

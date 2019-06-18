@@ -22,13 +22,14 @@ def deltaR(event, type1, index1, type2, index2):
     
 #--------------------------------------------------------------------------------#
 
+
 # selects a pair of leptons from an event. 
 # if findingSameFlav is True: selects for pair of muons if muPreference is True, 
 # or for pair of electrons if False. 
 # if findingSameFlav is False: selects for leading mu and trailing el if
 # muPreference is True, or for leading el and trailing mu if False.
 # returns an array of 2 entries where a[0] = l1Index, a[1] = l2Index, where 
-# l1 is always the leading (higher pt) lepton, l2 is trailing.
+# l1 is always the leading lepton (satisfies the higher pt cut), l2 is trailing.
 def selectLepts(event, findingSameFlav, muPreference):
     if findingSameFlav:
         if muPreference: # mumu

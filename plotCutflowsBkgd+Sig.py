@@ -69,9 +69,13 @@ for fileNum, line in enumerate(sigDataListFile):
     print
     print "Sig", fileNum, "stats:" 
     for i in range(1,hBkgd.GetNbinsX()):
-        print hBkgd.GetXaxis().GetBinLabel(i+1),"S/sqrt(B):",\
-                hSigArr[fileNum].GetBinContent(i+1)/sqrt(hBkgd.GetBinContent(i+1))
+        # print hBkgd.GetXaxis().GetBinLabel(i+1),"S/sqrt(B):",\
+        #         hSigArr[fileNum].GetBinContent(i+1)/sqrt(hBkgd.GetBinContent(i+1))
+        print hBkgd.GetXaxis().GetBinLabel(i+1),"S: ",hSigArr[fileNum].GetBinContent(i+1)
     print
+
+for i in range(1,hBkgd.GetNbinsX()):
+    print hBkgd.GetXaxis().GetBinLabel(i+1),"S: ",hBkgd.GetBinContent(i+1)
 
 legend = TLegend(.70,.75,.90,.90)
 legend.AddEntry(hBkgd, "bkgd_cutflow")
