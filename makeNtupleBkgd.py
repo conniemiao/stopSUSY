@@ -49,6 +49,7 @@ outDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
 outName = outDir+"stopCut_"
 if numBkgdFiles < 10: outName += "0"+str(numBkgdFiles)+"Bkgd_TTDiLept_"
 else: outName += str(numBkgdFiles)+"Bkgd_TTDiLept_"
+outName += "Sig_"+l1Flav[:2]+l2Flav[:2]
 if not cutMode: outName += "_baseline.root"
 else: outName += ".root"
 
@@ -113,8 +114,8 @@ tBkgd.Branch("mtlep1", mtlep1, "mtlep1/F")
 tBkgd.Branch("mtlep2", mtlep2, "mtlep2/F")
 
 bkgdCutflowHist = TH1F("bkgd_cutflow","bkgd_cutflow", len(cuts), 0, len(cuts))
-for i in range(len(cuts)):
-    bkgdCutflowHist.GetXaxis().SetBinLabel(i+1, cuts[i])
+for i, cut in enumerate(cuts, start=1):
+    bkgdCutflowHist.GetXaxis().SetBinLabel(i, cut)
 
 for fileNum, line in enumerate(bkgdDataListFile):
     if fileNum + 1 > numBkgdFiles: break

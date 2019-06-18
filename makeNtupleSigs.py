@@ -47,7 +47,8 @@ outDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
 # assemble the outName
 outName = outDir+"stopCut_"
 if numSigFiles < 10: outName += "0"+str(numSigFiles)+"Sig_"+l1Flav[:2]+l2Flav[:2]
-else: outName += str(numSigFiles)+"Sig_"+l1Flav[:2]+l2Flav[:2]
+else: outName += str(numSigFiles)
+outName += "Sig_"+l1Flav[:2]+l2Flav[:2]
 if not cutMode: outName += "_baseline.root"
 else: outName += ".root"
 
@@ -133,8 +134,8 @@ for fileNum, line in enumerate(sigDataListFile):
 
     sigCutflowHists.append(TH1F("sig_"+filename[19:24]+"_cutflow",\
             "sig_"+filename[19:24]+"_cutflow", len(cuts), 0, len(cuts)))
-    for i in range(len(cuts)):
-        sigCutflowHists[fileNum].GetXaxis().SetBinLabel(i+1, cuts[i])
+    for i, cut in enumerate(cuts, start=1):
+        sigCutflowHists[fileNum].GetXaxis().SetBinLabel(i, cut)
 
     # ***** EVERYTHING BELOW THIS LINE MUST MATCH makeNtupleBkgd.py *****
     # ************ BEGIN LOOPING OVER EVENTS **********
