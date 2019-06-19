@@ -39,7 +39,7 @@ binwidthY = (yMax - yMin)/nBinsY # include overflow bin
 
 hBkgd = TH2F(plotVarY+"_"+plotVarX+"_bkgd", plotVarY+"_"+plotVarX+"_bkgd", \
         nBinsX + 1, xMin, xMax + binwidthX, nBinsY + 1, yMin, yMax + binwidthY)
-lumi = 3000000 # luminosity = 3000 /pb = 3,000,000 /fb
+lumi = 3000000 # luminosity = 3000 /fb = 3,000,000 /fb
 
 c1 = TCanvas("c1","Plot",10,20,1000,700)
 gStyle.SetOptStat(0) # don't show any stats
@@ -79,7 +79,7 @@ hBkgd.Sumw2()
 #     print rebinned
 
 title = plotVarY + " v. "+plotVarX+" ("+allDataFile[70:74]+\
-        ", normalized to 3000 /pb)"
+        ", normalized to 3000 /fb)"
 if allDataFile[-13:-5] == "baseline": title += ", baseline"
 else: title += ", with cuts"
 hBkgd.SetTitle(title)

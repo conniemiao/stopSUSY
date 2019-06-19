@@ -14,15 +14,16 @@ from math import sqrt, cos
 from array import array
 from collections import OrderedDict
 
-testMode = True # limits the number of events and files to loop over 
+testMode = False # limits the number of events and files to loop over 
 cutMode = True # applying cuts
-print "Test mode: ", testMode
-print "Cut mode: ", cutMode
-
 findingSameFlavor = False 
 # selecting for either mu-mu or el-el (as opposed to mu-el or el-mu)
 muPreference = True 
 # only applies if findingSameFlav; selects for mu-mu as opposed to el-el
+
+print "Test mode: ", testMode
+print "Cut mode: ", cutMode
+
 if findingSameFlavor:
     if muPreference: 
         l1Flav = "muon"

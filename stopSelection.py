@@ -49,15 +49,17 @@ def selectLepts(event, findingSameFlav, muPreference):
         if muPreference: # muel
             l1Flav = "muon"
             l2Flav = "electron"
+            l1MinOkPt = 12
+            l2MinOkPt = 15
             maxL1OkEta = 2.4
             maxL2OkEta = 1.6 
         else: # elmu
             l1Flav = "electron"
             l2Flav = "muon"
+            l1MinOkPt = 25
+            l2MinOkPt = 5
             maxL1OkEta = 1.6
             maxL2OkEta = 2.4
-        l1MinOkPt = 25 
-        l2MinOkPt = 15
         maxOkIso = 0.2
 
     # select leading lepton

@@ -12,12 +12,12 @@ import numpy as np
 plotVar = "met_pt" # **** change this line for different vars
 
 # copy in the bkgd and sigs filenames from makeNtupleBkgd.py and makeNtupleSigs.py
-bkgdNtupleAdr = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_muel_withcuts.root"
+bkgdNtupleAdr = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_27Bkgd_TTDiLept_muel_withcuts.root"
 sigsNtupleAdr = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Sig_muel_withcuts.root"
 
 assert bkgdNtupleAdr[50:54] == "Bkgd", "bkgdNtupleAdr not bkgd"
 assert sigsNtupleAdr[50:53] == "Sig", "sigsNtupleAdr not sigs"
-assert bkgdNtupleAdr[-18:] == sigsNtupleAdr[-18:]
+assert bkgdNtupleAdr[-18:] == sigsNtupleAdr[-18:], "sigs/bkgd settings don't match"
 print "Plotting from",bkgdNtupleAdr,"and",sigsNtupleAdr
 
 plotSettings = { # [nBins,xMin,xMax,listForm]
@@ -54,7 +54,7 @@ listForm = plotSettings[plotVar][3] # only for some of the jet variables
 binwidth = (xMax - xMin)/nBins # include overflow bin
 hBkgd = TH1D(plotVar + "_bkgd", plotVar + "_bkgd", nBins + 1, \
         xMin, xMax + binwidth)
-lumi = 3000000 # luminosity = 3000 /pb = 3,000,000 /fb
+lumi = 3000000 # luminosity = 3000 /fb = 3,000,000 /pb
 
 c1 = TCanvas("c1","Plot",10,20,1000,700)
 gStyle.SetOptStat(0) # don't show any stats
@@ -95,7 +95,7 @@ hBkgd.Sumw2()
 #     hBkgd.Rebin(2)
 #     print rebinned
 
-title = plotVar + " ("+bkgdNtupleAdr[-18:-14]+", normalized to 3000 /pb)"
+title = plotVar + " ("+bkgdNtupleAdr[-18:-14]+", normalized to 3000 /fb)"
 title += ", "+bkgdNtupleAdr[-13:-5]
 hBkgd.SetTitle(title)
 hBkgd.GetXaxis().SetTitle(plotVar+" [GeV]")
