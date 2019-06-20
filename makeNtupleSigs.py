@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 
+# NOTE: NEEDS 4 CMD LINE ARGS with values {0 (false) or 1 (true)}: 
+# testMode, cutMode, findingSameFlavor, muPreference 
 # Outputs a ROOT file located in ../myData/ containing numSigFiles trees and
 # numSigFiles cutflow hists.
 # Each tree, tSig{i}, corresponds to a file listed in sig_SingleStop_files and
 # has branches for the same variables as the tSig{i} outputted by 
 # makeNtupleBkgd.py.
 
+import sys
 from ROOT import TFile, TTree, TH1F, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
 from stopSelection import deltaR, selectLepts, getNumBtag, findValidJets
@@ -14,12 +17,16 @@ from math import sqrt, cos
 from array import array
 from collections import OrderedDict
 
-testMode = False # limits the number of events and files to loop over 
-cutMode = False # applying cuts
-findingSameFlavor = False 
+assert len(sys.argv) == 5, "need 4 command line args: testMode{0,1}, cutMode{0,1}, findingSameFlavor{0,1}, muPreference{0,1}"
+
+# limits the number of events and files to loop over
+testMode = bool(int(sys.argv[1]))
+# applying cuts
+cutMode = bool(int(sys.argv[2]))
 # selecting for either mu-mu or el-el (as opposed to mu-el or el-mu)
-muPreference = True 
+findingSameFlavor = bool(int(sys.argv[3]))
 # only applies if findingSameFlav; selects for mu-mu as opposed to el-el
+muPreference = bool(int(sys.argv[4]))
 
 print "Test mode: ", testMode
 print "Cut mode: ", cutMode
@@ -253,6 +260,6 @@ outFile.Close()
 # h.Draw()
 # raw_input()
 
-print "Finished creating " + outName + "\n"
+print "Finished creating", outName
 print "Done."
 
