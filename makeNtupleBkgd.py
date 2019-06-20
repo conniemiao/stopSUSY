@@ -58,8 +58,10 @@ else: outName += "_withcuts.root"
 outFile = TFile(outName, "recreate")
 
 # number of events surviving after each cut.
-cuts = OrderedDict([("no cut",0), ("dilepton",1), ("deltaR(ll)>0.3",2), \
-        ("nbtag<2",3), ("MET>80",4), ("no 3rd lepton",5), ("njets<4",6)])
+# cuts = OrderedDict([("no cut",0), ("dilepton",1), ("deltaR(ll)>0.3",2), \
+#         ("nbtag<2",3), ("MET>80",4), ("no 3rd lepton",5), ("njets<4",6)])
+cuts = OrderedDict([("no cut",0), ("dilepton",1), ("nbtag<2",2), ("MET>80",3),\
+        ("no 3rd lepton",4), ("njets<4",5)])
 
 #--------------------------------------------------------------------------------#
 # ************* Make all the arrays. *************
@@ -163,8 +165,8 @@ for fileNum, line in enumerate(bkgdDataListFile):
 
         # ********** Additional cuts ***********
         if cutMode:
-            if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
-            bkgdCutflowHist.Fill(cuts["deltaR(ll)>0.3"])
+#             if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
+#             bkgdCutflowHist.Fill(cuts["deltaR(ll)>0.3"])
 
             if getNumBtag(event, jets) > 1: continue
             bkgdCutflowHist.Fill(cuts["nbtag<2"])
