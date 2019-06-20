@@ -1,5 +1,5 @@
 executable  = makeNtupleBkgd.py 
-arguments   = $(ClusterID) $(ProcId)
+arguments   = 0 1 1 1
 universe    = vanilla
 output      = condorLogs/makeNtupleBkgd.$(ClusterId).$(ProcId).out
 error       = condorLogs/makeNtupleBkgd.$(ClusterId).$(ProcId).err

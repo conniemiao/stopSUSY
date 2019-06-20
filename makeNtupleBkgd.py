@@ -28,8 +28,8 @@ findingSameFlavor = bool(int(sys.argv[3]))
 # only applies if findingSameFlav; selects for mu-mu as opposed to el-el
 muPreference = bool(int(sys.argv[4]))
 
-print "Test mode: ", testMode
-print "Cut mode: ", cutMode
+print "Test mode:", testMode
+print "Cut mode:", cutMode
 
 if findingSameFlavor:
     if muPreference: 

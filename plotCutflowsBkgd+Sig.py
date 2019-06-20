@@ -9,7 +9,28 @@ from ROOT import gSystem, gStyle
 import numpy as np
 from math import sqrt
 
+assert len(sys.argv) == 5, "need 4 command line args: testMode{0,1}, cutMode{0,1}, findingSameFlavor{0,1}, muPreference{0,1}"
+
+# limits the number of events and files to loop over
+testMode = bool(int(sys.argv[1]))
+# applying cuts
+cutMode = bool(int(sys.argv[2]))
+# selecting for either mu-mu or el-el (as opposed to mu-el or el-mu)
+findingSameFlavor = bool(int(sys.argv[3]))
+# only applies if findingSameFlav; selects for mu-mu as opposed to el-el
+muPreference = bool(int(sys.argv[4]))
 # copy in the bkgd and sigs filenames from makeNtupleBkgd.py and makeNtupleSigs.py
+if findingSameFlavor:
+    if muPreference: 
+        l1Flav = "muon"
+        l2Flav = "muon"
+    else: 
+        l1Flav = "electron"
+        l2Flav = "electron"
+else: 
+    l1Flav = "muon"
+    l2Flav = "electron"
+
 bkgdNtupleAdr = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_27Bkgd_TTDiLept_muel_withcuts.root"
 sigsNtupleAdr = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Sig_muel_withcuts.root"
 
@@ -45,6 +66,7 @@ markeropts = [1,20,21,22,23] # some good marker styles for lines
 linestyleopts = [1,2,3,7,9] # some good styles for lines
 
 hSigArr = []
+print
 for fileNum, line in enumerate(sigDataListFile):
     if fileNum + 1 > numSigFiles: break
     line = line.rstrip('\n')
@@ -72,7 +94,6 @@ for fileNum, line in enumerate(sigDataListFile):
     hSigArr[fileNum].Draw("hist same") # same pad, draw marker
     c1.Update()
 
-    print
     print "Num surviving events after each cut from sig %s:" % filename 
     for i in range(1,hBkgd.GetNbinsX()):
         # print hBkgd.GetXaxis().GetBinLabel(i+1),"S/sqrt(B):",\

@@ -1,24 +1,19 @@
 #!/usr/bin/env python
 
+# NOTE: NEEDS 4 CMD LINE ARGS with values {0 (false) or 1 (true)}: 
+# testMode, cutMode, findingSameFlavor, muPreference, plotVar
 # Draws 1D hist for data for some variable, for the summed bkgd data and for each 
 # of the signal files.
 # Uses the root files outputted by makeNtupleBkgd.py and makeNtupleSigs.py
 # Uses xsec info from sig_SingleStop_files
 
+import sys
 from ROOT import TFile, TTree, TH1D, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
 import numpy as np
 
-plotVar = "met_pt" # **** change this line for different vars
-
-# copy in the bkgd and sigs filenames from makeNtupleBkgd.py and makeNtupleSigs.py
-bkgdNtupleAdr = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_27Bkgd_TTDiLept_muel_withcuts.root"
-sigsNtupleAdr = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Sig_muel_withcuts.root"
-
-assert bkgdNtupleAdr[50:54] == "Bkgd", "bkgdNtupleAdr not bkgd"
-assert sigsNtupleAdr[50:53] == "Sig", "sigsNtupleAdr not sigs"
-assert bkgdNtupleAdr[-18:] == sigsNtupleAdr[-18:], "sigs/bkgd settings don't match"
-print "Plotting from",bkgdNtupleAdr,"and",sigsNtupleAdr
+assert len(sys.argv) == 6, "need 5 command line args: testMode{0,1}, cutMode{0,1}, findingSameFlavor{0,1}, muPreference{0,1}, plotVar"
+plotVar = sys.argv[5]
 
 plotSettings = { # [nBins,xMin,xMax,listForm]
         "lep1_pt":[100,0,400,False],
@@ -29,7 +24,7 @@ plotSettings = { # [nBins,xMin,xMax,listForm]
         "lep2_eta":[100,-4,4,False],
         "lep2_phi":[100,-4,4,False],
         "lep2_relIso":[10,0,0.2,False],
-        "njets":[15,0,15,False],
+        "njets":[10,0,10,False],
         "jet_pt":[100,0,400,True], 
         "jet_eta":[100,-3,3,True],
         "jet_phi":[100,-4,4,True],
@@ -40,8 +35,54 @@ plotSettings = { # [nBins,xMin,xMax,listForm]
         "mtlep2":[100,0,500,False],
         "met_pt":[100,0,500,False],
         "met_phi":[100,-4,-4,False],
-        "genweight":[100,2.980,2.995,False],
         }
+
+assert (plotVar in plotSettings), "invalid plotVar"
+
+# Determining adr of bkgd and sig ntuples.
+# limits the number of events and files to loop over
+testMode = bool(int(sys.argv[1]))
+# applying cuts
+cutMode = bool(int(sys.argv[2]))
+# selecting for either mu-mu or el-el (as opposed to mu-el or el-mu)
+findingSameFlavor = bool(int(sys.argv[3]))
+# only applies if findingSameFlav; selects for mu-mu as opposed to el-el
+muPreference = bool(int(sys.argv[4]))
+if findingSameFlavor:
+    if muPreference: 
+        l1Flav = "muon"
+        l2Flav = "muon"
+    else: 
+        l1Flav = "electron"
+        l2Flav = "electron"
+else: 
+    l1Flav = "muon"
+    l2Flav = "electron"
+# number of files to process
+numBkgdFiles = 27  # need to loop over all the files in order to have correct xsec
+if testMode: 
+    numBkgdFiles = 2 
+numSigFiles = 2 # max 25
+
+# assemble the sigsNtupleAdr and bkgdNtupleAdr
+baseDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
+bkgdNtupleAdr = baseDir+"stopCut_"
+sigsNtupleAdr = baseDir+"stopCut_"
+if numSigFiles < 10: sigsNtupleAdr += "0"+str(numSigFiles)
+else: sigsNtupleAdr += str(numSigFiles)
+if numBkgdFiles < 10: bkgdNtupleAdr += "0"+str(numBkgdFiles)
+else: bkgdNtupleAdr += str(numBkgdFiles)
+bkgdNtupleAdr += "Bkgd_TTDiLept_"+l1Flav[:2]+l2Flav[:2]
+sigsNtupleAdr += "Sig_"+l1Flav[:2]+l2Flav[:2]
+if not cutMode: 
+    sigsNtupleAdr += "_baseline.root"
+    bkgdNtupleAdr += "_baseline.root"
+else:
+    sigsNtupleAdr += "_withcuts.root"
+    bkgdNtupleAdr += "_withcuts.root"
+
+print "Plotting",plotVar,"from",bkgdNtupleAdr,"and",sigsNtupleAdr
+
 numSigFiles = int(sigsNtupleAdr[48:50])
 testMode = True 
 if numSigFiles > 10: testMode = False 
@@ -187,12 +228,15 @@ legend.Draw("same")
 c1.SetLogy()
 c1.Update()
 
-# if not testMode:
-#     print "Saving image."
-#     gSystem.ProcessEvents()
-#     img = TImage.Create()
-#     img.FromPad(c1)
-#     img.WriteImage(plotVar + "_Bkgd+Sig.png")
-print "Done. Press enter to finish."
-raw_input()
+if testMode:
+    print "Done. Press enter to finish."
+    raw_input()
+else:
+    print "Saving image."
+    gSystem.ProcessEvents()
+    img = TImage.Create()
+    img.FromPad(c1)
+    img.WriteImage(baseDir[:-7]+"plots/v2CutSequence/"+plotVar+"_"+\
+            l1Flav[:2]+l2Flav[:2]+"_"+sigsNtupleAdr[-13:-5]+".png")
+    print "Done."
 
