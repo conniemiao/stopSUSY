@@ -1,0 +1,11 @@
+executable  = makeSusyBkgd+SigRoot.py 
+arguments   = $(ClusterID) $(ProcId)
+universe    = vanilla
+output      = ~/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeSusyBkgd+SigRoot.$(ClusterId).$(ProcId).out
+error       = ~/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeSusyBkgd+SigRoot.$(ClusterId).$(ProcId).err
+log         = ~/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeSusyBkgd+SigRoot.$(ClusterId).log
++MaxRuntime = 10000
+
+transfer_input_files = stopSelection.py, bkgd_TTDiLept_files, sig_SingleStop_files
+
+queue
