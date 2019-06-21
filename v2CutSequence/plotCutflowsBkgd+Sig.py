@@ -4,6 +4,7 @@
 # Uses the root files outputted by makeNtupleBkgd.py and makeNtupleSigs.py
 # Uses xsec info from sig_SingleStop_files
 
+import sys
 from ROOT import TFile, TTree, TH1F, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
 import numpy as np
@@ -31,15 +32,32 @@ else:
     l1Flav = "muon"
     l2Flav = "electron"
 
-bkgdNtupleAdr = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_27Bkgd_TTDiLept_muel_withcuts.root"
-sigsNtupleAdr = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Sig_muel_withcuts.root"
+# assemble the sigsNtupleAdr and bkgdNtupleAdr
+# number of files to process
+numBkgdFiles = 27  # need to loop over all the files in order to have correct xsec
+if testMode: 
+    numBkgdFiles = 2 
+numSigFiles = 2 # max 25
+baseDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
+bkgdNtupleAdr = baseDir+"stopCut_"
+sigsNtupleAdr = baseDir+"stopCut_"
+if numSigFiles < 10: sigsNtupleAdr += "0"+str(numSigFiles)
+else: sigsNtupleAdr += str(numSigFiles)
+if numBkgdFiles < 10: bkgdNtupleAdr += "0"+str(numBkgdFiles)
+else: bkgdNtupleAdr += str(numBkgdFiles)
+bkgdNtupleAdr += "Bkgd_TTDiLept_"+l1Flav[:2]+l2Flav[:2]
+sigsNtupleAdr += "Sig_"+l1Flav[:2]+l2Flav[:2]
+if not cutMode: 
+    sigsNtupleAdr += "_baseline.root"
+    bkgdNtupleAdr += "_baseline.root"
+else:
+    sigsNtupleAdr += "_withcuts.root"
+    bkgdNtupleAdr += "_withcuts.root"
 
-assert bkgdNtupleAdr[50:54] == "Bkgd", "bkgdNtupleAdr not bkgd"
-assert sigsNtupleAdr[50:53] == "Sig", "sigsNtupleAdr not sigs"
-assert bkgdNtupleAdr[-18:] == sigsNtupleAdr[-18:], "sigs/bkgd settings don't match"
+# assert bkgdNtupleAdr[50:54] == "Bkgd", "bkgdNtupleAdr not bkgd"
+# assert sigsNtupleAdr[50:53] == "Sig", "sigsNtupleAdr not sigs"
+# assert bkgdNtupleAdr[-18:] == sigsNtupleAdr[-18:], "sigs/bkgd settings don't match"
 print "Plotting from",bkgdNtupleAdr,"and",sigsNtupleAdr
-
-numSigFiles = int(sigsNtupleAdr[48:50])
 
 lumi = 3000000 # luminosity = 3000 /fb = 3,000,000 /fb
 c1 = TCanvas("c1","Plot",10,20,1000,700)
@@ -116,5 +134,16 @@ legend.Draw("same")
 c1.SetLogy()
 c1.Update()
 
-print "Done. Press enter to finish."
-raw_input()
+if testMode:
+    print "Done. Press enter to finish."
+    raw_input()
+else:
+    imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
+            "plots/v2CutSequence/cutflow_"+ l1Flav[:2]+l2Flav[:2]+"_"+\
+            sigsNtupleAdr[-13:-5]+".png"
+    print "Saving image", imgName
+    gSystem.ProcessEvents()
+    img = TImage.Create()
+    img.FromPad(c1)
+    img.WriteImage(imgName)
+    print "Done."

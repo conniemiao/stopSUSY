@@ -42,12 +42,16 @@ assert (plotVar in plotSettings), "invalid plotVar"
 # Determining adr of bkgd and sig ntuples.
 # limits the number of events and files to loop over
 testMode = bool(int(sys.argv[1]))
+print "Test mode:", testMode
 # applying cuts
 cutMode = bool(int(sys.argv[2]))
+print "Cut mode:", cutMode
 # selecting for either mu-mu or el-el (as opposed to mu-el or el-mu)
 findingSameFlavor = bool(int(sys.argv[3]))
+print "Finding same flavor:", findingSameFlavor
 # only applies if findingSameFlav; selects for mu-mu as opposed to el-el
 muPreference = bool(int(sys.argv[4]))
+print "Mu preference:", muPreference
 if findingSameFlavor:
     if muPreference: 
         l1Flav = "muon"
@@ -58,13 +62,13 @@ if findingSameFlavor:
 else: 
     l1Flav = "muon"
     l2Flav = "electron"
+
+# assemble the sigsNtupleAdr and bkgdNtupleAdr
 # number of files to process
 numBkgdFiles = 27  # need to loop over all the files in order to have correct xsec
 if testMode: 
     numBkgdFiles = 2 
 numSigFiles = 2 # max 25
-
-# assemble the sigsNtupleAdr and bkgdNtupleAdr
 baseDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
 bkgdNtupleAdr = baseDir+"stopCut_"
 sigsNtupleAdr = baseDir+"stopCut_"
@@ -84,10 +88,8 @@ else:
 print "Plotting",plotVar,"from",bkgdNtupleAdr,"and",sigsNtupleAdr
 
 numSigFiles = int(sigsNtupleAdr[48:50])
-testMode = True 
-if numSigFiles > 10: testMode = False 
 nBins = plotSettings[plotVar][0]
-if not testMode and nBins > 20: nBins = nBins * 5
+# if not testMode and nBins > 20: nBins = nBins * 5
 xMin = plotSettings[plotVar][1]
 xMax = plotSettings[plotVar][2]
 listForm = plotSettings[plotVar][3] # only for some of the jet variables 
@@ -232,11 +234,13 @@ if testMode:
     print "Done. Press enter to finish."
     raw_input()
 else:
-    print "Saving image."
+    imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
+            "plots/v2CutSequence/"+plotVar+"_"+l1Flav[:2]+l2Flav[:2]+"_"+\
+            sigsNtupleAdr[-13:-5]+".png"
+    print "Saving image", imgName
     gSystem.ProcessEvents()
     img = TImage.Create()
     img.FromPad(c1)
-    img.WriteImage(baseDir[:-7]+"plots/v2CutSequence/"+plotVar+"_"+\
-            l1Flav[:2]+l2Flav[:2]+"_"+sigsNtupleAdr[-13:-5]+".png")
+    img.WriteImage(imgName)
     print "Done."
 

@@ -1,9 +1,9 @@
 executable  = makeNtupleBkgd.py 
-arguments   = 0 1 1 1
+arguments   = 0 0 0 0
 universe    = vanilla
-output      = ~/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtupleBkgd.$(ClusterId).$(ProcId).out
-error       = ~/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtupleBkgd.$(ClusterId).$(ProcId).err
-log         = ~/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtupleBkgd.$(ClusterId).log
+output      = ../../condorLogs/makeNtupleBkgd.$(ClusterId).$(ProcId).out
+error       = ../../condorLogs/makeNtupleBkgd.$(ClusterId).$(ProcId).err
+log         = ../../condorLogs/makeNtupleBkgd.$(ClusterId).log
 +MaxRuntime = 10000
 
 transfer_input_files = stopSelection.py, bkgd_TTDiLept_files
