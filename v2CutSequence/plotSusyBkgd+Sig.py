@@ -29,7 +29,7 @@ plotSettings = { # [nBins,xMin,xMax,listForm]
         "jet_pt":[100,0,400,True], 
         "jet_eta":[100,-3,3,True],
         "jet_phi":[100,-4,4,True],
-        "nbtag":[10,0,10,False],
+        "nbtag":[5,0,5,False],
         "deltaR_lep1_jet":[100,0,7,False],
         "deltaR_lep2_jet":[100,0,7,False],
         "mtlep1":[100,0,500,False],

@@ -174,13 +174,14 @@ for fileNum, line in enumerate(sigDataListFile):
 
         jets = findValidJets(event, l1Flav, l1Index, l2Flav, l2Index)
         numJets = len(jets)
+        numBtag = getNumBtag(event, jets)
 
         # ********** Additional cuts ***********
         if cutMode:
 #             if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
 #             sigCutflowHists[fileNum].Fill(cuts["deltaR(ll)>0.3"])
 
-            if getNumBtag(event, jets) > 1: continue
+            if numBtag > 1: continue
             sigCutflowHists[fileNum].Fill(cuts["nbtag<2"])
 
             if event.pfmet_pt < 80: continue
@@ -222,6 +223,7 @@ for fileNum, line in enumerate(sigDataListFile):
         jet_eta.fill(0)
         jet_phi.fill(0)
         njets[0] = numJets
+        nbtag[0] = numBtag
 
         iMaxPtJ = 0
         for j in range(numJets):
