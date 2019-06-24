@@ -4,7 +4,7 @@
 # variables=("lep1_pt" "lep1_eta" "lep1_relIso" "lep2_pt" \
 #     "njets" "jet_pt" "jet_eta" "nbtag" "deltaR_lep1_jet" \
 #     "mtlep1" "mtlep2" "met_pt")
-variables=("nbtag")
+variables=("deltaR_lep1_jet")
 
 python plotSusyBkgd+Sig.py 0 0 0 0 "${variables[@]}"
 echo

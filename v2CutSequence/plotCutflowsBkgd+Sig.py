@@ -6,7 +6,7 @@
 
 import sys
 from ROOT import TFile, TTree, TH1F, TCanvas, TImage, TLegend, TText
-from ROOT import gSystem, gStyle
+from ROOT import gSystem, gStyle, gROOT, kTRUE
 import numpy as np
 from math import sqrt
 
@@ -53,6 +53,8 @@ if not cutMode:
 else:
     sigsNtupleAdr += "_withcuts.root"
     bkgdNtupleAdr += "_withcuts.root"
+if not testMode:
+    gROOT.SetBatch(kTRUE) # prevent displaying canvases
 
 # assert bkgdNtupleAdr[50:54] == "Bkgd", "bkgdNtupleAdr not bkgd"
 # assert sigsNtupleAdr[50:53] == "Sig", "sigsNtupleAdr not sigs"

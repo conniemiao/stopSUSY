@@ -42,7 +42,7 @@ def selectLepts(event, findingSameFlav, muPreference):
             l2Flav = "electron"
             maxL1OkEta = 1.6
             maxL2OkEta = 1.6
-        l1MinOkPt = 30
+        l1MinOkPt = 20
         l2MinOkPt = -0.01 
         maxOkIso = 0.1
     else:
@@ -113,7 +113,8 @@ def selectLepts(event, findingSameFlav, muPreference):
 #--------------------------------------------------------------------------------#
 
 # loops over all jets for this event and returns an array of all the indices
-# that contain valid jets
+# that contain valid jets, given the flavs and indices of the 2 selected
+# leptons (to clean the jets)
 def findValidJets(event, l1Flav, l1Index, l2Flav, l2Index):
     jets = []
     numJets = event.pfjet_count

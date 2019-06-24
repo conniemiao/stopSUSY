@@ -168,7 +168,7 @@ for fileNum, line in enumerate(bkgdDataListFile):
         l2Index = lepIndices[1]
 
         jets = findValidJets(event, l1Flav, l1Index, l2Flav, l2Index)
-        numJets = len(jets)
+        numGoodJets = len(jets)
         numBtag = getNumBtag(event, jets)
 
         # ********** Additional cuts ***********
@@ -193,7 +193,7 @@ for fileNum, line in enumerate(bkgdDataListFile):
                 if selectLepts(event, True, False) is not None: continue
             bkgdCutflowHist.Fill(cuts["no 3rd lepton"])
         
-            if numJets >= 4: continue
+            if numGoodJets >= 4: continue
             bkgdCutflowHist.Fill(cuts["njets<4"])
 
         # *********** STORE THE DATA *************
@@ -217,21 +217,26 @@ for fileNum, line in enumerate(bkgdDataListFile):
         jet_pt.fill(0)
         jet_eta.fill(0)
         jet_phi.fill(0)
-        njets[0] = numJets
+        njets[0] = numGoodJets
         nbtag[0] = numBtag
 
-        iMaxPtJ = 0
-        for j in range(numJets):
-            jIndex = jets[j]
-            jet_pt[j] = list(event.pfjet_pt)[jIndex]
-            if jet_pt[j] > list(event.pfjet_pt)[iMaxPtJ]:
-                maxPtJIndex = j
-            jet_eta[j] = list(event.pfjet_eta)[jIndex]
-            jet_phi[j] = list(event.pfjet_phi)[jIndex]
-            # jet_flavour[j] = list(event.pfjet_flavour)[jIndex]
-        if numJets > 0:
-            deltaR_lep1_jet[0] = deltaR(event, l1Flav, l1Index, "pfjet", iMaxPtJ)
-            deltaR_lep2_jet[0] = deltaR(event, l2Flav, l2Index, "pfjet", iMaxPtJ)
+        if numGoodJets > 0:
+            iMaxPtJ = jets[0] 
+            for j in range(numGoodJets):
+                jIndex = jets[j]
+                jet_pt[j] = list(event.pfjet_pt)[jIndex]
+                if jet_pt[j] > list(event.pfjet_pt)[iMaxPtJ]:
+                    iMaxPtJ = jIndex
+                assert deltaR(event, l1Flav, l1Index, "pfjet", iMaxPtJ) > 0.5
+                jet_eta[j] = list(event.pfjet_eta)[jIndex]
+                assert deltaR(event, l1Flav, l1Index, "pfjet", iMaxPtJ) > 0.5
+                jet_phi[j] = list(event.pfjet_phi)[jIndex]
+                # jet_flavour[j] = list(event.pfjet_flavour)[jIndex]
+
+                deltaR_lep1_jet[0] = deltaR(event, l1Flav, l1Index, "pfjet", \
+                        iMaxPtJ)
+                deltaR_lep2_jet[0] = deltaR(event, l2Flav, l2Index, "pfjet", \
+                        iMaxPtJ)
 
         met_pt[0] = event.pfmet_pt
         met_phi[0] = event.pfmet_phi
