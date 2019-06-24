@@ -1,0 +1,11 @@
+executable  = makeNtupleBkgd.py 
+arguments   = 0 0 1 0
+universe    = vanilla
+output      = ../../condorLogs/makeNtupleBkgd.$(ClusterId).$(ProcId).out
+error       = ../../condorLogs/makeNtupleBkgd.$(ClusterId).$(ProcId).err
+log         = ../../condorLogs/makeNtupleBkgd.$(ClusterId).log
++MaxRuntime = 10000
+
+transfer_input_files = stopSelection.py, bkgd_TTDiLept_files
+
+queue
