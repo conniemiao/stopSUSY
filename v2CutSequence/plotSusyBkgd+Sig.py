@@ -104,7 +104,7 @@ for plotVar in plotVarArr: # add an entry to the plotVar:hist dictionary
     xMax = plotSettings[plotVar][2]
     binwidth = (xMax - xMin)/nBins # include overflow bin
     hBkgd = TH1D(plotVar + "_bkgd", plotVar + "_bkgd", \
-            nBins + 1, xMin, xMax + binwidth)
+            nBins + 1, xMin, xMax)
     hBkgd.SetDirectory(0) # necessary to keep hist from closing
     hBkgdDict.update({plotVar:hBkgd})
     c = TCanvas("c_"+plotVar,"Plot",10,20,1000,700)
@@ -139,12 +139,12 @@ for count, event in enumerate(tBkgd):
                 if jetval <= xMax:
                     hBkgd.Fill(jetval, 1)
                 else: # overflow
-                    hBkgd.Fill(xMax + binwidth/2, 1)
+                    hBkgd.Fill(xMax - binwidth/2, 1)
         else:
             if val <= xMax:
                 hBkgd.Fill(val, 1)
             else: # overflow
-                hBkgd.Fill(xMax + binwidth/2, 1)
+                hBkgd.Fill(xMax - binwidth/2, 1)
 for plotVar in plotVarArr:
     c = canvasDict[plotVar]
     c.cd()
@@ -199,7 +199,7 @@ for fileNum, line in enumerate(sigDataListFile):
         binwidth = (xMax - xMin)/nBins # include overflow bin
         hSigArr = hSigArrDict[plotVar]  # one hist for each signal file
         hSig = TH1D(plotVar + "_sig_" + filename, plotVar + "_sig_" + \
-                filename[21:31], nBins + 1, xMin, xMax + binwidth)
+                filename[21:31], nBins + 1, xMin, xMax)
         hSig.SetDirectory(0)
         hSigArr.append(hSig)
     
@@ -217,12 +217,12 @@ for fileNum, line in enumerate(sigDataListFile):
                     if jetval <= xMax:
                         hSig.Fill(jetval, 1)
                     else: # overflow
-                        hSig.Fill(xMax + binwidth/2, 1)
+                        hSig.Fill(xMax - binwidth/2, 1)
             else:
                 if val <= xMax:
                     hSig.Fill(val, 1)
                 else: # overflow
-                    hSig.Fill(xMax + binwidth/2, 1)
+                    hSig.Fill(xMax - binwidth/2, 1)
 
     hcolor = coloropts[fileNum % len(coloropts)]
     hmarkerstyle = markeropts[(fileNum/len(coloropts)) % len(markeropts)]
