@@ -5,7 +5,7 @@
 # Uses xsec info from sig_SingleStop_files
 
 import sys
-from ROOT import TFile, TTree, TH1F, TCanvas, TLorentzVector, TImage, TLegend
+from ROOT import TFile, TTree, TH1F, TCanvas, TImage, TLegend, TText
 from ROOT import gSystem, gStyle
 import numpy as np
 from math import sqrt
@@ -64,9 +64,11 @@ c1 = TCanvas("c1","Plot",10,20,1000,700)
 gStyle.SetOptStat(0) # don't show any stats
 
 xsec = 67.75 # production cross section
+nEvtsLabels = []
 
 bkgdFile = TFile.Open(bkgdNtupleAdr, "READ")
 hBkgd = bkgdFile.Get("bkgd_cutflow")
+nCuts = hBkgd.GetNbinsX()
 hBkgd.Sumw2()
 hBkgd.SetTitle("Cutflow ("+bkgdNtupleAdr[-18:-14]+", norm to 3000 /fb)")
 hBkgd.GetYaxis().SetTitle("Number of Events")
@@ -113,15 +115,34 @@ for fileNum, line in enumerate(sigDataListFile):
     c1.Update()
 
     print "Num surviving events after each cut from sig %s:" % filename 
-    for i in range(1,hBkgd.GetNbinsX()):
+    for i in range(0,nCuts):
         # print hBkgd.GetXaxis().GetBinLabel(i+1),"S/sqrt(B):",\
         #         hSigArr[fileNum].GetBinContent(i+1)/sqrt(hBkgd.GetBinContent(i+1))
-        print hBkgd.GetXaxis().GetBinLabel(i+1),hSigArr[fileNum].GetBinContent(i+1)
+        hSig = hSigArr[fileNum]
+        print hBkgd.GetXaxis().GetBinLabel(i+1),hSig.GetBinContent(i+1)
+        nEvtsLabel = TText()
+        nEvtsLabel.SetNDC()
+        nEvtsLabel.SetTextSize(0.02)
+        nEvtsLabel.SetTextAlign(22)
+        nEvtsLabel.SetTextAngle(0)
+        nEvtsLabel.SetTextColor(hcolor)
+        nEvtsLabel.DrawText(0.1+0.4/nCuts+0.8*float(i)/nCuts, \
+                0.1+(1+fileNum)*0.02, str(int(hSig.GetBinContent(i+1))))
+        nEvtsLabels.append(nEvtsLabel)
     print
 
 print "Num surviving events after each cut from bkgd:" 
-for i in range(1,hBkgd.GetNbinsX()):
+for i in range(0,nCuts):
     print hBkgd.GetXaxis().GetBinLabel(i+1),hBkgd.GetBinContent(i+1)
+    nEvtsLabel = TText()
+    nEvtsLabel.SetNDC()
+    nEvtsLabel.SetTextSize(0.02)
+    nEvtsLabel.SetTextAlign(22)
+    nEvtsLabel.SetTextAngle(0)
+    nEvtsLabel.SetTextColor(1)
+    nEvtsLabel.DrawText(0.1+0.4/nCuts+0.8*float(i)/nCuts, \
+            0.1+(numSigFiles+1)*0.02, str(int(hBkgd.GetBinContent(i+1))))
+    nEvtsLabels.append(nEvtsLabel)
 print
 
 legend = TLegend(.70,.75,.90,.90)
