@@ -99,12 +99,12 @@ def __selectLepts(event, findingSameFlav, muPreference, maxL1OkEta, maxL2OkEta, 
 # The following methods all call one of the channels of __selectLepts with default
 # max eta, min pt, and max iso values.
 
-def selectMuMu(event, maxL1OkEta=2.4, maxL2OkEta=2.4, l1MinOkPt=30, \
+def selectMuMu(event, maxL1OkEta=2.4, maxL2OkEta=2.4, l1MinOkPt=20, \
         l2MinOkPt=-0.01, maxOkIso=0.1):
     return __selectLepts(event, True, True, maxL1OkEta, maxL2OkEta, \
             l1MinOkPt, l2MinOkPt, maxOkIso)
 
-def selectElEl(event, maxL1OkEta=1.6, maxL2OkEta=1.6, l1MinOkPt=30, \
+def selectElEl(event, maxL1OkEta=1.6, maxL2OkEta=1.6, l1MinOkPt=20, \
         l2MinOkPt=-0.01, maxOkIso=0.1):
     return __selectLepts(event, True, False, maxL1OkEta, maxL2OkEta, \
             l1MinOkPt, l2MinOkPt, maxOkIso)

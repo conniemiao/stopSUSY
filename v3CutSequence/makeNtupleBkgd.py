@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# NOTE: NEEDS  CMD LINE ARGS with values {0 (false) or 1 (true)}: 
+# NOTE: NEEDS 3 CMD LINE ARGS with values {0 (false) or 1 (true)}: 
 # testMode, findingSameFlavor, muPreference 
 # Outputs a ROOT file located in ../myData/ containing 1 tree which contains 
 # the events from all files listed in bkgd_TTDiLept_file that have survived 
