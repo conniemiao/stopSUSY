@@ -22,45 +22,30 @@ def deltaR(event, type1, index1, type2, index2):
     
 #--------------------------------------------------------------------------------#
 
-
-# selects a pair of leptons from an event. 
-# if findingSameFlav is True: selects for pair of muons if muPreference is True, 
+# Selects a pair of leptons from an event (general private helper method). 
+# If findingSameFlav is True: selects for pair of muons if muPreference is True, 
 # or for pair of electrons if False. 
-# if findingSameFlav is False: selects for leading mu and trailing el if
+# If findingSameFlav is False: selects for leading mu and trailing el if
 # muPreference is True, or for leading el and trailing mu if False.
-# returns an array of 2 entries where a[0] = l1Index, a[1] = l2Index, where 
+# Returns an array of 2 entries where a[0] = l1Index, a[1] = l2Index, where 
 # l1 is always the leading lepton (satisfies the higher pt cut), l2 is trailing.
-def selectLepts(event, findingSameFlav, muPreference):
+# All the max/min parameters should be specified by selectMuMu/ElEl/MuEl/ElMu.
+def __selectLepts(event, findingSameFlav, muPreference, maxL1OkEta, maxL2OkEta, \
+        l1MinOkPt, l2MinOkPt, maxOkIso):
     if findingSameFlav:
         if muPreference: # mumu
             l1Flav = "muon"
             l2Flav = "muon"
-            maxL1OkEta = 2.4
-            maxL2OkEta = 2.4
         else: # elel
             l1Flav = "electron"
             l2Flav = "electron"
-            maxL1OkEta = 1.6
-            maxL2OkEta = 1.6
-        l1MinOkPt = 20
-        l2MinOkPt = -0.01 
-        maxOkIso = 0.1
     else:
         if muPreference: # muel
             l1Flav = "muon"
             l2Flav = "electron"
-            l1MinOkPt = 12
-            l2MinOkPt = 15
-            maxL1OkEta = 2.4
-            maxL2OkEta = 1.6 
         else: # elmu
             l1Flav = "electron"
             l2Flav = "muon"
-            l1MinOkPt = 25
-            l2MinOkPt = 5
-            maxL1OkEta = 1.6
-            maxL2OkEta = 2.4
-        maxOkIso = 0.2
 
     # select leading lepton
     l1Index = -1
@@ -111,6 +96,30 @@ def selectLepts(event, findingSameFlav, muPreference):
     return [l1Index, l2Index]
 
 #--------------------------------------------------------------------------------#
+# The following methods all call one of the channels of __selectLepts with default
+# max eta, min pt, and max iso values.
+
+def selectMuMu(event, maxL1OkEta=2.4, maxL2OkEta=2.4, l1MinOkPt=30, \
+        l2MinOkPt=-0.01, maxOkIso=0.1):
+    return __selectLepts(event, True, True, maxL1OkEta, maxL2OkEta, \
+            l1MinOkPt, l2MinOkPt, maxOkIso)
+
+def selectElEl(event, maxL1OkEta=1.6, maxL2OkEta=1.6, l1MinOkPt=30, \
+        l2MinOkPt=-0.01, maxOkIso=0.1):
+    return __selectLepts(event, True, False, maxL1OkEta, maxL2OkEta, \
+            l1MinOkPt, l2MinOkPt, maxOkIso)
+
+def selectMuEl(event, maxL1OkEta=2.4, maxL2OkEta=1.6, l1MinOkPt=12, \
+        l2MinOkPt=15, maxOkIso=0.2):
+    return __selectLepts(event, False, True, maxL1OkEta, maxL2OkEta, \
+            l1MinOkPt, l2MinOkPt, maxOkIso)
+
+def selectElMu(event, maxL1OkEta=1.6, maxL2OkEta=2.4, l1MinOkPt=25, \
+        l2MinOkPt=5, maxOkIso=0.2):
+    return __selectLepts(event, False, False, maxL1OkEta, maxL2OkEta, \
+            l1MinOkPt, l2MinOkPt, maxOkIso)
+
+#--------------------------------------------------------------------------------#
 
 # loops over all jets for this event and returns an array of all the indices
 # that contain valid jets, given the flavs and indices of the 2 selected
@@ -133,22 +142,15 @@ def findValidJets(event, l1Flav, l1Index, l2Flav, l2Index):
 
 #--------------------------------------------------------------------------------#
     
-# performs btag cuts on an event, given the jets array containing the indices of
-# the accepted jets. returns number of medium cut btags.
-def getNumBtag(event, jets):
+# Given the jets array containing the indices of the accepted jets, returns 
+# number of btags fulfilling some strictness (0=loose, 1=medium, 2=tight).
+def getNumBtag(event, jets, strictness=1):
     # bool pfjet_btag[jet][0, 1, 2]: 0, 1, 2 = passed loose, medium, tight cuts
     # stored as float so > 0.5 = True
     pfjet_btag = np.reshape(event.pfjet_btag, (event.pfjet_count,10))
-    numBTagLoose = 0
     numBTag = 0
-    numBTagTight = 0
     for jIndex in jets:
-        if pfjet_btag[jIndex, 0] > 0.5:
-            numBTagLoose += 1
-        if pfjet_btag[jIndex, 1] > 0.5:
-            numBTag += 1
-        if pfjet_btag[jIndex, 2] > 0.5:
-            numBTagTight += 1
+        if pfjet_btag[jIndex, strictness] > 0.5: numBTag += 1
     return numBTag
 
 #--------------------------------------------------------------------------------#
