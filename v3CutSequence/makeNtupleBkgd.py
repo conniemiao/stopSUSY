@@ -16,7 +16,6 @@ from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
 import numpy as np
 from math import sqrt, cos
 from array import array
-from collections import OrderedDict
 
 assert len(sys.argv) == 4, "need 3 command line args: testMode{0,1}, findingSameFlavor{0,1}, muPreference{0,1}"
 
@@ -57,7 +56,7 @@ outDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
 outName = outDir+"stopCut_"
 if numBkgdFiles < 10: outName += "0"+str(numBkgdFiles)+"Bkgd_TTDiLept_"
 else: outName += str(numBkgdFiles)+"Bkgd_TTDiLept_"
-outName += l1Flav[:2]+l2Flav[:2]
+outName += l1Flav[:2]+l2Flav[:2]+".root"
 
 outFile = TFile(outName, "recreate")
 
@@ -172,6 +171,7 @@ for fileNum, line in enumerate(bkgdDataListFile):
         # Save all the leptons' and jets' info for this event if it could possibly
         # contain a good lepton pair.
         assert l1Index > -1
+        muon_count[0] = event.muon_count
         for i in range(event.muon_count):
             muon_pt[i] = list(getattr(event, "muon_pt"))[i]
             muon_eta[i] = list(getattr(event, "muon_eta"))[i]
@@ -182,6 +182,7 @@ for fileNum, line in enumerate(bkgdDataListFile):
                     (1 - cos(muon_phi[i] - event.pfmet_phi)))
 
         assert l2Index > -1
+        electron_count[0] = event.electron_count
         for i in range(event.electron_count):
             electron_pt[i] = list(getattr(event, "electron_pt"))[i]
             electron_eta[i] = list(getattr(event, "electron_eta"))[i]

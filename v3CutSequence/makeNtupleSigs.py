@@ -15,7 +15,6 @@ from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
 import numpy as np
 from math import sqrt, cos
 from array import array
-from collections import OrderedDict
 
 assert len(sys.argv) == 4, "need 3 command line args: testMode{0,1}, findingSameFlavor{0,1}, muPreference{0,1}"
 
@@ -54,15 +53,9 @@ outDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
 outName = outDir+"stopCut_"
 if numSigFiles < 10: outName += "0"+str(numSigFiles)
 else: outName += str(numSigFiles)
-outName += "Sig_"+l1Flav[:2]+l2Flav[:2]
+outName += "Sig_"+l1Flav[:2]+l2Flav[:2]+".root"
 
 outFile = TFile(outName, "recreate")
-
-# number of events surviving after each cut.
-# cuts = OrderedDict([("no cut",0), ("dilepton",1), ("deltaR(ll)>0.3",2), \
-#         ("nbtag<2",3), ("MET>80",4), ("no 3rd lepton",5), ("njets<4",6)])
-cuts = OrderedDict([("no cut",0), ("dilepton",1), ("nbtag<2",2), ("MET>80",3),\
-        ("no 3rd lepton",4), ("njets<4",5)])
 
 #--------------------------------------------------------------------------------#
 # ************* Make all the arrays. *************
@@ -103,7 +96,6 @@ for fileNum, line in enumerate(sigDataListFile):
 
     # SET UP THE OUTPUT TREE
     tSig = TTree("tSig"+str(fileNum), "SUSY stop cut events")
-    tSig = TTree("tBkgd", "SUSY stop cut events")
     tSig.Branch("muon_count", muon_count, "muon_count/i")
     tSig.Branch("muon_pt", muon_pt, "muon_pt[20]/F")
     tSig.Branch("muon_eta", muon_eta, "muon_eta[20]/F")
@@ -178,6 +170,7 @@ for fileNum, line in enumerate(sigDataListFile):
         # Save all the leptons' and jets' info for this event if it could possibly
         # contain a good lepton pair.
         assert l1Index > -1
+        muon_count[0] = event.muon_count
         for i in range(event.muon_count):
             muon_pt[i] = list(getattr(event, "muon_pt"))[i]
             muon_eta[i] = list(getattr(event, "muon_eta"))[i]
@@ -188,6 +181,7 @@ for fileNum, line in enumerate(sigDataListFile):
                     (1 - cos(muon_phi[i] - event.pfmet_phi)))
 
         assert l2Index > -1
+        electron_count[0] = event.electron_count
         for i in range(event.electron_count):
             electron_pt[i] = list(getattr(event, "electron_pt"))[i]
             electron_eta[i] = list(getattr(event, "electron_eta"))[i]
@@ -228,7 +222,7 @@ for fileNum, line in enumerate(sigDataListFile):
 outFile.Close()
 
 # f = TFile.Open(outName, "READ")
-# t = f.Get("tBkgd")
+# t = f.Get("tSig")
 # for event in t:
 #     for j in range(event.jet_count):
 #         print event.jet_pt[j]

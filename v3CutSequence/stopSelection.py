@@ -10,8 +10,8 @@ from math import sqrt, cos
 # objets of that type (index1, index2). types allowed are "muon", "electron", or
 # "pfjet"
 def deltaR(event, type1, index1, type2, index2):
-    assert type1 == "muon" or type1 == "electron" or type1 == "pfjet"
-    assert type2 == "muon" or type2 == "electron" or type2 == "pfjet"
+    assert type1=="muon" or type1=="electron" or type1=="pfjet" or type1=="jet"
+    assert type2=="muon" or type2=="electron" or type2=="pfjet" or type2=="jet"
     
     eta1 = list(getattr(event, type1+"_eta"))[index1]
     eta2 = list(getattr(event, type2+"_eta"))[index2]
