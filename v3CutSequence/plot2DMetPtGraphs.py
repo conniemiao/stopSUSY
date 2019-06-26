@@ -13,8 +13,8 @@
 # Possible lastcuts: listed in cuts below.
 
 import sys
-from ROOT import TFile, TTree, TH2F, TCanvas, TImage, TLegend
-from ROOT import gSystem, gStyle, gROOT, kTRUE
+from ROOT import TFile, TTree, TH2F, TCanvas, TImage, TLegend, TPaletteAxis
+from ROOT import gSystem, gStyle, gROOT, kTRUE, gPad
 from stopSelection import deltaR,  getNumBtag, findValidJets
 from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
 from collections import OrderedDict
@@ -29,13 +29,13 @@ assert lastcut in cuts, "invalid last cut %s" % lastcut
 nCuts = cuts[lastcut]+1
 
 plotSettings = { # [nBins,xMin,xMax]
-        "lep1_pt":[10,0,400,"[Gev]"],
-        "lep2_pt":[10,0,400,"[GeV]"],
-        "lep1_mt":[10,0,500,"[GeV]"],
-        "lep2_mt":[10,0,500,"[GeV]"],
-        "met_pt":[10,0,500,"[GeV]"],
-        "lep1_eta":[10,-4,4,""],
-        "lep2_eta":[10,-4,4,""],
+        "lep1_pt":[20,0,400,"[Gev]"],
+        "lep2_pt":[20,0,400,"[GeV]"],
+        "lep1_mt":[20,0,500,"[GeV]"],
+        "lep2_mt":[20,0,500,"[GeV]"],
+        "met_pt":[20,0,500,"[GeV]"],
+        "lep1_eta":[20,-4,4,""],
+        "lep2_eta":[20,-4,4,""],
         }
 
 plotVarsXY = sys.argv[6:8] # x, y
@@ -46,6 +46,8 @@ testMode = bool(int(sys.argv[1]))
 print "Test mode:", testMode
 displayMode = bool(int(sys.argv[2]))
 print "Display mode:", displayMode
+if not displayMode:
+    gROOT.SetBatch(kTRUE) # prevent displaying canvases
 # applying cuts
 # selecting for either mu-mu or el-el (as opposed to mu-el or el-mu)
 findingSameFlavor = bool(int(sys.argv[3]))
@@ -104,9 +106,13 @@ hBkgd = TH2F(plotVarsXY[1]+"_"+plotVarsXY[0]+"_bkgd", \
 lumi = 3000000 # luminosity = 3000 /fb = 3,000,000 /fb
 
 c = TCanvas("c","Plot",10,20,1000,700)
+gStyle.SetPalette(1)
+gStyle.SetStatX(0.9)
+gStyle.SetStatY(0.9)
 
 #--------------------------------------------------------------------------------#
 # *************** Filling bkgd data summed together  ************
+print
 print "Plotting " + plotVarsXY[1] + " vs. " + plotVarsXY[0] + " from background."
 xsec = 67.75 # production cross section
 bkgdFile = TFile.Open(bkgdNtupleAdr, "READ")
@@ -172,8 +178,6 @@ for count, event in enumerate(inTree):
     # ********** Plotting. ***********
     valXY = []
     for plotVar in plotVarsXY:
-        xMin = plotSettings[plotVar][1]
-        xMax = plotSettings[plotVar][2]
         if plotVar[:4] == "lep1": 
             valXY.append(np.reshape(getattr(event, l1Flav+plotVar[4:]),\
                     20)[l1Index])
@@ -203,9 +207,9 @@ hBkgd.GetXaxis().SetTitle(plotVarsXY[0]+" "+unitsLabelX)
 hBkgd.GetYaxis().SetTitle(plotVarsXY[1]+" "+unitsLabelY)
 hBkgd.Scale(xsec*lumi/totOrigNentries)
 hBkgd.SetLineColor(1) # black
-gStyle.SetStatX(0.9)
-gStyle.SetStatY(0.9)
-hBkgd.Draw("hist colz")
+hBkgd.Draw("colz")
+gPad.Update()
+hBkgd.GetZaxis().SetLabelSize(0.02)
 c.Update()
 if displayMode:
     print "Done plotting bkgd 2d hist. Press enter to continue."
@@ -213,7 +217,7 @@ if displayMode:
 else:
     gSystem.ProcessEvents()
     imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-            "plots/v3CutSequence/bkgd_"+plotVarsXY[1]+"_"+plotVarsXY[0]+\
+            "plots/v3CutSequence/bkgd_"+plotVarsXY[1]+"_"+plotVarsXY[0]+"_"+\
             channelName+"_"+lastcut+".png"
     print "Saving image", imgName
     img = TImage.Create()
@@ -229,6 +233,7 @@ sigDataListFile = open("sig_SingleStop_files_nentries")
 
 hSigArr = []
 for fileNum, line in enumerate(sigDataListFile):
+    print
     if fileNum + 1 > numSigFiles: break
 
     filename, xsec, origNentries = line.split(" ")
@@ -242,8 +247,8 @@ for fileNum, line in enumerate(sigDataListFile):
     print("nentries={0:d}".format(nentries))
     assert nentries > 0, "You have no events in your tree..."
 
-    hSigArr.append(TH2F(plotVarsXY[1]+"_"+plotVarsXY[0]+"_sig_"+filename[19:24], \
-            plotVarsXY[1]+"_"+plotVarsXY[0] +"_sig_"+filename[19:24], \
+    hSigArr.append(TH2F(plotVarsXY[1]+"_"+plotVarsXY[0]+"_sig_"+filename[21:31], \
+            plotVarsXY[1]+"_"+plotVarsXY[0] +"_sig_"+filename[21:31], \
             nBinsX, xMin, xMax, nBinsY, yMin, yMax))
     
     for count, event in enumerate(inTree):
@@ -293,8 +298,6 @@ for fileNum, line in enumerate(sigDataListFile):
         # ********** Plotting. ***********
         valXY = []
         for plotVar in plotVarsXY:
-            xMin = plotSettings[plotVar][1]
-            xMax = plotSettings[plotVar][2]
             if plotVar[:4] == "lep1": 
                 valXY.append(np.reshape(getattr(event, l1Flav+plotVar[4:]),\
                         20)[l1Index])
@@ -315,8 +318,16 @@ for fileNum, line in enumerate(sigDataListFile):
                 hSigArr[fileNum].Fill(valXY[0], valXY[1], 1)
 
     hSigArr[fileNum].Sumw2()
+    title = plotVarsXY[1]+" v. "+plotVarsXY[0]+" ("+channelName+\
+            ", cuts to "+lastcut+")"
+    hSigArr[fileNum].SetTitle(title)
+    unitsLabelX = plotSettings[plotVarsXY[0]][3]
+    unitsLabelY = plotSettings[plotVarsXY[1]][3]
+    hSigArr[fileNum].GetXaxis().SetTitle(plotVarsXY[0]+" "+unitsLabelX)
+    hSigArr[fileNum].GetYaxis().SetTitle(plotVarsXY[1]+" "+unitsLabelY)
     hSigArr[fileNum].Scale(xsec*lumi/origNentries)
-    hSigArr[fileNum].Draw("hist colz")
+    hSigArr[fileNum].Draw("colz")
+    hSigArr[fileNum].GetZaxis().SetLabelSize(0.02)
     c.Update()
     if displayMode:
         print "Done plotting sig%i 2d hist. Press enter to continue." %fileNum
@@ -324,8 +335,8 @@ for fileNum, line in enumerate(sigDataListFile):
     else:
         gSystem.ProcessEvents()
         imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-                "plots/v3CutSequence/sig"+fileNum+"_"+plotVarsXY[1]+"_"+\
-                plotVarsXY[0]+channelName+"_"+lastcut+".png"
+                "plots/v3CutSequence/sig"+str(fileNum)+"_"+plotVarsXY[1]+"_"+\
+                plotVarsXY[0]+"_"+channelName+"_"+lastcut+".png"
         print "Saving image", imgName
         img = TImage.Create()
         img.FromPad(c)
