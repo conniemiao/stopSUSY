@@ -28,6 +28,7 @@ assert len(sys.argv) >= 7, "need at least 6 command line args: testMode{0,1}, di
 cuts = OrderedDict([("nocut",0), ("dilepton",1), ("nbtag<2",2), ("MET>80",3),\
         ("no3rdlept",4), ("njets<4",5)])
 lastcut = sys.argv[5]
+assert lastcut in cuts, "invalid last cut %s" % lastcut
 nCuts = cuts[lastcut]+1
 
 plotVarArr = sys.argv[6:]
@@ -73,6 +74,7 @@ print "Finding same flavor:", findingSameFlavor
 # only applies if findingSameFlav; selects for mu-mu as opposed to el-el
 muPreference = bool(int(sys.argv[4]))
 print "Mu preference:", muPreference
+channelName = ""
 if findingSameFlavor:
     if muPreference: 
         l1Flav = "muon"
@@ -83,6 +85,7 @@ if findingSameFlavor:
 else: 
     l1Flav = "muon"
     l2Flav = "electron"
+channelName = l1Flav[:2] + l2Flav[:2]
 
 # assemble the sigsNtupleAdr and bkgdNtupleAdr
 # number of files to process
@@ -97,10 +100,11 @@ if numSigFiles < 10: sigsNtupleAdr += "0"+str(numSigFiles)
 else: sigsNtupleAdr += str(numSigFiles)
 if numBkgdFiles < 10: bkgdNtupleAdr += "0"+str(numBkgdFiles)
 else: bkgdNtupleAdr += str(numBkgdFiles)
-bkgdNtupleAdr += "Bkgd_TTDiLept_"+l1Flav[:2]+l2Flav[:2]+".root"
-sigsNtupleAdr += "Sig_"+l1Flav[:2]+l2Flav[:2]+".root"
+bkgdNtupleAdr += "Bkgd_TTDiLept_"+channelName+".root"
+sigsNtupleAdr += "Sig_"+channelname+".root"
 
 print "Plotting",str(plotVarArr),"from",bkgdNtupleAdr,"and",sigsNtupleAdr
+print "Cutting events up to and including", lastcut
 
 numSigFiles = int(sigsNtupleAdr[48:50])
 
@@ -130,6 +134,7 @@ gStyle.SetOptStat(0) # don't show any stats
 #--------------------------------------------------------------------------------#
 
 # *************** Filling bkgd data summed together  ************
+print
 print "Plotting from background."
 xsec = 67.75 # ttbar production cross section
 bkgdFile = TFile.Open(bkgdNtupleAdr, "READ")
@@ -141,6 +146,7 @@ assert nentries > 0, "You have no events in your tree..."
 
 hBkgdCutflow = hBkgdDict["cutflow"] 
 for i, cut in enumerate(cuts, start=1):
+    if i>nCuts: break
     hBkgdCutflow.GetXaxis().SetBinLabel(i, cut)
 
 totOrigNentries = 0
@@ -156,11 +162,13 @@ for count, event in enumerate(tBkgd):
     hBkgdCutflow.Fill(cuts["nocut"])
 
     # ********** Additional cuts. ***********
-    if cuts[lastcut] < cuts["dilepton"]: continue
     if findingSameFlavor:
         if muPreference:
             lepIndices = selectMuMu(event)
-        else: lepIndices = selectElEl(event)
+            # l1Flav, l2Flav set at runtime
+        else: 
+            lepIndices = selectElEl(event)
+            # l1Flav, l2Flav set at runtime
         if lepIndices is None: continue
     else:
         lepIndices = selectMuEl(event)
@@ -178,30 +186,31 @@ for count, event in enumerate(tBkgd):
     # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
     # hBkgdCutflow.Fill(cuts["deltaR(ll)>0.3"])
 
-    if cuts[lastcut] < cuts["nbtag<2"]: continue
-    if event.nbtag > 1: continue
-    hBkgdCutflow.Fill(cuts["nbtag<2"])
+    if nCuts > cuts["nbtag<2"]:
+        if event.nbtag > 1: continue
+        hBkgdCutflow.Fill(cuts["nbtag<2"])
 
-    if cuts[lastcut] < cuts["MET>80"]: continue
-    if event.met_pt < 80: continue
-    hBkgdCutflow.Fill(cuts["MET>80"])
+    if nCuts > cuts["MET>80"]:
+        if event.met_pt < 80: continue
+        hBkgdCutflow.Fill(cuts["MET>80"])
 
-    if cuts[lastcut] < cuts["no3rdlept"]: continue
-    # veto (3rd lepton) checks:
-    if findingSameFlavor:
-        # event should not give valid muel or elmu pair
-        if selectMuEl(event) is not None: continue
-        if selectElMu(event) is not None: continue
-    else:
-        # event should not give valid mumu or elel pair
-        if selectMuMu(event) is not None: continue
-        if selectElEl(event) is not None: continue
-    hBkgdCutflow.Fill(cuts["no3rdlept"])
-    
-    if cuts[lastcut] < cuts["njets<4"]: continue
-    if event.njets >= 4: continue
-    hBkgdCutflow.Fill(cuts["njets<4"])
+    if nCuts > cuts["no3rdlept"]:
+        # veto (3rd lepton) checks:
+        if findingSameFlavor:
+            # event should not give valid muel or elmu pair
+            if selectMuEl(event) is not None: continue
+            if selectElMu(event) is not None: continue
+        else:
+            # event should not give valid mumu or elel pair
+            if selectMuMu(event) is not None: continue
+            if selectElEl(event) is not None: continue
+        hBkgdCutflow.Fill(cuts["no3rdlept"])
+        
+    if nCuts > cuts["njets<4"]:
+        if event.njets >= 4: continue
+        hBkgdCutflow.Fill(cuts["njets<4"])
 
+    # ********** Plotting. ***********
     if event.njets > 0:
         jMaxPt = 0
         for j in range(event.njets):
@@ -209,8 +218,6 @@ for count, event in enumerate(tBkgd):
                     np.reshape(event.jet_pt,20)[jMaxPt]: jMaxPt = j
         dR_lep1_jet = deltaR(event, l1Flav, l1Index, "jet", jMaxPt)
         dR_lep2_jet = deltaR(event, l2Flav, l2Index, "jet", jMaxPt)
-
-    # ********** Plotting. ***********
     for plotVar in plotVarArr:
         if plotVar == "cutflow": break
 
@@ -242,7 +249,7 @@ for plotVar in plotVarArr:
     c.cd()
     hBkgd = hBkgdDict[plotVar]
     hBkgd.Sumw2()
-    title = plotVar+" ("+l1Flav[:2]+l2Flav[:2]+", cuts to "+lastcut+")"
+    title = plotVar+" ("+channelName+", cuts to "+lastcut+")"
     hBkgd.SetTitle(title)
     unitsLabel = plotSettings[plotVar][3]
     hBkgd.GetXaxis().SetTitle(plotVar+" "+unitsLabel)
@@ -312,6 +319,7 @@ for fileNum, line in enumerate(sigDataListFile):
 
     hSigCutflow = hSigArrDict["cutflow"][fileNum]
     for i, cut in enumerate(cuts, start=1):
+        if i>nCuts: break
         hSigCutflow.GetXaxis().SetBinLabel(i, cut)
 
     # ********** Looping over events. ***********
@@ -320,11 +328,13 @@ for fileNum, line in enumerate(sigDataListFile):
         hSigCutflow.Fill(cuts["nocut"])
 
         # ********** Additional cuts. ***********
-        if cuts[lastcut] < cuts["dilepton"]: continue
         if findingSameFlavor:
             if muPreference:
                 lepIndices = selectMuMu(event)
-            else: lepIndices = selectElEl(event)
+                # l1Flav, l2Flav set at runtime
+            else: 
+                lepIndices = selectElEl(event)
+                # l1Flav, l2Flav set at runtime
             if lepIndices is None: continue
         else:
             lepIndices = selectMuEl(event)
@@ -343,30 +353,31 @@ for fileNum, line in enumerate(sigDataListFile):
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
         # hSigCutflow.Fill(cuts["deltaR(ll)>0.3"])
 
-        if cuts[lastcut] < cuts["nbtag<2"]: continue
-        if event.nbtag > 1: continue
-        hSigCutflow.Fill(cuts["nbtag<2"])
+        if nCuts > cuts["nbtag<2"]:
+            if event.nbtag > 1: continue
+            hSigCutflow.Fill(cuts["nbtag<2"])
 
-        if cuts[lastcut] < cuts["MET>80"]: continue
-        if event.met_pt < 80: continue
-        hSigCutflow.Fill(cuts["MET>80"])
+        if nCuts > cuts["MET>80"]:
+            if event.met_pt < 80: continue
+            hSigCutflow.Fill(cuts["MET>80"])
 
-        if cuts[lastcut] < cuts["no3rdlept"]: continue
-        # veto (3rd lepton) checks:
-        if findingSameFlavor:
-            # event should not give valid muel or elmu pair
-            if selectMuEl(event) is not None: continue
-            if selectElMu(event) is not None: continue
-        else:
-            # event should not give valid mumu or elel pair
-            if selectMuMu(event) is not None: continue
-            if selectElEl(event) is not None: continue
-        hSigCutflow.Fill(cuts["no3rdlept"])
+        if nCuts > cuts["no3rdlept"]:
+            # veto (3rd lepton) checks:
+            if findingSameFlavor:
+                # event should not give valid muel or elmu pair
+                if selectMuEl(event) is not None: continue
+                if selectElMu(event) is not None: continue
+            else:
+                # event should not give valid mumu or elel pair
+                if selectMuMu(event) is not None: continue
+                if selectElEl(event) is not None: continue
+            hSigCutflow.Fill(cuts["no3rdlept"])
         
-        if cuts[lastcut] < cuts["njets<4"]: continue
-        if event.njets >= 4: continue
-        hSigCutflow.Fill(cuts["njets<4"])
+        if nCuts > cuts["njets<4"]:
+            if event.njets >= 4: continue
+            hSigCutflow.Fill(cuts["njets<4"])
 
+        # ********** Plotting. ***********
         if event.njets > 0:
             jMaxPt = 0
             for j in range(event.njets):
@@ -375,7 +386,6 @@ for fileNum, line in enumerate(sigDataListFile):
             dR_lep1_jet = deltaR(event, l1Flav, l1Index, "jet", jMaxPt)
             dR_lep2_jet = deltaR(event, l2Flav, l2Index, "jet", jMaxPt)
 
-        # ********** Plotting. ***********
         for plotVar in plotVarArr:
             if plotVar == "cutflow": break
 
@@ -460,8 +470,7 @@ else:
     gSystem.ProcessEvents()
     for plotVar in plotVarArr:
         imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-                "plots/v3CutSequence/"+plotVar+"_"+l1Flav[:2]+l2Flav[:2]+\
-                "_"+lastcut+".png"
+                "plots/v3CutSequence/"+plotVar+"_"+channelname+"_"+lastcut+".png"
         print "Saving image", imgName
         img = TImage.Create()
         img.FromPad(canvasDict[plotVar])

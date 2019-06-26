@@ -1,167 +1,349 @@
 #!/usr/bin/env python
 
-# Draws 2D hist for data for some variable, for the summed bkgd data and for each 
-# of the signal files (e.g. met vs. pt(l), met vs. mt(l)).
-# Uses the root file outputted by makeSusyBkgd+SigRoot.py
-# Uses xsec info from sig_SingleStop_files
+# NOTE: NEEDS 7 CMD LINE ARGS with values {0 (false) or 1 (true)}: 
+# testMode, displayMode, findingSameFlavor, muPreference, lastcut, plotVarX, 
+# plotVarY
+# True testMode plots only a few events; True displayMode displays rather than 
+# saves w/o displaying the hists.
+# Implements additional cuts and then draws a 2D hist for the summed bkgd data 
+# and for each of the signal files (e.g. met vs. pt(l), met vs. mt(l)).
+# Uses the root files outputted by makeNtupleBkgd.py and makeNtupleSigs.py
+# Uses nentries info from bkgd_TTDiLept_files_nentries
+# Uses xsec and nentries info from sig_SingleStop_files_nentries
+# Possible lastcuts: listed in cuts below.
 
+import sys
 from ROOT import TFile, TTree, TH2F, TCanvas, TImage, TLegend
-from ROOT import gSystem, gStyle
+from ROOT import gSystem, gStyle, gROOT, kTRUE
+from stopSelection import deltaR,  getNumBtag, findValidJets
+from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
+from collections import OrderedDict
 import numpy as np
 
-plotVarY = "met_pt" # y-axis variable
-plotVarX = "lep1_pt" # x-axis variable
+assert len(sys.argv) == 8, "need 7 command line args: testMode{0,1}, displayMode{0,1}, findingSameFlavor{0,1}, muPreference{0,1}, lastcut, plotVarX, plotVarY"
 
-# copy in the output name from running makeSusyBkgd+SigRoot.py:
-allDataFile = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/stopCut_02Bkgd_TTDiLept_02Sig_mumu.root"
-print "Plotting from "+allDataFile
+cuts = OrderedDict([("nocut",0), ("dilepton",1), ("nbtag<2",2), ("MET>80",3),\
+        ("no3rdlept",4), ("njets<4",5)])
+lastcut = sys.argv[5]
+assert lastcut in cuts, "invalid last cut %s" % lastcut
+nCuts = cuts[lastcut]+1
 
 plotSettings = { # [nBins,xMin,xMax]
-        "lep1_pt":[500,0,400], 
-        "lep2_pt":[500,0,400],
-        "mtlep1":[500,0,500],
-        "mtlep2":[500,0,500],
-        "met_pt":[500,0,500],
+        "lep1_pt":[10,0,400,"[Gev]"],
+        "lep2_pt":[10,0,400,"[GeV]"],
+        "lep1_mt":[10,0,500,"[GeV]"],
+        "lep2_mt":[10,0,500,"[GeV]"],
+        "met_pt":[10,0,500,"[GeV]"],
+        "lep1_eta":[10,-4,4,""],
+        "lep2_eta":[10,-4,4,""],
         }
-numSigFiles = int(allDataFile[64:66])
+
+plotVarsXY = sys.argv[6:8] # x, y
+for plotVar in plotVarsXY:
+    assert (plotVar in plotSettings), "invalid plotVar %s" % plotVar
+
+testMode = bool(int(sys.argv[1]))
+print "Test mode:", testMode
+displayMode = bool(int(sys.argv[2]))
+print "Display mode:", displayMode
+# applying cuts
+# selecting for either mu-mu or el-el (as opposed to mu-el or el-mu)
+findingSameFlavor = bool(int(sys.argv[3]))
+print "Finding same flavor:", findingSameFlavor
+# only applies if findingSameFlav; selects for mu-mu as opposed to el-el
+muPreference = bool(int(sys.argv[4]))
+print "Mu preference:", muPreference
+if findingSameFlavor:
+    if muPreference: 
+        l1Flav = "muon"
+        l2Flav = "muon"
+    else: 
+        l1Flav = "electron"
+        l2Flav = "electron"
+else: 
+    l1Flav = "muon"
+    l2Flav = "electron"
+channelName = l1Flav[:2] + l2Flav[:2]
+
+# assemble the sigsNtupleAdr and bkgdNtupleAdr
+# number of files to process
+numBkgdFiles = 27  # need to loop over all the files in order to have correct xsec
+if testMode: 
+    numBkgdFiles = 2 
+numSigFiles = 2 # max 25
+baseDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
+bkgdNtupleAdr = baseDir+"stopCut_"
+sigsNtupleAdr = baseDir+"stopCut_"
+if numSigFiles < 10: sigsNtupleAdr += "0"+str(numSigFiles)
+else: sigsNtupleAdr += str(numSigFiles)
+if numBkgdFiles < 10: bkgdNtupleAdr += "0"+str(numBkgdFiles)
+else: bkgdNtupleAdr += str(numBkgdFiles)
+bkgdNtupleAdr += "Bkgd_TTDiLept_"+channelName+".root"
+sigsNtupleAdr += "Sig_"+channelName+".root"
+print "Plotting",str(plotVarsXY),"from",bkgdNtupleAdr,"and",sigsNtupleAdr
+print "Cutting events up to and including", lastcut
+
+numSigFiles = int(sigsNtupleAdr[48:50])
+
 testMode = True 
 if numSigFiles > 10: testMode = False 
-nBinsX = plotSettings[plotVarX][0]
+nBinsX = plotSettings[plotVarsXY[0]][0]
 if not testMode: nBinsX = nBinsX * 5
-xMin = plotSettings[plotVarX][1]
-xMax = plotSettings[plotVarX][2]
+xMin = plotSettings[plotVarsXY[0]][1]
+xMax = plotSettings[plotVarsXY[0]][2]
 binwidthX = (xMax - xMin)/nBinsX # include overflow bin
-nBinsY = plotSettings[plotVarY][0]
+nBinsY = plotSettings[plotVarsXY[1]][0]
 if not testMode: nBinsY = nBinsY * 5
-yMin = plotSettings[plotVarY][1]
-yMax = plotSettings[plotVarY][2]
+yMin = plotSettings[plotVarsXY[1]][1]
+yMax = plotSettings[plotVarsXY[1]][2]
 binwidthY = (yMax - yMin)/nBinsY # include overflow bin
 
-hBkgd = TH2F(plotVarY+"_"+plotVarX+"_bkgd", plotVarY+"_"+plotVarX+"_bkgd", \
-        nBinsX + 1, xMin, xMax + binwidthX, nBinsY + 1, yMin, yMax + binwidthY)
+hBkgd = TH2F(plotVarsXY[1]+"_"+plotVarsXY[0]+"_bkgd", \
+        plotVarsXY[1]+"_"+plotVarsXY[0]+"_bkgd", \
+        nBinsX, xMin, xMax, nBinsY, yMin, yMax)
 lumi = 3000000 # luminosity = 3000 /fb = 3,000,000 /fb
 
-c1 = TCanvas("c1","Plot",10,20,1000,700)
-gStyle.SetOptStat(0) # don't show any stats
-
-inFile = TFile.Open(allDataFile)
+c = TCanvas("c","Plot",10,20,1000,700)
 
 #--------------------------------------------------------------------------------#
 # *************** Filling bkgd data summed together  ************
-print "Plotting " + plotVarY + " vs. " + plotVarX + " from background."
+print "Plotting " + plotVarsXY[1] + " vs. " + plotVarsXY[0] + " from background."
 xsec = 67.75 # production cross section
-inTree = inFile.Get("tBkgd")
+bkgdFile = TFile.Open(bkgdNtupleAdr, "READ")
+inTree = bkgdFile.Get("tBkgd")
+
+totOrigNentries = 0
+bkgdDataListFile = open("bkgd_TTDiLept_files_nentries")
+for line in bkgdDataListFile:
+    line = line.rstrip('\n')
+    filename, origNentries = line.split(" ")
+    totOrigNentries += int(origNentries)
 
 nentries = inTree.GetEntries()
 print("nentries={0:d}".format(nentries))
 assert nentries > 0, "You have no events in your tree..."
 
+# ********** Looping over events. ***********
 for count, event in enumerate(inTree):
     if count % 500000 == 0: print("count={0:d}".format(count))
-    valX = getattr(event, plotVarX)
-    valY = getattr(event,plotVarY)
-    if valX > xMax:
-        if valY > yMax: # x and y overflow
-            hBkgd.Fill(xMax + binwidthX/2, yMax + binwidthY/2, 1)
-        else: # x overflow, y in range
-            hBkgd.Fill(xMax + binwidthX/2, valY, 1)
+    # ********** Additional cuts. ***********
+    if findingSameFlavor:
+        if muPreference:
+            lepIndices = selectMuMu(event)
+            # l1Flav, l2Flav set at runtime
+        else: 
+            lepIndices = selectElEl(event)
+            # l1Flav, l2Flav set at runtime
+        if lepIndices is None: continue
     else:
-        if valY > yMax: # x in range, y overflow
-            hBkgd.Fill(valX, yMax + binwidthY/2, 1)
+        lepIndices = selectMuEl(event)
+        l1Flav = "muon"
+        l2Flav = "electron"
+        if lepIndices is None:
+            lepIndices = selectElMu(event)
+            if lepIndices is None: continue
+            l1Flav = "electron"
+            l2Flav = "muon"
+    l1Index = lepIndices[0]
+    l2Index = lepIndices[1]
+
+    # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
+
+    if nCuts > cuts["nbtag<2"]:
+        if event.nbtag > 1: continue
+
+    if nCuts > cuts["MET>80"]:
+        if event.met_pt < 80: continue
+
+    if nCuts > cuts["no3rdlept"]:
+        # veto (3rd lepton) checks:
+        if findingSameFlavor:
+            # event should not give valid muel or elmu pair
+            if selectMuEl(event) is not None: continue
+            if selectElMu(event) is not None: continue
+        else:
+            # event should not give valid mumu or elel pair
+            if selectMuMu(event) is not None: continue
+            if selectElEl(event) is not None: continue
+        
+    if nCuts > cuts["njets<4"]:
+        if event.njets >= 4: continue
+
+    # ********** Plotting. ***********
+    valXY = []
+    for plotVar in plotVarsXY:
+        xMin = plotSettings[plotVar][1]
+        xMax = plotSettings[plotVar][2]
+        if plotVar[:4] == "lep1": 
+            valXY.append(np.reshape(getattr(event, l1Flav+plotVar[4:]),\
+                    20)[l1Index])
+        elif plotVar[:4] == "lep2": 
+            valXY.append(np.reshape(getattr(event, l2Flav+plotVar[4:]), \
+                    20)[l2Index])
+        else: valXY.append(getattr(event, plotVar))
+
+    if valXY[0] > xMax:
+        if valXY[1] > yMax: # x and y overflow
+            hBkgd.Fill(xMax - binwidthX/2, yMax - binwidthY/2, 1)
+        else: # x overflow, y in range
+            hBkgd.Fill(xMax - binwidthX/2, valXY[1], 1)
+    else:
+        if valXY[1] > yMax: # x in range, y overflow
+            hBkgd.Fill(valXY[0], yMax - binwidthY/2, 1)
         else: # x in range, y in range
-            hBkgd.Fill(valX, valY, 1)
+            hBkgd.Fill(valXY[0], valXY[1], 1)
 hBkgd.Sumw2()
-
-# rebinning
-# print hBkgd.GetBinError((xMax+xMin)/2)/hBkgd.GetSumOfWeights()
-# while hBkgd.GetBinError((xMax+xMin)/2) > 0.1*hBkgd.GetSumOfWeights():
-#     hBkgd.Rebin(2)
-#     print rebinned
-
-title = plotVarY + " v. "+plotVarX+" ("+allDataFile[70:74]+\
-        ", normalized to 3000 /fb)"
-if allDataFile[-13:-5] == "baseline": title += ", baseline"
-else: title += ", with cuts"
+c.cd()
+title = plotVarsXY[1]+" v. "+plotVarsXY[0]+" ("+channelName+\
+        ", cuts to "+lastcut+")"
 hBkgd.SetTitle(title)
-hBkgd.GetXaxis().SetTitle(plotVarX + " [GeV]")
-hBkgd.GetYaxis().SetTitle(plotVarY + " [GeV]")
-hBkgd.Scale(xsec*lumi/hBkgd.GetSumOfWeights())
+unitsLabelX = plotSettings[plotVarsXY[0]][3]
+unitsLabelY = plotSettings[plotVarsXY[1]][3]
+hBkgd.GetXaxis().SetTitle(plotVarsXY[0]+" "+unitsLabelX)
+hBkgd.GetYaxis().SetTitle(plotVarsXY[1]+" "+unitsLabelY)
+hBkgd.Scale(xsec*lumi/totOrigNentries)
 hBkgd.SetLineColor(1) # black
-# hBkgd.SetStats(0)
-hBkgd.Draw("hist")
-c1.Update()
+gStyle.SetStatX(0.9)
+gStyle.SetStatY(0.9)
+hBkgd.Draw("hist colz")
+c.Update()
+if displayMode:
+    print "Done plotting bkgd 2d hist. Press enter to continue."
+    raw_input()
+else:
+    gSystem.ProcessEvents()
+    imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
+            "plots/v3CutSequence/bkgd_"+plotVarsXY[1]+"_"+plotVarsXY[0]+\
+            channelName+"_"+lastcut+".png"
+    print "Saving image", imgName
+    img = TImage.Create()
+    img.FromPad(c)
+    img.WriteImage(imgName)
+    print "Done plotting bkgd 2d hist."
+bkgdFile.Close()
 
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal data in a separate hist  ************
-print "Plotting " + plotVarY + " vs. " + plotVarX + " from signal."
-sigDataDir = "/eos/user/a/alkaloge/HLLHC/Skims/v2/SingleStop/"
-sigDataListFile = open("sig_SingleStop_files")
+print "Plotting " + plotVarsXY[1] + " vs. " + plotVarsXY[0] + " from signal."
+sigDataListFile = open("sig_SingleStop_files_nentries")
 
-coloropts = [2,4,3,6,7,9,28,46] # some good colors for lines
-
-hSigArr = [] # one hist for each signal file 
+hSigArr = []
 for fileNum, line in enumerate(sigDataListFile):
     if fileNum + 1 > numSigFiles: break
 
-    line = line.rstrip('\n')
-    filename, xsec = line.split(" ")
+    filename, xsec, origNentries = line.split(" ")
     xsec = float(xsec)
+    origNentries = int(origNentries)
     print filename
 
-    inTree = inFile.Get("tSig"+str(fileNum))
+    sigFile = TFile.Open(sigsNtupleAdr, "READ")
+    inTree = sigFile.Get("tSig"+str(fileNum))
     nentries = inTree.GetEntries()
     print("nentries={0:d}".format(nentries))
     assert nentries > 0, "You have no events in your tree..."
 
-    hSigArr.append(TH2F(plotVarY+"_"+plotVarX+"_sig_"+filename[19:24], \
-            plotVarY+"_"+plotVarX +"_sig_"+filename[19:24], nBinsX + 1, \
-            xMin, xMax + binwidthX, nBinsY + 1, yMin, yMax + binwidthY))
+    hSigArr.append(TH2F(plotVarsXY[1]+"_"+plotVarsXY[0]+"_sig_"+filename[19:24], \
+            plotVarsXY[1]+"_"+plotVarsXY[0] +"_sig_"+filename[19:24], \
+            nBinsX, xMin, xMax, nBinsY, yMin, yMax))
     
     for count, event in enumerate(inTree):
-        if count % 500000 == 0: print("count={0:d}".format(count))
-        valX = getattr(event, plotVarX)
-        valY = getattr(event,plotVarY)
-        if valX > xMax:
-            if valY > yMax: # x and y overflow
-                hSigArr[fileNum].Fill(xMax + binwidthX/2, yMax + binwidthY/2, 1)
-            else: # x overflow, y in range
-                hSigArr[fileNum].Fill(xMax + binwidthX/2, valY, 1)
+    # ********** Additional cuts. ***********
+        if findingSameFlavor:
+            if muPreference:
+                lepIndices = selectMuMu(event)
+                # l1Flav, l2Flav set at runtime
+            else: 
+                lepIndices = selectElEl(event)
+                # l1Flav, l2Flav set at runtime
+            if lepIndices is None: continue
         else:
-            if valY > yMax: # x in range, y overflow
-                hSigArr[fileNum].Fill(valX, yMax + binwidthY/2, 1)
+            lepIndices = selectMuEl(event)
+            l1Flav = "muon"
+            l2Flav = "electron"
+            if lepIndices is None:
+                lepIndices = selectElMu(event)
+                if lepIndices is None: continue
+                l1Flav = "electron"
+                l2Flav = "muon"
+        l1Index = lepIndices[0]
+        l2Index = lepIndices[1]
+
+        # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
+
+        if nCuts > cuts["nbtag<2"]:
+            if event.nbtag > 1: continue
+
+        if nCuts > cuts["MET>80"]:
+            if event.met_pt < 80: continue
+
+        if nCuts > cuts["no3rdlept"]:
+            # veto (3rd lepton) checks:
+            if findingSameFlavor:
+                # event should not give valid muel or elmu pair
+                if selectMuEl(event) is not None: continue
+                if selectElMu(event) is not None: continue
+            else:
+                # event should not give valid mumu or elel pair
+                if selectMuMu(event) is not None: continue
+                if selectElEl(event) is not None: continue
+            
+        if nCuts > cuts["njets<4"]:
+            if event.njets >= 4: continue
+
+        # ********** Plotting. ***********
+        valXY = []
+        for plotVar in plotVarsXY:
+            xMin = plotSettings[plotVar][1]
+            xMax = plotSettings[plotVar][2]
+            if plotVar[:4] == "lep1": 
+                valXY.append(np.reshape(getattr(event, l1Flav+plotVar[4:]),\
+                        20)[l1Index])
+            elif plotVar[:4] == "lep2": 
+                valXY.append(np.reshape(getattr(event, l2Flav+plotVar[4:]), \
+                        20)[l2Index])
+            else: valXY.append(getattr(event, plotVar))
+
+        if valXY[0] > xMax:
+            if valXY[1] > yMax: # x and y overflow
+                hSigArr[fileNum].Fill(xMax - binwidthX/2, yMax - binwidthY/2, 1)
+            else: # x overflow, y in range
+                hSigArr[fileNum].Fill(xMax - binwidthX/2, valXY[1], 1)
+        else:
+            if valXY[1] > yMax: # x in range, y overflow
+                hSigArr[fileNum].Fill(valXY[0], yMax - binwidthY/2, 1)
             else: # x in range, y in range
-                hSigArr[fileNum].Fill(valX, valY, 1)
-
-    hSigArr[fileNum].SetDirectory(0) # necessary to keep hist from closing
-
-    hcolor = coloropts[fileNum % len(coloropts)]
-    hSigArr[fileNum].SetLineColor(hcolor) 
-    hSigArr[fileNum].SetMarkerColor(hcolor)
+                hSigArr[fileNum].Fill(valXY[0], valXY[1], 1)
 
     hSigArr[fileNum].Sumw2()
-    hSigArr[fileNum].Scale(xsec * lumi / hSigArr[fileNum].GetSumOfWeights())
-    hSigArr[fileNum].Draw("hist same") # same pad, draw marker
-    c1.Update()
+    hSigArr[fileNum].Scale(xsec*lumi/origNentries)
+    hSigArr[fileNum].Draw("hist colz")
+    c.Update()
+    if displayMode:
+        print "Done plotting sig%i 2d hist. Press enter to continue." %fileNum
+        raw_input()
+    else:
+        gSystem.ProcessEvents()
+        imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
+                "plots/v3CutSequence/sig"+fileNum+"_"+plotVarsXY[1]+"_"+\
+                plotVarsXY[0]+channelName+"_"+lastcut+".png"
+        print "Saving image", imgName
+        img = TImage.Create()
+        img.FromPad(c)
+        img.WriteImage(imgName)
+        print "Done plotting sig%i 2d hist." %fileNum
+
+    sigFile.Close()
 
 
 #--------------------------------------------------------------------------------#
 # *************** Wrap up. *******************
 
-legend = TLegend(.65,.75,.90,.90)
-legend.AddEntry(hBkgd, plotVarY+"_"+plotVarX+"_bkgd")
-legend.SetTextSize(0.02)
-for fileNum, h in enumerate(hSigArr):
-    legend.AddEntry(hSigArr[fileNum], hSigArr[fileNum].GetTitle())
-legend.Draw("same")
+# legend = TLegend(.65,.75,.90,.90)
+# legend.AddEntry(hBkgd, plotVarsXY[1]+"_"+plotVarsXY[0]+"_bkgd")
+# legend.SetTextSize(0.02)
+# for fileNum, h in enumerate(hSigArr):
+#     legend.AddEntry(hSigArr[fileNum], hSigArr[fileNum].GetTitle())
+# legend.Draw("same")
 
-c1.Update()
-
-# if not testMode:
-#     print "Saving image."
-#     gSystem.ProcessEvents()
-#     img = TImage.Create()
-#     img.FromPad(c1)
-#     img.WriteImage(plotVar + "_Bkgd+Sig.png")
-print "Done. Press enter to finish."
-raw_input()
+print "Done."
 
