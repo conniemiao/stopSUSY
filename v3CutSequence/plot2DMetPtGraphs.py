@@ -18,6 +18,7 @@ from stopSelection import deltaR,  getNumBtag, findValidJets
 from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
 from collections import OrderedDict
 import numpy as np
+import time
 
 assert len(sys.argv) == 8, "need 7 command line args: testMode{0,1}, displayMode{0,1}, findingSameFlavor{0,1}, muPreference{0,1}, lastcut, plotVarX, plotVarY"
 
@@ -102,12 +103,15 @@ binwidthY = (yMax - yMin)/nBinsY # include overflow bin
 hBkgd = TH2F(plotVarsXY[1]+"_"+plotVarsXY[0]+"_bkgd", \
         plotVarsXY[1]+"_"+plotVarsXY[0]+"_bkgd", \
         nBinsX, xMin, xMax, nBinsY, yMin, yMax)
+hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
 lumi = 3000000 # luminosity = 3000 /fb = 3,000,000 /fb
 
 c = TCanvas("c","Plot",10,20,1000,700)
 gStyle.SetPalette(1)
 gStyle.SetStatX(0.9)
 gStyle.SetStatY(0.9)
+
+start_time = time.time()
 
 #--------------------------------------------------------------------------------#
 # *************** Filling bkgd data summed together  ************
@@ -193,7 +197,7 @@ for count, event in enumerate(inTree):
             hBkgd.Fill(valXY[0], yMax - binwidthY/2, genwt)
         else: # x in range, y in range
             hBkgd.Fill(valXY[0], valXY[1], genwt)
-hBkgd.Sumw2()
+# hBkgd.Sumw2()
 c.cd()
 title = plotVarsXY[1]+" v. "+plotVarsXY[0]+" ("+channelName+\
         ", cuts to "+lastcut+")"
@@ -246,6 +250,7 @@ for fileNum, line in enumerate(sigDataListFile):
     hSigArr.append(TH2F(plotVarsXY[1]+"_"+plotVarsXY[0]+"_sig_"+filename[21:31], \
             plotVarsXY[1]+"_"+plotVarsXY[0] +"_sig_"+filename[21:31], \
             nBinsX, xMin, xMax, nBinsY, yMin, yMax))
+    hSigArr[fileNum].SetDefaultSumw2() # automatically sum w^2 while filling
 
     hSigGenweights = sigFile.Get("genweights")
     sigTotGenweight = hSigGenweights.GetSumOfWeights()
@@ -321,7 +326,7 @@ for fileNum, line in enumerate(sigDataListFile):
             else: # x in range, y in range
                 hSigArr[fileNum].Fill(valXY[0], valXY[1], genwt)
 
-    hSigArr[fileNum].Sumw2()
+    # hSigArr[fileNum].Sumw2()
     title = plotVarsXY[1]+" v. "+plotVarsXY[0]+" ("+channelName+\
             ", cuts to "+lastcut+")"
     hSigArr[fileNum].SetTitle(title)
@@ -352,6 +357,7 @@ for fileNum, line in enumerate(sigDataListFile):
 
 #--------------------------------------------------------------------------------#
 # *************** Wrap up. *******************
+print int(time.time()-start_time), "secs of processing."
 
 # legend = TLegend(.65,.75,.90,.90)
 # legend.AddEntry(hBkgd, plotVarsXY[1]+"_"+plotVarsXY[0]+"_bkgd")
