@@ -76,9 +76,15 @@ electron_phi = np.zeros(20, dtype=np.float32)
 electron_relIso = np.zeros(20, dtype=np.float32)
 electron_charge = np.zeros(20, dtype=np.float32)
 electron_mt = np.zeros(20, dtype=np.float32)
+found3rdLept = array('i',[0])
+lep1_isMu = array('i',[0]) # True (1) if muon, False (0) if electron
+lep1_index = array('i',[0])
+lep2_isMu = array('i',[0]) # True (1) if muon, False (0) if electron
+lep2_index = array('i',[0])
 jet_pt = np.zeros(20, dtype=np.float32)
 jet_eta = np.zeros(20, dtype=np.float32)
 jet_phi = np.zeros(20, dtype=np.float32)
+jet_ht = array('f',[0.])
 # jet_flavour = array('f',[0])
 njets = array('i',[0])
 nbtag = array('i',[0])
@@ -86,7 +92,7 @@ nbtagLoose = array('i',[0])
 nbtagTight = array('i',[0])
 met_pt = array('f',[0.])
 met_phi = array('f',[0.])
-# genweight = array('f',[0.])
+genweight = array('f',[0.])
 #--------------------------------------------------------------------------------#
 
 # ********************** Filling bkgd data summed together  **********************
@@ -110,17 +116,25 @@ tBkgd.Branch("electron_phi", electron_phi, "electron_phi[20]/F")
 tBkgd.Branch("electron_relIso", electron_relIso, "electron_relIso[20]/F")
 tBkgd.Branch("electron_charge", electron_charge, "electron_charge[20]/F")
 tBkgd.Branch("electron_mt", electron_mt, "electron_mt[20]/F")
+tBkgd.Branch("found3rdLept", found3rdLept, "found3rdLept/i")
+tBkgd.Branch("lep1_isMu", lep1_isMu, "lep1_isMu/i")
+tBkgd.Branch("lep1_index", lep1_index, "lep1_index/i")
+tBkgd.Branch("lep2_isMu", lep2_isMu, "lep2_isMu/i")
+tBkgd.Branch("lep2_index", lep2_index, "lep2_index/i")
 tBkgd.Branch("njets", njets, "njets/i")
 tBkgd.Branch("jet_pt", jet_pt, "jet_pt[20]/F")
 tBkgd.Branch("jet_eta", jet_eta, "jet_eta[20]/F")
 tBkgd.Branch("jet_phi", jet_phi, "jet_phi[20]/F")
+tBkgd.Branch("jet_ht", jet_ht, "jet_ht/F")
 # tBkgd.Branch("jet_flavour", jet_flavour, "jet_flavour/F")
 tBkgd.Branch("nbtag", nbtag, "nbtag/i")
 tBkgd.Branch("nbtagLoose", nbtagLoose, "nbtagLoose/i")
 tBkgd.Branch("nbtagTight", nbtagTight, "nbtagTight/i")
 tBkgd.Branch("met_pt", met_pt, "met_pt/F")
 tBkgd.Branch("met_phi", met_phi, "met_phi/F")
-# tBkgd.Branch("genweight", genweight, "genweight/F")
+tBkgd.Branch("genweight", genweight, "genweight/F")
+
+hGenweights = TH1F("genweights","genweights",1,0,1)
 
 for fileNum, line in enumerate(bkgdDataListFile):
     if fileNum + 1 > numBkgdFiles: break
@@ -141,11 +155,12 @@ for fileNum, line in enumerate(bkgdDataListFile):
         if count > nMax : break
         if count % 500000 == 0: print("count={0:d}".format(count))
 
+        hGenweights.Fill(0,event.genweight)
         # ****** Loose selection of events with valid lep1, lep2, jets ******
         if findingSameFlavor:
             if muPreference:
-                lepIndices = selectMuMu(event, l1MinOkPt=20, maxOkIso=0.3)
-            else: lepIndices = selectElEl(event, l1MinOkPt=20, maxOkIso=0.3)
+                lepIndices = selectMuMu(event, maxOkIso=0.3)
+            else: lepIndices = selectElEl(event, maxOkIso=0.3)
             if lepIndices is None: continue
         else:
             lepIndices = selectMuEl(event, maxOkIso=0.3)
@@ -192,12 +207,29 @@ for fileNum, line in enumerate(bkgdDataListFile):
             electron_mt[i] = sqrt(2 * electron_pt[i] * event.pfmet_pt * \
                     (1 - cos(electron_phi[i] - event.pfmet_phi)))
 
+        lep1_isMu[0] = int(l1Flav == "muon")
+        lep1_index[0] = l1Index
+        lep2_isMu[0] = int(l2Flav == "muon") 
+        lep2_index[0] = l2Index
+
+        # veto (3rd lepton) checks:
+        found3rdLept[0] = False
+        if findingSameFlavor:
+            # event should not give valid muel or elmu pair
+            if selectMuEl(event) is not None: found3rdLept[0] = True
+            if selectElMu(event) is not None: found3rdLept[0] = True
+        else:
+            # event should not give valid mumu or elel pair
+            if selectMuMu(event) is not None: found3rdLept[0] = True
+            if selectElEl(event) is not None: found3rdLept[0] = True
+
         njets[0] = numGoodJets
         nbtag[0] = numBtag
         nbtagLoose[0] = numBtagLoose
         nbtagTight[0] = numBtagTight
 
         if numGoodJets > 0:
+            jet_ht[0] = 0
             iMaxPtJ = jets[0] 
             for j in range(numGoodJets):
                 jIndex = jets[j]
@@ -206,16 +238,18 @@ for fileNum, line in enumerate(bkgdDataListFile):
                     iMaxPtJ = jIndex
                 jet_eta[j] = list(event.pfjet_eta)[jIndex]
                 jet_phi[j] = list(event.pfjet_phi)[jIndex]
+                jet_ht[0] += jet_pt[j]
                 # jet_flavour[j] = list(event.pfjet_flavour)[jIndex]
 
         met_pt[0] = event.pfmet_pt
         met_phi[0] = event.pfmet_phi
-        # genweight[0] = event.genweight
+        genweight[0] = event.genweight
 
         tBkgd.Fill()
 
 outFile.cd() # cd to outFile to write to it
 tBkgd.Write()
+hGenweights.Write()
 
 #--------------------------------------------------------------------------------#
 

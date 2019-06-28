@@ -8,8 +8,7 @@
 # Implements additional cuts and then draws a 2D hist for the summed bkgd data 
 # and for each of the signal files (e.g. met vs. pt(l), met vs. mt(l)).
 # Uses the root files outputted by makeNtupleBkgd.py and makeNtupleSigs.py
-# Uses nentries info from bkgd_TTDiLept_files_nentries
-# Uses xsec and nentries info from sig_SingleStop_files_nentries
+# Uses xsec info from sig_SingleStop_files
 # Possible lastcuts: listed in cuts below.
 
 import sys
@@ -118,40 +117,46 @@ xsec = 67.75 # production cross section
 bkgdFile = TFile.Open(bkgdNtupleAdr, "READ")
 inTree = bkgdFile.Get("tBkgd")
 
-totOrigNentries = 0
-bkgdDataListFile = open("bkgd_TTDiLept_files_nentries")
-for line in bkgdDataListFile:
-    line = line.rstrip('\n')
-    filename, origNentries = line.split(" ")
-    totOrigNentries += int(origNentries)
-
 nentries = inTree.GetEntries()
 print("nentries={0:d}".format(nentries))
 assert nentries > 0, "You have no events in your tree..."
 
+hBkgdGenweights = bkgdFile.Get("genweights")
+bkgdTotGenweight = hBkgdGenweights.GetSumOfWeights()
+
 # ********** Looping over events. ***********
 for count, event in enumerate(inTree):
-    if count % 500000 == 0: print("count={0:d}".format(count))
+    if count % 100000 == 0: print("count={0:d}".format(count))
+    genwt = event.genweight
+
+    if not findingSameFlavor: # if findingSameFlavor, l1/l2Flav set at runtime
+        if event.lep1_isMu: l1Flav = "muon"
+        else: l1Flav = "electron"
+        if event.lep2_isMu: l1Flav = "muon"
+        else: l2Flav = "electron"
+    l1Index = event.lep1_index
+    l2Index = event.lep2_index
     # ********** Additional cuts. ***********
-    if findingSameFlavor:
-        if muPreference:
-            lepIndices = selectMuMu(event)
-            # l1Flav, l2Flav set at runtime
-        else: 
-            lepIndices = selectElEl(event)
-            # l1Flav, l2Flav set at runtime
-        if lepIndices is None: continue
-    else:
-        lepIndices = selectMuEl(event)
-        l1Flav = "muon"
-        l2Flav = "electron"
-        if lepIndices is None:
-            lepIndices = selectElMu(event)
+    if nCuts > cuts["dilepton"]:
+        if findingSameFlavor:
+            if muPreference:
+                lepIndices = selectMuMu(event)
+                # l1Flav, l2Flav set at runtime
+            else: 
+                lepIndices = selectElEl(event)
+                # l1Flav, l2Flav set at runtime
             if lepIndices is None: continue
-            l1Flav = "electron"
-            l2Flav = "muon"
-    l1Index = lepIndices[0]
-    l2Index = lepIndices[1]
+        else:
+            lepIndices = selectMuEl(event)
+            l1Flav = "muon"
+            l2Flav = "electron"
+            if lepIndices is None:
+                lepIndices = selectElMu(event)
+                if lepIndices is None: continue
+                l1Flav = "electron"
+                l2Flav = "muon"
+        l1Index = lepIndices[0]
+        l2Index = lepIndices[1]
 
     # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
 
@@ -162,15 +167,7 @@ for count, event in enumerate(inTree):
         if event.met_pt < 80: continue
 
     if nCuts > cuts["no3rdlept"]:
-        # veto (3rd lepton) checks:
-        if findingSameFlavor:
-            # event should not give valid muel or elmu pair
-            if selectMuEl(event) is not None: continue
-            if selectElMu(event) is not None: continue
-        else:
-            # event should not give valid mumu or elel pair
-            if selectMuMu(event) is not None: continue
-            if selectElEl(event) is not None: continue
+        if event.found3rdLept: continue
         
     if nCuts > cuts["njets<4"]:
         if event.njets >= 4: continue
@@ -188,14 +185,14 @@ for count, event in enumerate(inTree):
 
     if valXY[0] > xMax:
         if valXY[1] > yMax: # x and y overflow
-            hBkgd.Fill(xMax - binwidthX/2, yMax - binwidthY/2, 1)
+            hBkgd.Fill(xMax - binwidthX/2, yMax - binwidthY/2, genwt)
         else: # x overflow, y in range
-            hBkgd.Fill(xMax - binwidthX/2, valXY[1], 1)
+            hBkgd.Fill(xMax - binwidthX/2, valXY[1], genwt)
     else:
         if valXY[1] > yMax: # x in range, y overflow
-            hBkgd.Fill(valXY[0], yMax - binwidthY/2, 1)
+            hBkgd.Fill(valXY[0], yMax - binwidthY/2, genwt)
         else: # x in range, y in range
-            hBkgd.Fill(valXY[0], valXY[1], 1)
+            hBkgd.Fill(valXY[0], valXY[1], genwt)
 hBkgd.Sumw2()
 c.cd()
 title = plotVarsXY[1]+" v. "+plotVarsXY[0]+" ("+channelName+\
@@ -205,7 +202,7 @@ unitsLabelX = plotSettings[plotVarsXY[0]][3]
 unitsLabelY = plotSettings[plotVarsXY[1]][3]
 hBkgd.GetXaxis().SetTitle(plotVarsXY[0]+" "+unitsLabelX)
 hBkgd.GetYaxis().SetTitle(plotVarsXY[1]+" "+unitsLabelY)
-hBkgd.Scale(xsec*lumi/totOrigNentries)
+hBkgd.Scale(xsec*lumi/bkgdTotGenweight)
 hBkgd.SetLineColor(1) # black
 hBkgd.Draw("colz")
 gPad.Update()
@@ -229,16 +226,15 @@ bkgdFile.Close()
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal data in a separate hist  ************
 print "Plotting " + plotVarsXY[1] + " vs. " + plotVarsXY[0] + " from signal."
-sigDataListFile = open("sig_SingleStop_files_nentries")
+sigDataListFile = open("sig_SingleStop_files")
 
 hSigArr = []
 for fileNum, line in enumerate(sigDataListFile):
     print
     if fileNum + 1 > numSigFiles: break
 
-    filename, xsec, origNentries = line.split(" ")
+    filename, xsec = line.split(" ")
     xsec = float(xsec)
-    origNentries = int(origNentries)
     print filename
 
     sigFile = TFile.Open(sigsNtupleAdr, "READ")
@@ -250,28 +246,44 @@ for fileNum, line in enumerate(sigDataListFile):
     hSigArr.append(TH2F(plotVarsXY[1]+"_"+plotVarsXY[0]+"_sig_"+filename[21:31], \
             plotVarsXY[1]+"_"+plotVarsXY[0] +"_sig_"+filename[21:31], \
             nBinsX, xMin, xMax, nBinsY, yMin, yMax))
+
+    hSigGenweights = sigFile.Get("genweights")
+    sigTotGenweight = hSigGenweights.GetSumOfWeights()
     
+    # ********** Looping over events. ***********
     for count, event in enumerate(inTree):
-    # ********** Additional cuts. ***********
-        if findingSameFlavor:
-            if muPreference:
-                lepIndices = selectMuMu(event)
-                # l1Flav, l2Flav set at runtime
-            else: 
-                lepIndices = selectElEl(event)
-                # l1Flav, l2Flav set at runtime
-            if lepIndices is None: continue
-        else:
-            lepIndices = selectMuEl(event)
-            l1Flav = "muon"
-            l2Flav = "electron"
-            if lepIndices is None:
-                lepIndices = selectElMu(event)
+        if count % 100000 == 0: print("count={0:d}".format(count))
+        genwt = event.genweight
+
+        if not findingSameFlavor: # if findingSameFlavor, l1/l2Flav set at runtime
+            if event.lep1_isMu: l1Flav = "muon"
+            else: l1Flav = "electron"
+            if event.lep2_isMu: l1Flav = "muon"
+            else: l2Flav = "electron"
+        l1Index = event.lep1_index
+        l2Index = event.lep2_index
+
+        # ********** Additional cuts. ***********
+        if nCuts > cuts["dilepton"]:
+            if findingSameFlavor:
+                if muPreference:
+                    lepIndices = selectMuMu(event)
+                    # l1Flav, l2Flav set at runtime
+                else: 
+                    lepIndices = selectElEl(event)
+                    # l1Flav, l2Flav set at runtime
                 if lepIndices is None: continue
-                l1Flav = "electron"
-                l2Flav = "muon"
-        l1Index = lepIndices[0]
-        l2Index = lepIndices[1]
+            else:
+                lepIndices = selectMuEl(event)
+                l1Flav = "muon"
+                l2Flav = "electron"
+                if lepIndices is None:
+                    lepIndices = selectElMu(event)
+                    if lepIndices is None: continue
+                    l1Flav = "electron"
+                    l2Flav = "muon"
+            l1Index = lepIndices[0]
+            l2Index = lepIndices[1]
 
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
 
@@ -282,15 +294,7 @@ for fileNum, line in enumerate(sigDataListFile):
             if event.met_pt < 80: continue
 
         if nCuts > cuts["no3rdlept"]:
-            # veto (3rd lepton) checks:
-            if findingSameFlavor:
-                # event should not give valid muel or elmu pair
-                if selectMuEl(event) is not None: continue
-                if selectElMu(event) is not None: continue
-            else:
-                # event should not give valid mumu or elel pair
-                if selectMuMu(event) is not None: continue
-                if selectElEl(event) is not None: continue
+            if event.found3rdLept: continue
             
         if nCuts > cuts["njets<4"]:
             if event.njets >= 4: continue
@@ -308,14 +312,14 @@ for fileNum, line in enumerate(sigDataListFile):
 
         if valXY[0] > xMax:
             if valXY[1] > yMax: # x and y overflow
-                hSigArr[fileNum].Fill(xMax - binwidthX/2, yMax - binwidthY/2, 1)
+                hSigArr[fileNum].Fill(xMax - binwidthX/2, yMax - binwidthY/2, genwt)
             else: # x overflow, y in range
-                hSigArr[fileNum].Fill(xMax - binwidthX/2, valXY[1], 1)
+                hSigArr[fileNum].Fill(xMax - binwidthX/2, valXY[1], genwt)
         else:
             if valXY[1] > yMax: # x in range, y overflow
-                hSigArr[fileNum].Fill(valXY[0], yMax - binwidthY/2, 1)
+                hSigArr[fileNum].Fill(valXY[0], yMax - binwidthY/2, genwt)
             else: # x in range, y in range
-                hSigArr[fileNum].Fill(valXY[0], valXY[1], 1)
+                hSigArr[fileNum].Fill(valXY[0], valXY[1], genwt)
 
     hSigArr[fileNum].Sumw2()
     title = plotVarsXY[1]+" v. "+plotVarsXY[0]+" ("+channelName+\
@@ -325,7 +329,7 @@ for fileNum, line in enumerate(sigDataListFile):
     unitsLabelY = plotSettings[plotVarsXY[1]][3]
     hSigArr[fileNum].GetXaxis().SetTitle(plotVarsXY[0]+" "+unitsLabelX)
     hSigArr[fileNum].GetYaxis().SetTitle(plotVarsXY[1]+" "+unitsLabelY)
-    hSigArr[fileNum].Scale(xsec*lumi/origNentries)
+    hSigArr[fileNum].Scale(xsec*lumi/sigTotGenweight)
     hSigArr[fileNum].Draw("colz")
     hSigArr[fileNum].GetZaxis().SetLabelSize(0.02)
     c.Update()
