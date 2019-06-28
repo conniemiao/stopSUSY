@@ -21,6 +21,7 @@ from stopSelection import deltaR,  getNumBtag, findValidJets
 from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
 from collections import OrderedDict
 import numpy as np
+import time
 
 assert len(sys.argv) >= 7, "need at least 6 command line args: testMode{0,1}, displayMode{0,1}, findingSameFlavor{0,1}, muPreference{0,1}, lastcut, plotVar1, plotVar2, ..."
 
@@ -122,6 +123,7 @@ for plotVar in plotVarArr: # add an entry to the plotVar:hist dictionary
     binwidth = (xMax - xMin)/nBins
     hBkgd = TH1F(plotVar + "_bkgd", plotVar + "_bkgd", nBins, xMin, xMax)
     hBkgd.SetDirectory(0) # necessary to keep hist from closing
+    hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
     hBkgdDict.update({plotVar:hBkgd})
     c = TCanvas("c_"+plotVar,"Plot",10,20,1000,700)
     canvasDict.update({plotVar:c})
@@ -130,6 +132,7 @@ lumi = 3000000 # luminosity = 3000 /fb = 3,000,000 /pb
 
 gStyle.SetOptStat(0) # don't show any stats
 
+start_time = time.time()
 #--------------------------------------------------------------------------------#
 
 # *************** Filling bkgd data summed together  ************
@@ -245,7 +248,7 @@ for plotVar in plotVarArr:
     c = canvasDict[plotVar]
     c.cd()
     hBkgd = hBkgdDict[plotVar]
-    hBkgd.Sumw2()
+    # hBkgd.Sumw2() # already summed while filling
     title = plotVar+" ("+channelName+", cuts to "+lastcut+")"
     hBkgd.SetTitle(title)
     unitsLabel = plotSettings[plotVar][3]
@@ -310,6 +313,7 @@ for fileNum, line in enumerate(sigDataListFile):
         hSig = TH1F(plotVar + "_sig_" + filename, plotVar + "_sig_" + \
                 filename[21:31], nBins, xMin, xMax)
         hSig.SetDirectory(0)
+        hSig.SetDefaultSumw2() # automatically sum w^2 while filling
         hSigArr.append(hSig)
 
     hSigCutflow = hSigArrDict["cutflow"][fileNum]
@@ -387,6 +391,7 @@ for fileNum, line in enumerate(sigDataListFile):
             dR_lep2_jet = deltaR(event, l2Flav, l2Index, "jet", jMaxPt)
 
         for plotVar in plotVarArr:
+
             if plotVar == "cutflow": break
 
             hSig = hSigArrDict[plotVar][fileNum]
@@ -411,6 +416,7 @@ for fileNum, line in enumerate(sigDataListFile):
             else: # overflow
                 hSig.Fill(xMax - binwidth/2, genwt)
 
+
     hcolor = coloropts[fileNum % len(coloropts)]
     hmarkerstyle = markeropts[(fileNum/len(coloropts)) % len(markeropts)]
 
@@ -425,7 +431,11 @@ for fileNum, line in enumerate(sigDataListFile):
                 len(linestyleopts)]
         hSig.SetLineStyle(hlinestyle)
 
-        hSig.Sumw2()
+        # print "here3"
+        # sys.stdout.flush()
+        # hSig.Sumw2()
+        # print "here4"
+        # sys.stdout.flush()
         hSig.Scale(xsec*lumi/sigTotGenweight)
         hSig.SetMinimum(1)
         hSig.SetMaximum(10**12)
@@ -452,6 +462,7 @@ for fileNum, line in enumerate(sigDataListFile):
 
 #--------------------------------------------------------------------------------#
 # *************** Wrap up. *******************
+print int(time.time()-start_time), "secs of processing."
 
 for plotVar in plotVarArr:
     c = canvasDict[plotVar]
@@ -469,7 +480,7 @@ else:
     gSystem.ProcessEvents()
     for plotVar in plotVarArr:
         imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-                "plots/v3CutSequence/"+plotVar+"_"+channelname+"_"+lastcut+".png"
+                "plots/v3CutSequence/"+plotVar+"_"+channelName+"_"+lastcut+".png"
         print "Saving image", imgName
         img = TImage.Create()
         img.FromPad(canvasDict[plotVar])
