@@ -6,12 +6,11 @@
 # True testMode plots only a few events; True displayMode displays rather than 
 # saves w/o displaying the hists.
 # Implements additional cuts and then draws 1D hist for data for some 
-# variable(s), for the summed bkgd data and for each of the signal files. Also,
-# draws the cutflow. 
+# variable(s), for the summed bkgd data and for each of the signal files.
 # Uses the root files outputted by makeNtupleBkgd.py and makeNtupleSigs.py
+# Uses xsec info from bkgd_files
 # Uses xsec info from sig_SingleStop_files
-# Possible plotVars: listed in plotSettings, other than cutflow (which is always
-# plotted)
+# Possible plotVars: listed in plotSettings
 # Possible lastcuts: listed in cuts below.
 
 import sys
@@ -54,17 +53,10 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "dR_lep1_jet":[100,0,7,""],
         "dR_lep2_jet":[100,0,7,""],
         "met_pt":[100,0,500,"[GeV]"],
-        "cutflow":[nCuts, 0, nCuts,""]
         }
 
 for plotVar in plotVarArr:
     assert (plotVar in plotSettings), "invalid plotVar %s" % plotVar
-plotVarArr.append("cutflow")
-
-# bkgd process name : color for plotting
-# processes = {"TT+X":30, "Diboson":38, "W-Jets":41, "Drell-Yan":46, \
-#         "Single-Top":40}
-processes = {"TT+X":30, "Diboson":38}
 
 # Determining adr of bkgd and sig ntuples.
 # limits the number of events and files to loop over
@@ -94,9 +86,16 @@ channelName = l1Flav[:2] + l2Flav[:2]
 
 print "Cutting events up to and including", lastcut
 
+# bkgd process name : color for plotting
+processes = {"TT+X":30, "Diboson":38, "W-Jets":41, "Drell-Yan":46, \
+        "Single-Top":40}
+if testMode:
+    processes = {"TT+X":30, "Diboson":38}
+
+
 canvasDict = {}
 legendDict = {}
-hBkgdStacksDict = {}
+hBkgdStacksDict = {} # maps plotVar to the stack of background
 nEvtsLabels = []
 
 if not displayMode:
@@ -110,9 +109,11 @@ if testMode:
 numSigFiles = 3 # max 25
 
 #--------------------------------------------------------------------------------#
+start_time = time.time()
 # *************** Filling bkgd data summed together  ************
 print
 print "Plotting from background."
+print
 
 # For each plotVar in hBkgdPlotVarSubprocessesDict, there is a dictionary 
 # which maps every subprocess to an hBkgd which contains data from all the 
@@ -143,10 +144,9 @@ lumi = 3000000 # luminosity = 3000 /fb = 3,000,000 /pb
 
 gStyle.SetOptStat(0) # don't show any stats
 
-start_time = time.time()
-
 # ********** Looping over each subprocess. ***********
 prevProcess = "" # to determine when you got to the next process
+processNum = 0
 bkgdSubprocessesListFile = open("bkgd_files")
 for subprocessLine in bkgdSubprocessesListFile:
     subprocessLine = subprocessLine.rstrip('\n')
@@ -154,8 +154,6 @@ for subprocessLine in bkgdSubprocessesListFile:
     xsec = float(xsec)
 
     if not process in processes: continue
-
-    print
 
     # assemble the bkgdNtupleAdr
     bkgdNtupleAdr = baseDir+"stopCut_"
@@ -171,11 +169,6 @@ for subprocessLine in bkgdSubprocessesListFile:
     print("nentries={0:d}".format(nentries))
     assert nentries > 0, "You have no events in your tree..."
 
-    hBkgdCutflow = hBkgdPlotVarSubprocessesDict["cutflow"][subprocess] 
-    for i, cut in enumerate(cuts, start=1):
-        if i>nCuts: break
-        hBkgdCutflow.GetXaxis().SetBinLabel(i, cut)
-    
     hBkgdGenweights = bkgdFile.Get("genweights")
     # tot for this subprocess:
     bkgdTotGenweight = hBkgdGenweights.GetSumOfWeights()
@@ -193,7 +186,6 @@ for subprocessLine in bkgdSubprocessesListFile:
             else: l2Flav = "electron"
         l1Index = event.lep1_index
         l2Index = event.lep2_index
-        hBkgdCutflow.Fill(cuts["nocut"], genwt)
     
         # ********** Additional cuts. ***********
         if nCuts > cuts["dilepton"]:
@@ -216,26 +208,20 @@ for subprocessLine in bkgdSubprocessesListFile:
                     l2Flav = "muon"
             l1Index = lepIndices[0]
             l2Index = lepIndices[1]
-            hBkgdCutflow.Fill(cuts["dilepton"], genwt)
     
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
-        # hBkgdCutflow.Fill(cuts["deltaR(ll)>0.3"], genwt)
     
         if nCuts > cuts["nbtag<2"]:
             if event.nbtag > 1: continue
-            hBkgdCutflow.Fill(cuts["nbtag<2"], genwt)
     
         if nCuts > cuts["MET>80"]:
             if event.met_pt < 80: continue
-            hBkgdCutflow.Fill(cuts["MET>80"], genwt)
     
         if nCuts > cuts["no3rdlept"]:
             if event.found3rdLept: continue
-            hBkgdCutflow.Fill(cuts["no3rdlept"], genwt)
             
         if nCuts > cuts["njets<4"]:
             if event.njets >= 4: continue
-            hBkgdCutflow.Fill(cuts["njets<4"], genwt)
     
         # ********** Plotting. ***********
         if event.njets > 0:
@@ -246,8 +232,6 @@ for subprocessLine in bkgdSubprocessesListFile:
             dR_lep1_jet = deltaR(event, l1Flav, l1Index, "jet", jMaxPt)
             dR_lep2_jet = deltaR(event, l2Flav, l2Index, "jet", jMaxPt)
         for plotVar in plotVarArr:
-            if plotVar == "cutflow": break
-    
             hBkgd = hBkgdPlotVarSubprocessesDict[plotVar][subprocess]
             xMin = plotSettings[plotVar][1]
             xMax = plotSettings[plotVar][2]
@@ -274,6 +258,12 @@ for subprocessLine in bkgdSubprocessesListFile:
             else: # overflow
                 hBkgd.Fill(xMax - binwidth/2, genwt)
     
+    newProcess = False
+    if not prevProcess == process:
+        prevProcess = process
+        processNum += 1
+        newProcess = True
+
     for plotVar in plotVarArr:
         c = canvasDict[plotVar]
         c.cd()
@@ -283,31 +273,21 @@ for subprocessLine in bkgdSubprocessesListFile:
         hBkgd.GetXaxis().SetTitle(plotVar+" "+unitsLabel)
         hBkgd.GetYaxis().SetTitle("Number of Events, norm to 3000 /fb")
         hBkgd.Scale(xsec*lumi/bkgdTotGenweight)
-        hBkgd.SetMinimum(1)
-        hBkgd.SetMaximum(10**12)
         hBkgd.SetFillColor(processes[process])
         hBkgd.SetLineColor(processes[process])
         hBkgdStacksDict[plotVar].Add(hBkgd)
-        # hBkgd.Draw("hist")
-        if not prevProcess == process:
+        if newProcess:
             legend = legendDict[plotVar]
             legend.AddEntry(hBkgd, plotVar+"_"+process+"_bkgd")
-            prevProcess = process
-    print "Num surviving events after each cut from bkgd:" 
-    for i, cut in enumerate(cuts):
-        print cut, hBkgdCutflow.GetBinContent(i+1)
-        nEvtsLabel = TText()
-        nEvtsLabel.SetNDC()
-        nEvtsLabel.SetTextSize(0.02)
-        nEvtsLabel.SetTextAlign(22)
-        nEvtsLabel.SetTextAngle(0)
-        nEvtsLabel.SetTextColor(processes[process])
-        nEvtsLabel.DrawText(0.1+0.4/nCuts+0.8*float(i)/nCuts, \
-                0.1+(numSigFiles+1)*0.02, \
-                str(int(hBkgdCutflow.GetBinContent(i+1))))
-        nEvtsLabels.append(nEvtsLabel)
     print
     bkgdFile.Close()
+
+for plotVar in plotVarArr:
+    c = canvasDict[plotVar]
+    c.cd()
+    hBkgdStacksDict[plotVar].Draw("hist")
+    hBkgdStacksDict[plotVar].SetMinimum(1)
+    hBkgdStacksDict[plotVar].SetMaximum(10**12)
 
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal in a separate hist  ************
@@ -356,11 +336,6 @@ for fileNum, line in enumerate(sigDataListFile):
         hSig.SetDefaultSumw2() # automatically sum w^2 while filling
         hSigArr.append(hSig)
 
-    hSigCutflow = hSigArrDict["cutflow"][fileNum]
-    for i, cut in enumerate(cuts, start=1):
-        if i>nCuts: break
-        hSigCutflow.GetXaxis().SetBinLabel(i, cut)
-
     hSigGenweights = sigFile.Get("genweights")
     sigTotGenweight = hSigGenweights.GetSumOfWeights()
 
@@ -376,7 +351,6 @@ for fileNum, line in enumerate(sigDataListFile):
             else: l2Flav = "electron"
         l1Index = event.lep1_index
         l2Index = event.lep2_index
-        hSigCutflow.Fill(cuts["nocut"], genwt)
 
         # ********** Additional cuts. ***********
         if nCuts > cuts["dilepton"]:
@@ -399,27 +373,21 @@ for fileNum, line in enumerate(sigDataListFile):
                     l2Flav = "muon"
             l1Index = lepIndices[0]
             l2Index = lepIndices[1]
-            hSigCutflow.Fill(cuts["dilepton"], genwt)
 
 
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
-        # hSigCutflow.Fill(cuts["deltaR(ll)>0.3"], genwt)
 
         if nCuts > cuts["nbtag<2"]:
             if event.nbtag > 1: continue
-            hSigCutflow.Fill(cuts["nbtag<2"], genwt)
 
         if nCuts > cuts["MET>80"]:
             if event.met_pt < 80: continue
-            hSigCutflow.Fill(cuts["MET>80"], genwt)
 
         if nCuts > cuts["no3rdlept"]:
             if event.found3rdLept: continue
-            hSigCutflow.Fill(cuts["no3rdlept"], genwt)
         
         if nCuts > cuts["njets<4"]:
             if event.njets >= 4: continue
-            hSigCutflow.Fill(cuts["njets<4"], genwt)
 
         # ********** Plotting. ***********
         if event.njets > 0:
@@ -431,9 +399,6 @@ for fileNum, line in enumerate(sigDataListFile):
             dR_lep2_jet = deltaR(event, l2Flav, l2Index, "jet", jMaxPt)
 
         for plotVar in plotVarArr:
-
-            if plotVar == "cutflow": break
-
             hSig = hSigArrDict[plotVar][fileNum]
             xMin = plotSettings[plotVar][1]
             xMax = plotSettings[plotVar][2]
@@ -472,31 +437,16 @@ for fileNum, line in enumerate(sigDataListFile):
         hSig.SetLineStyle(hlinestyle)
 
         hSig.Scale(xsec*lumi/sigTotGenweight)
-        hSig.SetMinimum(1)
-        hSig.SetMaximum(10**12)
         legend = legendDict[plotVar]
         legend.AddEntry(hSig, hSig.GetTitle())
         hSig.Draw("hist same") # same pad
-
-    print "Num surviving events after each cut from sig %s:" % filename 
-    for i, cut in enumerate(cuts):
-        print cut, hSigCutflow.GetBinContent(i+1)
-        nEvtsLabel = TText()
-        nEvtsLabel.SetNDC()
-        nEvtsLabel.SetTextSize(0.02)
-        nEvtsLabel.SetTextAlign(22)
-        nEvtsLabel.SetTextAngle(0)
-        nEvtsLabel.SetTextColor(hcolor)
-        nEvtsLabel.DrawText(0.1+0.4/nCuts+0.8*float(i)/nCuts, \
-                0.1+(1+fileNum)*0.02, str(int(hSigCutflow.GetBinContent(i+1))))
-        nEvtsLabels.append(nEvtsLabel)
     print
-
     sigFile.Close()
 
 #--------------------------------------------------------------------------------#
 # *************** Wrap up. *******************
 print int(time.time()-start_time), "secs of processing."
+print "Drawing."
 
 for plotVar in plotVarArr:
     c = canvasDict[plotVar]
