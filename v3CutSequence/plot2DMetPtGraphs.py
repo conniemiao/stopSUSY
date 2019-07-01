@@ -248,7 +248,7 @@ for fileNum, line in enumerate(sigDataListFile):
     assert nentries > 0, "You have no events in your tree..."
 
     hSigArr.append(TH2F(plotVarsXY[1]+"_"+plotVarsXY[0]+"_sig_"+filename[21:31], \
-            plotVarsXY[1]+"_"+plotVarsXY[0] +"_sig_"+filename[21:31], \
+            plotVarsXY[1]+"_"+plotVarsXY[0] +"_sig_"+filename[19:31], \
             nBinsX, xMin, xMax, nBinsY, yMin, yMax))
     hSigArr[fileNum].SetDefaultSumw2() # automatically sum w^2 while filling
 

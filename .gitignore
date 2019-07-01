@@ -3,3 +3,5 @@ condorLogs/
 *.swp
 cmiao.cc
 *.pyc
+bkgdProcesses/
+Xsecs

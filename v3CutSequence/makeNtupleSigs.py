@@ -20,32 +20,30 @@ assert len(sys.argv) == 4, "need 3 command line args: testMode{0,1}, findingSame
 
 # limits the number of events and files to loop over
 testMode = bool(int(sys.argv[1]))
-# applying cuts
+print "Test mode:", testMode
 # selecting for either mu-mu or el-el (as opposed to mu-el or el-mu)
 findingSameFlavor = bool(int(sys.argv[2]))
+print "Finding same flavor:", findingSameFlavor
 # only applies if findingSameFlav; selects for mu-mu as opposed to el-el
 muPreference = bool(int(sys.argv[3]))
-
-print "Test mode:", testMode
+print "Mu preference:", muPreference
 
 if findingSameFlavor:
     if muPreference: 
         l1Flav = "muon"
         l2Flav = "muon"
-        print "Selecting for pair of 2 muons."
     else: 
         l1Flav = "electron"
         l2Flav = "electron"
-        print "Selecting for pair of 2 electrons."
 else: 
-    print "Selecting for pair of opposite flavor leptons."
     # these 2 lines just matter for creating the outFile name; actual 
     # selection of leading/trailing flavors occurs when looping over events:
     l1Flav = "muon"
     l2Flav = "electron"
+channelName = l1Flav[:2] + l2Flav[:2]
 
 # number of files to process
-numSigFiles = 2 # max 25
+numSigFiles = 3 # max 25
 
 outDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
 
@@ -53,7 +51,7 @@ outDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
 outName = outDir+"stopCut_"
 if numSigFiles < 10: outName += "0"+str(numSigFiles)
 else: outName += str(numSigFiles)
-outName += "Sig_"+l1Flav[:2]+l2Flav[:2]+".root"
+outName += "Sig_"+channelName+".root"
 
 outFile = TFile(outName, "recreate")
 
@@ -140,7 +138,7 @@ for fileNum, line in enumerate(sigDataListFile):
     filename, xsec = line.split(" ")
     xsec = float(xsec)
     print filename
-    inFile = TFile.Open(sigDataDir + filename, "READ")
+    inFile = TFile.Open(sigDataDir + filename + ".root", "READ")
 
     inTree = inFile.Get("AC1B")
     nentries = inTree.GetEntries()

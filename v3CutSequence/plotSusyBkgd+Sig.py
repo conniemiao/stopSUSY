@@ -89,18 +89,18 @@ channelName = l1Flav[:2] + l2Flav[:2]
 
 # assemble the sigsNtupleAdr and bkgdNtupleAdr
 # number of files to process
-numBkgdFiles = 27  # need to loop over all the files in order to have correct xsec
+numBkgdFiles = float("inf")  # note: must loop over all files to have correct xsec
 if testMode: 
     numBkgdFiles = 2 
-numSigFiles = 2 # max 25
+numSigFiles = 3 # max 25
 baseDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
 bkgdNtupleAdr = baseDir+"stopCut_"
 sigsNtupleAdr = baseDir+"stopCut_"
 if numSigFiles < 10: sigsNtupleAdr += "0"+str(numSigFiles)
 else: sigsNtupleAdr += str(numSigFiles)
-if numBkgdFiles < 10: bkgdNtupleAdr += "0"+str(numBkgdFiles)
-else: bkgdNtupleAdr += str(numBkgdFiles)
-bkgdNtupleAdr += "Bkgd_TTDiLept_"+channelName+".root"
+if testMode: bkgdNtupleAdr += "test_"
+else: bkgdNtupleAdr += "all_"
+bkgdNtupleAdr += "Bkgd_"+processName+"_"+channelName+".root"
 sigsNtupleAdr += "Sig_"+channelName+".root"
 
 print "Plotting",str(plotVarArr),"from",bkgdNtupleAdr,"and",sigsNtupleAdr
@@ -277,7 +277,7 @@ print
 bkgdFile.Close()
 
 #--------------------------------------------------------------------------------#
-# *************** Filling each signal data in a separate hist  ************
+# *************** Filling each signal in a separate hist  ************
 print "Plotting from signal."
 sigDataListFile = open("sig_SingleStop_files")
 
@@ -311,7 +311,7 @@ for fileNum, line in enumerate(sigDataListFile):
         binwidth = (xMax - xMin)/nBins
         hSigArr = hSigArrDict[plotVar]  # one hist for each signal file
         hSig = TH1F(plotVar + "_sig_" + filename, plotVar + "_sig_" + \
-                filename[21:31], nBins, xMin, xMax)
+                filename[19:31], nBins, xMin, xMax)
         hSig.SetDirectory(0)
         hSig.SetDefaultSumw2() # automatically sum w^2 while filling
         hSigArr.append(hSig)
@@ -431,11 +431,6 @@ for fileNum, line in enumerate(sigDataListFile):
                 len(linestyleopts)]
         hSig.SetLineStyle(hlinestyle)
 
-        # print "here3"
-        # sys.stdout.flush()
-        # hSig.Sumw2()
-        # print "here4"
-        # sys.stdout.flush()
         hSig.Scale(xsec*lumi/sigTotGenweight)
         hSig.SetMinimum(1)
         hSig.SetMaximum(10**12)
