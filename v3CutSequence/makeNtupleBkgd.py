@@ -23,9 +23,6 @@ from array import array
 
 assert len(sys.argv) == 5, "need 4 command line args: testMode{0,1}, findingSameFlavor{0,1}, muPreference{0,1}, process"
 
-assert (sys.argv[4] == "TT+X" or sys.argv[4] == "Diboson" or sys.argv[4] == "W-Jets" or sys.argv[4] == "Drell-Yan" or sys.argv[4] == "Single-Top"), \
-        "invalid process"
-
 # limits the number of events and files to loop over
 testMode = bool(int(sys.argv[1]))
 print "Test mode:", testMode
@@ -35,8 +32,11 @@ print "Finding same flavor:", findingSameFlavor
 # only applies if findingSameFlav; selects for mu-mu as opposed to el-el
 muPreference = bool(int(sys.argv[3]))
 print "Mu preference:", muPreference
+
 # name of the eventual process that this output root file will be hstacked into
 process = sys.argv[4]
+processes = {"TT+X", "Diboson", "W-Jets", "Drell-Yan", "Single-Top"}
+assert process in processes, "invalid process %s" % process
 print "Process:", process
 
 if findingSameFlavor:
@@ -57,6 +57,8 @@ channelName = l1Flav[:2] + l2Flav[:2]
 numBkgdFiles = float("inf")  # note: must loop over all files to have correct xsec
 if testMode: 
     numBkgdFiles = 2 
+
+outDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
 
 #--------------------------------------------------------------------------------#
 # ************* Make all the arrays. *************
@@ -96,9 +98,9 @@ genweight = array('f',[0.])
 # ********************** Filling bkgd data  **********************
 print "Storing variables from background."
 
-bkgdProcessesListFile = open("bkgd_files")
+bkgdSubprocessesListFile = open("bkgd_files")
 
-for processLine in bkgdProcessesListFile:
+for processLine in bkgdSubprocessesListFile:
     processLine = processLine.rstrip('\n')
     subProcessName, processName, xsec = processLine.split(" ")
     if not processName == process: continue
@@ -108,7 +110,6 @@ for processLine in bkgdProcessesListFile:
     print "Filling from", subProcessName, "for", processName
     
     # assemble the outName
-    outDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
     outName = outDir+"stopCut_"
     if testMode: outName += "test_"
     else: outName+="all_"

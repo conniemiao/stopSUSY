@@ -1,5 +1,5 @@
 executable  = makeNtupleBkgd.py
-arguments   = 1 0 0 Single-Top
+arguments   = 1 1 0 Diboson
 
 universe    = vanilla
 output      = ../../condorLogs/makeNtupleBkgd.$(ClusterId).$(ProcId).out
@@ -7,6 +7,6 @@ error       = ../../condorLogs/makeNtupleBkgd.$(ClusterId).$(ProcId).err
 log         = ../../condorLogs/makeNtupleBkgd.$(ClusterId).log
 +MaxRuntime = 10000
 
-transfer_input_files = stopSelection.py, bkgd_files, bkgdProcesses/Single-Top/*
+transfer_input_files = stopSelection.py, bkgd_files, bkgdProcesses/Diboson
 
 queue
