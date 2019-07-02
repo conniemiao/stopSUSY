@@ -19,6 +19,7 @@ from ROOT import gSystem, gStyle, gROOT, kTRUE
 from stopSelection import deltaR,  getNumBtag, findValidJets
 from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
 from collections import OrderedDict
+from math import sqrt, cos
 import numpy as np
 import time
 
@@ -47,16 +48,24 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "jet_pt":[100,0,400,"[GeV]"], 
         "jet_eta":[100,-3,3,""],
         "jet_phi":[100,-4,4,""],
+        "jet_ht":[100,0,800,"[GeV]"],
         "nbtag":[5,0,5,""],
         "nbtagLoose":[10,0,10,""],
         "nbtagTight":[5,0,5,""],
         "dR_lep1_jet":[100,0,7,""],
         "dR_lep2_jet":[100,0,7,""],
         "met_pt":[100,0,500,"[GeV]"],
+        "mt_tot":[100,0,800,"[GeV]"], # sqrt(mt1^2 + mt2^2)
+        "mt_sum":[100,0,800,"[GeV]"], # mt1 + mt2
+        "m_eff":[100,0,800,"[GeV]"], # ht + met + pt1 + pt2
+        "jet_ht_div_sqrt_met":[100,0,200,""],
+        "mt_tot_div_sqrt_met":[100,0,200,""],
+        "m_eff_div_sqrt_met":[100,0,200,""]
         }
 
 for plotVar in plotVarArr:
     assert (plotVar in plotSettings), "invalid plotVar %s" % plotVar
+print "Plotting", str(plotVarArr)
 
 # Determining adr of bkgd and sig ntuples.
 # limits the number of events and files to loop over
@@ -64,7 +73,6 @@ testMode = bool(int(sys.argv[1]))
 print "Test mode:", testMode
 displayMode = bool(int(sys.argv[2]))
 print "Display mode:", displayMode
-# applying cuts
 # selecting for either mu-mu or el-el (as opposed to mu-el or el-mu)
 findingSameFlavor = bool(int(sys.argv[3]))
 print "Finding same flavor:", findingSameFlavor
@@ -130,6 +138,7 @@ for plotVar in plotVarArr: # add an entry to the plotVar:hist dictionary
         for subprocessLine in bkgdSubprocessesListFile:
             subprocessLine = subprocessLine.rstrip('\n')
             subprocess, process, xsec = subprocessLine.split(" ")
+            if subprocess[0] == "#": continue # problematic input files
             hBkgd = TH1F(plotVar+"_"+subprocess+"_bkgd", \
                     plotVar+"_"+subprocess+"_bkgd", nBins, xMin, xMax)
             hBkgd.SetDirectory(0) # necessary to keep hist from closing
@@ -153,6 +162,7 @@ for subprocessLine in bkgdSubprocessesListFile:
     subprocess, process, xsec = subprocessLine.split(" ")
     xsec = float(xsec)
 
+    if process[:1] == "#": continue # problematic input files
     if not process in processes: continue
 
     # assemble the bkgdNtupleAdr
@@ -231,6 +241,7 @@ for subprocessLine in bkgdSubprocessesListFile:
                         np.reshape(event.jet_pt,20)[jMaxPt]: jMaxPt = j
             dR_lep1_jet = deltaR(event, l1Flav, l1Index, "jet", jMaxPt)
             dR_lep2_jet = deltaR(event, l2Flav, l2Index, "jet", jMaxPt)
+
         for plotVar in plotVarArr:
             hBkgd = hBkgdPlotVarSubprocessesDict[plotVar][subprocess]
             xMin = plotSettings[plotVar][1]
@@ -241,6 +252,11 @@ for subprocessLine in bkgdSubprocessesListFile:
             elif plotVar[:4] == "lep2": 
                 val = np.reshape(getattr(event, l2Flav+plotVar[4:]),\
                         20)[l2Index]
+            elif plotVar[:6] == "jet_ht":
+                if event.njets == 0: continue # to the next plotVar
+                val = event.jet_ht
+                if plotVar == "jet_ht_div_sqrt_met":
+                    val /= sqrt(event.met_pt)
             elif plotVar[:3] == "jet":
                 if event.njets == 0: continue # to the next plotVar
                 val = np.reshape(getattr(event, "jet_"+plotVar[4:]),\
@@ -251,6 +267,23 @@ for subprocessLine in bkgdSubprocessesListFile:
             elif plotVar == "dR_lep2_jet": 
                 if event.njets == 0: continue # to the next plotVar
                 val = dR_lep2_jet
+            elif plotVar[:6] == "mt_tot":
+                val = sqrt((np.reshape(getattr(event, l1Flav+"_mt"),\
+                        20)[l1Index])**2 + (np.reshape(getattr(event, \
+                        l2Flav+"_mt"),20)[l2Index])**2)
+                if plotVar == "mt_tot_div_sqrt_met":
+                    val /= sqrt(event.met_pt)
+            elif plotVar == "mt_sum":
+                val = np.reshape(getattr(event, l1Flav+"_mt"),\
+                        20)[l1Index] + np.reshape(getattr(event, \
+                        l2Flav+"_mt"),20)[l2Index]
+            elif plotVar[:5] == "m_eff":
+                val = event.met_pt + np.reshape(getattr(event, \
+                        l1Flav+"_pt"),20)[l1Index] + np.reshape(getattr(event, \
+                        l2Flav+"_pt"),20)[l2Index]
+                if event.njets > 0: val += event.jet_ht
+                if plotVar == "m_eff_div_sqrt_met":
+                    val /= sqrt(event.met_pt)
             else: val = getattr(event, plotVar)
     
             if val <= xMax:
@@ -403,19 +436,45 @@ for fileNum, line in enumerate(sigDataListFile):
             xMin = plotSettings[plotVar][1]
             xMax = plotSettings[plotVar][2]
             if plotVar[:4] == "lep1": 
-                val = np.reshape(getattr(event, l1Flav+plotVar[4:]),20)[l1Index]
+                val = np.reshape(getattr(event, l1Flav+plotVar[4:]),\
+                        20)[l1Index]
             elif plotVar[:4] == "lep2": 
-                val = np.reshape(getattr(event, l2Flav+plotVar[4:]),20)[l2Index]
+                val = np.reshape(getattr(event, l2Flav+plotVar[4:]),\
+                        20)[l2Index]
+            elif plotVar[:6] == "jet_ht":
+                if event.njets == 0: continue # to the next plotVar
+                val = event.jet_ht
+                if plotVar == "jet_ht_div_sqrt_met":
+                    val /= sqrt(event.met_pt)
             elif plotVar[:3] == "jet":
                 if event.njets == 0: continue # to the next plotVar
-                val = np.reshape(getattr(event, "jet_"+plotVar[4:]),20)[jMaxPt]
+                val = np.reshape(getattr(event, "jet_"+plotVar[4:]),\
+                        20)[jMaxPt]
             elif plotVar == "dR_lep1_jet": 
                 if event.njets == 0: continue # to the next plotVar
                 val = dR_lep1_jet
             elif plotVar == "dR_lep2_jet": 
                 if event.njets == 0: continue # to the next plotVar
                 val = dR_lep2_jet
+            elif plotVar[:6] == "mt_tot":
+                val = sqrt((np.reshape(getattr(event, l1Flav+"_mt"),\
+                        20)[l1Index])**2 + (np.reshape(getattr(event, \
+                        l2Flav+"_mt"),20)[l2Index])**2)
+                if plotVar == "mt_tot_div_sqrt_met":
+                    val /= sqrt(event.met_pt)
+            elif plotVar == "mt_sum":
+                val = np.reshape(getattr(event, l1Flav+"_mt"),\
+                        20)[l1Index] + np.reshape(getattr(event, \
+                        l2Flav+"_mt"),20)[l2Index]
+            elif plotVar[:5] == "m_eff":
+                val = event.met_pt + np.reshape(getattr(event, \
+                        l1Flav+"_pt"),20)[l1Index] + np.reshape(getattr(event, \
+                        l2Flav+"_pt"),20)[l2Index]
+                if event.njets > 0: val += event.jet_ht
+                if plotVar == "m_eff_div_sqrt_met":
+                    val /= sqrt(event.met_pt)
             else: val = getattr(event, plotVar)
+
             if val <= xMax:
                 hSig.Fill(val, genwt)
             else: # overflow

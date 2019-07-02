@@ -103,6 +103,7 @@ bkgdSubprocessesListFile = open("bkgd_files")
 for processLine in bkgdSubprocessesListFile:
     processLine = processLine.rstrip('\n')
     subProcessName, processName, xsec = processLine.split(" ")
+    if subProcessName[0] == "#": continue # problematic input files
     if not processName == process: continue
     # all subProcesses with the same processName will be hstacked with the same
     # color during plotting.

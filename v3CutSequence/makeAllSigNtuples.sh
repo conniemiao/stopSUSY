@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # For each channel, creates the sig ntuples.
+# Args to makeNtupleSigs: test mode, same flav, mu pref
 
 echo "python makeNtupleSigs.py 0 0 0"
 python makeNtupleSigs.py 0 0 0

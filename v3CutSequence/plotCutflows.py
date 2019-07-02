@@ -30,7 +30,6 @@ testMode = bool(int(sys.argv[1]))
 print "Test mode:", testMode
 displayMode = bool(int(sys.argv[2]))
 print "Display mode:", displayMode
-# applying cuts
 # selecting for either mu-mu or el-el (as opposed to mu-el or el-mu)
 findingSameFlavor = bool(int(sys.argv[3]))
 print "Finding same flavor:", findingSameFlavor
@@ -85,6 +84,7 @@ with open("bkgd_files") as bkgdSubprocessesListFile:
     for subprocessLine in bkgdSubprocessesListFile:
         subprocessLine = subprocessLine.rstrip('\n')
         subprocess, process, xsec = subprocessLine.split(" ")
+        if subprocess[0] == "#": continue # problematic input files
         hBkgd = TH1F("cutflow_"+subprocess+"_bkgd", \
                 "cutflow_"+subprocess+"_bkgd", nCuts, 0, nCuts)
         hBkgd.SetDirectory(0) # necessary to keep hist from closing
@@ -110,6 +110,7 @@ for subprocessLine in bkgdSubprocessesListFile:
     subprocess, process, xsec = subprocessLine.split(" ")
     xsec = float(xsec)
 
+    if subprocess[0] == "#": continue # problematic input files
     if not process in processes: continue
 
     # assemble the bkgdNtupleAdr
