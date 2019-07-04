@@ -39,9 +39,9 @@ plotSettings = { # [nBins,xMin,xMax]
         "lep1_eta":[30,-4,4,""],
         "lep2_eta":[30,-4,4,""],
         "jet_ht":[30,0,800,"[GeV]"],
-        "mt_tot":[30,0,800,"[GeV]"], # sqrt(mt1^2 + mt2^2)
-        "mt_sum":[30,0,800,"[GeV]"], # mt1 + mt2
-        "m_eff":[30,0,800,"[GeV]"], # ht + met + pt1 + pt2
+        "mt_tot":[30,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
+        "mt_sum":[30,0,1000,"[GeV]"], # mt1 + mt2
+        "m_eff":[30,0,1000,"[GeV]"], # ht + met + pt1 + pt2
         }
 
 plotVarsXY = sys.argv[7:9] # x, y
@@ -73,10 +73,10 @@ else:
 channelName = l1Flav[:2] + l2Flav[:2]
 
 # bkgd process name : color for plotting
-processes = {"TT+X":30, "Diboson":38, "W-Jets":41, "Drell-Yan":46, \
-        "Single-Top":40}
+processes = {"W-Jets":38, "Drell-Yan":46, "Diboson":41, "Single-Top":30, \
+        "TT+X":7}
 if testMode:
-    processes = {"TT+X":30, "Diboson":38}
+    processes = {"Diboson":41, "TT+X":7}
 
 process = sys.argv[6]
 assert process in processes, "invalid process %s" % process
@@ -88,7 +88,7 @@ numBkgdFiles = 27  # need to loop over all the files in order to have correct xs
 if testMode: 
     numBkgdFiles = 2 
 numSigFiles = 2 # max 25
-baseDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
+baseDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/"
 print "Plotting",str(plotVarsXY)
 print "Cutting events up to and including", lastcut
 
@@ -113,9 +113,7 @@ with open("bkgd_files") as bkgdSubprocessesListFile:
         subprocessLine = subprocessLine.rstrip('\n')
         subprocess, process, xsec = subprocessLine.split(" ")
         if subprocess[0] == "#": continue # problematic input files
-        hBkgd = TH2F(plotVarsXY[1]+"_"+plotVarsXY[0]+"_bkgd", \
-                plotVarsXY[1]+"_"+plotVarsXY[0]+"_bkgd", \
-                nBinsX, xMin, xMax, nBinsY, yMin, yMax)
+        hBkgd = TH2F("bkgd", "bkgd", nBinsX, xMin, xMax, nBinsY, yMin, yMax)
         hBkgd.SetDirectory(0) # necessary to keep hist from closing
         hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
         hBkgdSubprocessesDict.update({subprocess:hBkgd})
@@ -256,10 +254,6 @@ for subprocessLine in bkgdSubprocessesListFile:
                 hBkgd.Fill(valXY[0], valXY[1], genwt)
     # hBkgd.Sumw2()
     c.cd()
-    unitsLabelX = plotSettings[plotVarsXY[0]][3]
-    unitsLabelY = plotSettings[plotVarsXY[1]][3]
-    hBkgd.GetXaxis().SetTitle(plotVarsXY[0]+" "+unitsLabelX)
-    hBkgd.GetYaxis().SetTitle(plotVarsXY[1]+" "+unitsLabelY)
     hBkgd.Scale(xsec*lumi/bkgdTotGenweight)
     # hBkgd.SetFillColor(processes[process])
     if firstFile:
@@ -274,6 +268,10 @@ for subprocessLine in bkgdSubprocessesListFile:
 # hBkgdStack.Draw("colz")
 # hBkgdStack.Draw("lego2")
 hBkgdStack.Draw("col")
+unitsLabelX = plotSettings[plotVarsXY[0]][3]
+unitsLabelY = plotSettings[plotVarsXY[1]][3]
+hBkgdStack.GetXaxis().SetTitle(plotVarsXY[0]+" "+unitsLabelX)
+hBkgdStack.GetYaxis().SetTitle(plotVarsXY[1]+" "+unitsLabelY)
 gPad.Update()
 c.Update()
 
@@ -316,8 +314,7 @@ for fileNum, line in enumerate(sigDataListFile):
     print("nentries={0:d}".format(nentries))
     assert nentries > 0, "You have no events in your tree..."
 
-    hSigArr.append(TH2F(plotVarsXY[1]+"_"+plotVarsXY[0]+"_sig_"+filename[21:31], \
-            plotVarsXY[1]+"_"+plotVarsXY[0] +"_sig_"+filename[19:31], \
+    hSigArr.append(TH2F("sig_"+filename[21:31], "sig_"+filename[18:31], \
             nBinsX, xMin, xMax, nBinsY, yMin, yMax))
     hSigArr[fileNum].SetDefaultSumw2() # automatically sum w^2 while filling
 

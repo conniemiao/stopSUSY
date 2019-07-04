@@ -55,12 +55,12 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "dR_lep1_jet":[100,0,7,""],
         "dR_lep2_jet":[100,0,7,""],
         "met_pt":[100,0,500,"[GeV]"],
-        "mt_tot":[100,0,800,"[GeV]"], # sqrt(mt1^2 + mt2^2)
-        "mt_sum":[100,0,800,"[GeV]"], # mt1 + mt2
-        "m_eff":[100,0,800,"[GeV]"], # ht + met + pt1 + pt2
-        "jet_ht_div_sqrt_met":[100,0,200,""],
-        "mt_tot_div_sqrt_met":[100,0,200,""],
-        "m_eff_div_sqrt_met":[100,0,200,""]
+        "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
+        "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
+        "m_eff":[100,0,1000,"[GeV]"], # ht + met + pt1 + pt2
+        "jet_ht_div_sqrt_met":[100,0,100,""],
+        "mt_tot_div_sqrt_met":[100,0,100,""],
+        "m_eff_div_sqrt_met":[100,0,100,""]
         }
 
 for plotVar in plotVarArr:
@@ -95,10 +95,10 @@ channelName = l1Flav[:2] + l2Flav[:2]
 print "Cutting events up to and including", lastcut
 
 # bkgd process name : color for plotting
-processes = {"TT+X":30, "Diboson":38, "W-Jets":41, "Drell-Yan":46, \
-        "Single-Top":40}
+processes = {"W-Jets":38, "Drell-Yan":46, "Diboson":41, "Single-Top":30, \
+        "TT+X":7}
 if testMode:
-    processes = {"TT+X":30, "Diboson":38}
+    processes = {"Diboson":41, "TT+X":7}
 
 
 canvasDict = {}
@@ -109,7 +109,7 @@ nEvtsLabels = []
 if not displayMode:
     gROOT.SetBatch(kTRUE) # prevent displaying canvases
 
-baseDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
+baseDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/"
 # number of files to process
 numBkgdFiles = float("inf")  # note: must loop over all files to have correct xsec
 if testMode: 
@@ -139,14 +139,14 @@ for plotVar in plotVarArr: # add an entry to the plotVar:hist dictionary
             subprocessLine = subprocessLine.rstrip('\n')
             subprocess, process, xsec = subprocessLine.split(" ")
             if subprocess[0] == "#": continue # problematic input files
-            hBkgd = TH1F(plotVar+"_"+subprocess+"_bkgd", \
-                    plotVar+"_"+subprocess+"_bkgd", nBins, xMin, xMax)
+            hBkgd = TH1F(subprocess+"_bkgd", \
+                    subprocess+"_bkgd", nBins, xMin, xMax)
             hBkgd.SetDirectory(0) # necessary to keep hist from closing
             hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
             hBkgdPlotVarSubprocessesDict[plotVar].update({subprocess:hBkgd})
     c = TCanvas("c_"+plotVar,"Plot",10,20,1000,700)
     canvasDict.update({plotVar:c})
-    legendDict.update({plotVar:TLegend(.65,.75,.90,.90)})
+    legendDict.update({plotVar:TLegend(.70,.70,.90,.90)})
     title = plotVar+" ("+channelName+", cuts to "+lastcut+")"
     hBkgdStacksDict.update({plotVar:THStack(plotVar+"_bkgdStack", title)})
 lumi = 3000000 # luminosity = 3000 /fb = 3,000,000 /pb
@@ -162,7 +162,7 @@ for subprocessLine in bkgdSubprocessesListFile:
     subprocess, process, xsec = subprocessLine.split(" ")
     xsec = float(xsec)
 
-    if process[:1] == "#": continue # problematic input files
+    if subprocess[:1] == "#": continue # problematic input files
     if not process in processes: continue
 
     # assemble the bkgdNtupleAdr
@@ -182,9 +182,12 @@ for subprocessLine in bkgdSubprocessesListFile:
     hBkgdGenweights = bkgdFile.Get("genweights")
     # tot for this subprocess:
     bkgdTotGenweight = hBkgdGenweights.GetSumOfWeights()
+
+    # nMax = 10000
     
     # ********** Looping over events. ***********
     for count, event in enumerate(tBkgd):
+        # if count > nMax : break
         if count % 100000 == 0: print("count={0:d}".format(count))
         genwt = event.genweight
     
@@ -244,8 +247,10 @@ for subprocessLine in bkgdSubprocessesListFile:
 
         for plotVar in plotVarArr:
             hBkgd = hBkgdPlotVarSubprocessesDict[plotVar][subprocess]
+            nBins = plotSettings[plotVar][0]
             xMin = plotSettings[plotVar][1]
             xMax = plotSettings[plotVar][2]
+            binwidth = (xMax - xMin)/nBins
             if plotVar[:4] == "lep1": 
                 val = np.reshape(getattr(event, l1Flav+plotVar[4:]),\
                         20)[l1Index]
@@ -302,25 +307,26 @@ for subprocessLine in bkgdSubprocessesListFile:
         c.cd()
         hBkgd = hBkgdPlotVarSubprocessesDict[plotVar][subprocess]
         # hBkgd.Sumw2() # already summed while filling
-        unitsLabel = plotSettings[plotVar][3]
-        hBkgd.GetXaxis().SetTitle(plotVar+" "+unitsLabel)
-        hBkgd.GetYaxis().SetTitle("Number of Events, norm to 3000 /fb")
         hBkgd.Scale(xsec*lumi/bkgdTotGenweight)
         hBkgd.SetFillColor(processes[process])
         hBkgd.SetLineColor(processes[process])
         hBkgdStacksDict[plotVar].Add(hBkgd)
         if newProcess:
             legend = legendDict[plotVar]
-            legend.AddEntry(hBkgd, plotVar+"_"+process+"_bkgd")
+            legend.AddEntry(hBkgd, process+"_bkgd")
     print
     bkgdFile.Close()
 
 for plotVar in plotVarArr:
     c = canvasDict[plotVar]
     c.cd()
-    hBkgdStacksDict[plotVar].Draw("hist")
-    hBkgdStacksDict[plotVar].SetMinimum(1)
-    hBkgdStacksDict[plotVar].SetMaximum(10**12)
+    hBkgdStack = hBkgdStacksDict[plotVar]
+    hBkgdStack.Draw("hist")
+    unitsLabel = plotSettings[plotVar][3]
+    hBkgdStack.GetXaxis().SetTitle(plotVar+" "+unitsLabel)
+    hBkgdStack.GetYaxis().SetTitle("Number of Events, norm to 3000 /fb")
+    hBkgdStack.SetMinimum(1)
+    hBkgdStack.SetMaximum(10**12)
 
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal in a separate hist  ************
@@ -363,8 +369,8 @@ for fileNum, line in enumerate(sigDataListFile):
         xMax = plotSettings[plotVar][2]
         binwidth = (xMax - xMin)/nBins
         hSigArr = hSigArrDict[plotVar]  # one hist for each signal file
-        hSig = TH1F(plotVar + "_sig_" + filename, plotVar + "_sig_" + \
-                filename[19:31], nBins, xMin, xMax)
+        hSig = TH1F("sig_" + filename, "sig_" + \
+                filename[18:31], nBins, xMin, xMax)
         hSig.SetDirectory(0)
         hSig.SetDefaultSumw2() # automatically sum w^2 while filling
         hSigArr.append(hSig)

@@ -45,7 +45,7 @@ channelName = l1Flav[:2] + l2Flav[:2]
 # number of files to process
 numSigFiles = 3 # max 25
 
-outDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
+outDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/"
 
 # assemble the outName
 outName = outDir+"stopCut_"

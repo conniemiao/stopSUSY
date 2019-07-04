@@ -18,7 +18,7 @@ from collections import OrderedDict
 import numpy as np
 import time
 
-assert len(sys.argv) == 5, "needs 4 command line args: testMode{0,1}, displayMode{0,1}, findingSameFlavor{0,1}, muPreference{0,1} ..."
+assert len(sys.argv) == 5, "needs 4 command line args: testMode{0,1}, displayMode{0,1}, findingSameFlavor{0,1}, muPreference{0,1}"
 
 cuts = OrderedDict([("nocut",0), ("dilepton",1), ("nbtag<2",2), ("MET>80",3),\
         ("no3rdlept",4), ("njets<4",5)])
@@ -50,17 +50,17 @@ else:
 channelName = l1Flav[:2] + l2Flav[:2]
 
 # bkgd process name : color for plotting
-processes = OrderedDict([("TT+X",30), ("Diboson",38), ("W-Jets",41), \
-        ("Drell-Yan",46), ("Single-Top",40)])
+processes = OrderedDict([("W-Jets",38), ("Drell-Yan",46), ("Diboson",41), \
+        ("Single-Top",30), ("TT+X",7)])
 if testMode:
-    processes = OrderedDict([("TT+X",30), ("Diboson",38)])
+    processes = OrderedDict([("Diboson",41), ("TT+X",7)])
 
 nEvtsLabels = []
 
 if not displayMode:
     gROOT.SetBatch(kTRUE) # prevent displaying canvases
 
-baseDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
+baseDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/"
 # number of files to process
 numBkgdFiles = float("inf")  # note: must loop over all files to have correct xsec
 if testMode: 
@@ -93,7 +93,7 @@ with open("bkgd_files") as bkgdSubprocessesListFile:
 for process in processes:
     hBkgdCutsCountDict.update({process:[0]*nCuts})
 c = TCanvas("c","c",10,20,1000,700)
-legend = TLegend(.65,.75,.90,.90)
+legend = TLegend(.70,.70,.90,.90)
 title = "cutflow ("+channelName+")"
 hBkgdStack = THStack("cutflow_bkgdStack", title)
 
@@ -136,8 +136,11 @@ for subprocessLine in bkgdSubprocessesListFile:
     # tot for this subprocess:
     bkgdSubprocessGenweight = hBkgdGenweights.GetSumOfWeights()
     
+    # nMax = 10000
+
     # ********** Looping over events. ***********
     for count, event in enumerate(tBkgd):
+        # if count > nMax : break
         if count % 100000 == 0: print("count={0:d}".format(count))
         genwt = event.genweight
     
@@ -201,8 +204,6 @@ for subprocessLine in bkgdSubprocessesListFile:
 
     c.cd()
     # hBkgd.Sumw2() # already summed while filling
-    hBkgd.GetXaxis().SetTitle("cutflow")
-    hBkgd.GetYaxis().SetTitle("Number of Events, norm to 3000 /fb")
     hBkgd.Scale(xsec*lumi/bkgdSubprocessGenweight)
     hBkgd.SetFillColor(processes[process])
     hBkgd.SetLineColor(processes[process])
@@ -215,6 +216,8 @@ for subprocessLine in bkgdSubprocessesListFile:
     bkgdFile.Close()
 
 hBkgdStack.Draw("hist")
+hBkgdStack.GetXaxis().SetTitle("cutflow")
+hBkgdStack.GetYaxis().SetTitle("Number of Events, norm to 3000 /fb")
 hBkgdStack.SetMinimum(1)
 hBkgdStack.SetMaximum(10**12)
 
@@ -269,8 +272,7 @@ for fileNum, line in enumerate(sigDataListFile):
     print("nentries={0:d}".format(nentries))
     assert nentries > 0, "You have no events in your tree..."
 
-    hSig = TH1F("cutflow_sig_" + filename, "cutflow_sig_" + \
-            filename[19:31], nCuts, 0, nCuts)
+    hSig = TH1F("sig_" + filename, "sig_" + filename[18:31], nCuts, 0, nCuts)
     hSig.SetDirectory(0)
     hSig.SetDefaultSumw2() # automatically sum w^2 while filling
     hSigArr.append(hSig)
@@ -387,7 +389,7 @@ if displayMode:
 else:
     gSystem.ProcessEvents()
     imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-            "plots/v3CutSequence/cutflow_"+channelName+"_"+lastcut+".png"
+            "plots/v3CutSequence/cutflow_"+channelName+".png"
     print "Saving image", imgName
     img = TImage.Create()
     img.FromPad(c)

@@ -58,7 +58,7 @@ numBkgdFiles = float("inf")  # note: must loop over all files to have correct xs
 if testMode: 
     numBkgdFiles = 2 
 
-outDir = "~/private/CMSSW_9_4_9/s2019_SUSY/myData/"
+outDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/"
 
 #--------------------------------------------------------------------------------#
 # ************* Make all the arrays. *************

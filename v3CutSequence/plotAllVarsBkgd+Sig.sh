@@ -9,23 +9,30 @@ variables=("lep1_pt" "lep1_eta" "lep1_relIso" "lep2_pt" "njets" "jet_pt" \
 # plotSusyBkgd+Sig.py: testMode, displayMode, findingSameFlavor, muPreference, 
 # lastcut, plotVar1, plotVar2, ...
 
-python plotSusyBkgd+Sig.py 0 0 0 0 "njets<4" "${variables[@]}"
-echo
-echo
-python plotSusyBkgd+Sig.py 0 0 1 0 "njets<4" "${variables[@]}"
-echo
-echo
+#python plotSusyBkgd+Sig.py 0 0 0 0 "njets<4" "${variables[@]}"
+#echo
+#echo
+#python plotSusyBkgd+Sig.py 0 0 1 0 "njets<4" "${variables[@]}"
+#echo
+#echo
 python plotSusyBkgd+Sig.py 0 0 1 1 "njets<4" "${variables[@]}"
 
-# python plotSusyBkgd+Sig.py 0 0 0 0 "nocut" "${variables[@]}"
-# echo
-# echo
+#python plotSusyBkgd+Sig.py 0 0 0 0 "nocut" "${variables[@]}"
+#echo
+#echo
 # python plotSusyBkgd+Sig.py 0 0 1 0 "nocut" "${variables[@]}"
-# echo
-# echo
+#echo
+#echo
 # python plotSusyBkgd+Sig.py 0 0 1 1 "nocut" "${variables[@]}"
 
 
+#python plotCutflows.py 0 0 0 0
+#echo
+#echo
+#python plotCutflows.py 0 0 1 0
+#echo
+#echo
+python plotCutflows.py 0 0 1 1
 
 
 # python plot2DMetPtGraphs.py 0 0 0 0 "nocut" lep1_pt met_pt
@@ -46,10 +53,10 @@ python plotSusyBkgd+Sig.py 0 0 1 1 "njets<4" "${variables[@]}"
 # python plot2DMetPtGraphs.py 0 0 1 1 "nocut" lep1_eta met_pt
 # echo
 # echo
-python plot2DMetPtGraphs.py 0 0 0 0 "nocut" lep1_mt met_pt
-echo
-echo
-python plot2DMetPtGraphs.py 0 0 1 0 "nocut" lep1_mt met_pt
-echo
-echo
-python plot2DMetPtGraphs.py 0 0 1 1 "nocut" lep1_mt met_pt
+# python plot2DMetPtGraphs.py 0 0 0 0 "nocut" lep1_mt met_pt
+# echo
+# echo
+# python plot2DMetPtGraphs.py 0 0 1 0 "nocut" lep1_mt met_pt
+# echo
+# echo
+# python plot2DMetPtGraphs.py 0 0 1 1 "nocut" lep1_mt met_pt
