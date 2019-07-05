@@ -5,8 +5,8 @@
 # True testMode plots only a few events; True displayMode displays rather than 
 # saves w/o displaying the hists.
 # Implements additional cuts and then draws the cutflow. 
-# Uses xsec info from bkgd_files
 # Uses the root files outputted by makeNtupleBkgd.py and makeNtupleSigs.py
+# Uses xsec info from bkgd_files
 # Uses xsec info from sig_SingleStop_files
 
 import sys

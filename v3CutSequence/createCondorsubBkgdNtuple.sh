@@ -1,4 +1,4 @@
-# Creates a condorsub file for makeNtupleBkgd with $1-4 as thearguments to 
+# Creates a condorsub file for makeNtupleBkgd with $1-4 as the arguments to 
 # makeNtupleBkgd.py
 
 # cat > testcondorsub <<EOF
