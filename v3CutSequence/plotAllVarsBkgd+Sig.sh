@@ -9,24 +9,25 @@ variables=("lep1_pt" "lep1_eta" "lep1_relIso" "lep2_pt" "njets" "jet_pt" \
     "m_eff_div_sqrt_met")
 cuts=("njets<4" "nocut")
 
-./createCondorsubPlotting.sh plotSusyBkgd+Sig.py 0 0 1 1 "nocut" "${variables[@]}"
-
 for cut in "${cuts[@]}"
 do
-    ./createCondorsubPlotting.sh plotSusyBkgd+Sig.py 0 0 0 0 cut "${variables[@]}"
+    ./createCondorsubPlotting.sh plotSusyBkgd+Sig.py 0 0 0 0 "$cut" \
+        "${variables[@]}"
     condor_submit condorsub_plotting
-    ./createCondorsubPlotting.sh plotSusyBkgd+Sig.py 0 0 1 0 cut "${variables[@]}"
+    ./createCondorsubPlotting.sh plotSusyBkgd+Sig.py 0 0 1 0 "$cut" \
+        "${variables[@]}"
     condor_submit condorsub_plotting
-    ./createCondorsubPlotting.sh plotSusyBkgd+Sig.py 0 0 1 1 cut "${variables[@]}"
+    ./createCondorsubPlotting.sh plotSusyBkgd+Sig.py 0 0 1 1 "$cut" \
+        "${variables[@]}"
     condor_submit condorsub_plotting
 done
 
-./createCondorsubPlotting.sh plotCutflows.py 0 0 0 0
-condor_submit condorsub_plotting
-./createCondorsubPlotting.sh plotCutflows.py 0 0 1 0
-condor_submit condorsub_plotting
-./createCondorsubPlotting.sh plotCutflows.py 0 0 1 1
-condor_submit condorsub_plotting
+# ./createCondorsubPlotting.sh plotCutflows.py 0 0 0 0
+# condor_submit condorsub_plotting
+# ./createCondorsubPlotting.sh plotCutflows.py 0 0 1 0
+# condor_submit condorsub_plotting
+# ./createCondorsubPlotting.sh plotCutflows.py 0 0 1 1
+# condor_submit condorsub_plotting
 
 
 # python plot2DMetPtGraphs.py 0 0 0 0 "nocut" lep1_pt met_pt

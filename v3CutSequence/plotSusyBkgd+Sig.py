@@ -129,7 +129,6 @@ print
 hBkgdPlotVarSubprocessesDict = {} 
 for plotVar in plotVarArr: # add an entry to the plotVar:hist dictionary
     nBins = plotSettings[plotVar][0]
-    # if not testMode and nBins > 20: nBins = nBins * 5
     xMin = plotSettings[plotVar][1]
     xMax = plotSettings[plotVar][2]
     binwidth = (xMax - xMin)/nBins
@@ -364,10 +363,8 @@ for fileNum, line in enumerate(sigDataListFile):
 
     for plotVar in plotVarArr:
         nBins = plotSettings[plotVar][0]
-        # if not testMode and nBins > 20: nBins = nBins * 5
         xMin = plotSettings[plotVar][1]
         xMax = plotSettings[plotVar][2]
-        binwidth = (xMax - xMin)/nBins
         hSigArr = hSigArrDict[plotVar]  # one hist for each signal file
         hSig = TH1F("sig_" + filename, "sig_" + \
                 filename[18:31], nBins, xMin, xMax)
@@ -439,8 +436,10 @@ for fileNum, line in enumerate(sigDataListFile):
 
         for plotVar in plotVarArr:
             hSig = hSigArrDict[plotVar][fileNum]
+            nBins = plotSettings[plotVar][0]
             xMin = plotSettings[plotVar][1]
             xMax = plotSettings[plotVar][2]
+            binwidth = (xMax - xMin)/nBins
             if plotVar[:4] == "lep1": 
                 val = np.reshape(getattr(event, l1Flav+plotVar[4:]),\
                         20)[l1Index]
