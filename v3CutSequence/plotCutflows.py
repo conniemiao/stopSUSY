@@ -97,7 +97,7 @@ legend = TLegend(.70,.70,.90,.90)
 title = "cutflow ("+channelName+")"
 hBkgdStack = THStack("cutflow_bkgdStack", title)
 
-lumi = 3000000 # luminosity = 3000 /fb = 3,000,000 /pb
+lumi = 3000000 # luminosity = 3 /ab = 3000 /fb = 3,000,000 /fb
 
 gStyle.SetOptStat(0) # don't show any stats
 

@@ -148,7 +148,7 @@ for plotVar in plotVarArr: # add an entry to the plotVar:hist dictionary
     legendDict.update({plotVar:TLegend(.70,.70,.90,.90)})
     title = plotVar+" ("+channelName+", cuts to "+lastcut+")"
     hBkgdStacksDict.update({plotVar:THStack(plotVar+"_bkgdStack", title)})
-lumi = 3000000 # luminosity = 3000 /fb = 3,000,000 /pb
+lumi = 3000000 # luminosity = 3 /ab = 3000 /fb = 3,000,000 /fb
 
 gStyle.SetOptStat(0) # don't show any stats
 

@@ -31,17 +31,17 @@ assert lastcut in cuts, "invalid last cut %s" % lastcut
 nCuts = cuts[lastcut]+1
 
 plotSettings = { # [nBins,xMin,xMax]
-        "lep1_pt":[30,0,400,"[Gev]"],
-        "lep2_pt":[30,0,400,"[GeV]"],
-        "lep1_mt":[30,0,500,"[GeV]"],
-        "lep2_mt":[30,0,500,"[GeV]"],
-        "met_pt":[30,0,500,"[GeV]"],
-        "lep1_eta":[30,-4,4,""],
-        "lep2_eta":[30,-4,4,""],
-        "jet_ht":[30,0,800,"[GeV]"],
-        "mt_tot":[30,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
-        "mt_sum":[30,0,1000,"[GeV]"], # mt1 + mt2
-        "m_eff":[30,0,1000,"[GeV]"], # ht + met + pt1 + pt2
+        "lep1_pt":[50,0,400,"[Gev]"],
+        "lep2_pt":[50,0,400,"[GeV]"],
+        "lep1_mt":[50,0,500,"[GeV]"],
+        "lep2_mt":[50,0,500,"[GeV]"],
+        "met_pt":[50,0,500,"[GeV]"],
+        "lep1_eta":[50,-4,4,""],
+        "lep2_eta":[50,-4,4,""],
+        "jet_ht":[50,0,800,"[GeV]"],
+        "mt_tot":[50,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
+        "mt_sum":[50,0,1000,"[GeV]"], # mt1 + mt2
+        "m_eff":[50,0,1000,"[GeV]"], # ht + met + pt1 + pt2
         }
 
 plotVarsXY = sys.argv[7:9] # x, y
@@ -72,53 +72,46 @@ else:
     l2Flav = "electron"
 channelName = l1Flav[:2] + l2Flav[:2]
 
-# bkgd process name : color for plotting
-processes = {"W-Jets":38, "Drell-Yan":46, "Diboson":41, "Single-Top":30, \
-        "TT+X":7}
-if testMode:
-    processes = {"Diboson":41, "TT+X":7}
+processes = {"W-Jets", "Drell-Yan", "Diboson", "Single-Top", "TT+X"}
 
-process = sys.argv[6]
-assert process in processes, "invalid process %s" % process
-print "Bkgd process:", process
+thisProcess = sys.argv[6]
+assert thisProcess in processes, "invalid process %s" % thisProcess
+print "Bkgd process:", thisProcess
 
 # assemble the sigsNtupleAdr and bkgdNtupleAdr
 # number of files to process
 numBkgdFiles = 27  # need to loop over all the files in order to have correct xsec
 if testMode: 
     numBkgdFiles = 2 
-numSigFiles = 2 # max 25
+numSigFiles = 2 # just use the first signal one
 baseDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/"
 print "Plotting",str(plotVarsXY)
 print "Cutting events up to and including", lastcut
 
-testMode = True 
-if numSigFiles > 10: testMode = False 
 nBinsX = plotSettings[plotVarsXY[0]][0]
-if not testMode: nBinsX = nBinsX * 5
 xMin = plotSettings[plotVarsXY[0]][1]
 xMax = plotSettings[plotVarsXY[0]][2]
-binwidthX = (xMax - xMin)/nBinsX # include overflow bin
+binwidthX = (xMax - xMin)/nBinsX
 nBinsY = plotSettings[plotVarsXY[1]][0]
-if not testMode: nBinsY = nBinsY * 5
 yMin = plotSettings[plotVarsXY[1]][1]
 yMax = plotSettings[plotVarsXY[1]][2]
-binwidthY = (yMax - yMin)/nBinsY # include overflow bin
+binwidthY = (yMax - yMin)/nBinsY
 
 hBkgdSubprocessesDict = {} 
-# if not testMode and nBins > 20: nBins = nBins * 5
-# 1 hBkgd for each subprocess which will be stacked into 1 hstack
+# 1 hBkgd for each subprocess for this process which will be stacked into 1 hstack
 with open("bkgd_files") as bkgdSubprocessesListFile:
     for subprocessLine in bkgdSubprocessesListFile:
         subprocessLine = subprocessLine.rstrip('\n')
         subprocess, process, xsec = subprocessLine.split(" ")
         if subprocess[0] == "#": continue # problematic input files
-        hBkgd = TH2F("bkgd", "bkgd", nBinsX, xMin, xMax, nBinsY, yMin, yMax)
+        if process != thisProcess: continue
+        hBkgd = TH2F("bkgd_"+subprocess, "bkgd_"+subprocess, nBinsX, xMin, xMax, \
+                nBinsY, yMin, yMax)
         hBkgd.SetDirectory(0) # necessary to keep hist from closing
         hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
         hBkgdSubprocessesDict.update({subprocess:hBkgd})
 
-lumi = 3000000 # luminosity = 3000 /fb = 3,000,000 /fb
+lumi = 3000000 # luminosity = 3 /ab = 3000 /fb = 3,000,000 /fb
 
 c = TCanvas("c","Plot",10,20,1000,700) # same canvas used for signal and bkgd
 gStyle.SetPalette(1)
@@ -130,9 +123,9 @@ start_time = time.time()
 #--------------------------------------------------------------------------------#
 # *************** Filling bkgd data summed together  ************
 print
-print "Plotting " + plotVarsXY[1] + " vs. " + plotVarsXY[0] + " from background."
+print "Plotting", plotVarsXY[1], "vs.", plotVarsXY[0], "from bkgd", thisProcess
 
-title = plotVarsXY[1]+" v. "+plotVarsXY[0]+" ("+channelName+\
+title = plotVarsXY[1]+" v. "+plotVarsXY[0]+" ("+thisProcess+" bkgd, "+channelName+\
         ", cuts to "+lastcut+")"
 hBkgdStack = THStack("hBkgdStack", title)
 bkgdSubprocessesListFile = open("bkgd_files")
@@ -143,8 +136,8 @@ for subprocessLine in bkgdSubprocessesListFile:
     xsec = float(xsec)
 
     if subprocess[0] == "#": continue # problematic input files
+    if process != thisProcess: continue # only take subprocess from this process
     if not process in processes: continue
-    if firstFile: firstFile = False
 
     # assemble the bkgdNtupleAdr
     bkgdNtupleAdr = baseDir+"stopCut_"
@@ -255,11 +248,6 @@ for subprocessLine in bkgdSubprocessesListFile:
     # hBkgd.Sumw2()
     c.cd()
     hBkgd.Scale(xsec*lumi/bkgdTotGenweight)
-    # hBkgd.SetFillColor(processes[process])
-    if firstFile:
-        hBkgd.Draw("colz")
-        hBkgd.GetZaxis().SetLabelSize(0.02)
-    else: hBkgd.Draw("col")
     hBkgdStack.Add(hBkgd)
 
     print
@@ -281,8 +269,8 @@ if displayMode:
 else:
     gSystem.ProcessEvents()
     imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-            "plots/v3CutSequence/bkgd_"+plotVarsXY[1]+"_"+plotVarsXY[0]+"_"+\
-            channelName+"_"+lastcut+".png"
+            "plots/v3CutSequence/bkgd_"+thisProcess+"_"+plotVarsXY[1]+"_v_"+\
+            plotVarsXY[0]+"_"+channelName+"_"+lastcut+".png"
     print "Saving image", imgName
     img = TImage.Create()
     img.FromPad(c)
@@ -303,6 +291,7 @@ hSigArr = []
 for fileNum, line in enumerate(sigDataListFile):
     print
     if fileNum + 1 > numSigFiles: break
+    if fileNum + 1 > 1: break # just want to plot from 1 sig for now
 
     filename, xsec = line.split(" ")
     xsec = float(xsec)
@@ -314,7 +303,7 @@ for fileNum, line in enumerate(sigDataListFile):
     print("nentries={0:d}".format(nentries))
     assert nentries > 0, "You have no events in your tree..."
 
-    hSigArr.append(TH2F("sig_"+filename[21:31], "sig_"+filename[18:31], \
+    hSigArr.append(TH2F("sig_"+filename[18:31], "sig_"+filename[18:31], \
             nBinsX, xMin, xMax, nBinsY, yMin, yMax))
     hSigArr[fileNum].SetDefaultSumw2() # automatically sum w^2 while filling
 
@@ -409,8 +398,8 @@ for fileNum, line in enumerate(sigDataListFile):
                 hSigArr[fileNum].Fill(valXY[0], valXY[1], genwt)
 
     # hSigArr[fileNum].Sumw2()
-    title = plotVarsXY[1]+" v. "+plotVarsXY[0]+" ("+channelName+\
-            ", cuts to "+lastcut+")"
+    title = plotVarsXY[1]+" v. "+plotVarsXY[0]+" (sig_"+filename[18:31]+", "+\
+            channelName+", cuts to "+lastcut+")"
     hSigArr[fileNum].SetTitle(title)
     unitsLabelX = plotSettings[plotVarsXY[0]][3]
     unitsLabelY = plotSettings[plotVarsXY[1]][3]
@@ -426,7 +415,7 @@ for fileNum, line in enumerate(sigDataListFile):
     else:
         gSystem.ProcessEvents()
         imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-                "plots/v3CutSequence/sig"+str(fileNum)+"_"+plotVarsXY[1]+"_"+\
+                "plots/v3CutSequence/sig"+str(fileNum)+"_"+plotVarsXY[1]+"_v_"+\
                 plotVarsXY[0]+"_"+channelName+"_"+lastcut+".png"
         print "Saving image", imgName
         img = TImage.Create()
