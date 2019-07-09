@@ -182,11 +182,11 @@ for subprocessLine in bkgdSubprocessesListFile:
     # tot for this subprocess:
     bkgdTotGenweight = hBkgdGenweights.GetSumOfWeights()
 
-    # nMax = 10000
+    nMax = 10000
     
     # ********** Looping over events. ***********
     for count, event in enumerate(tBkgd):
-        # if count > nMax : break
+        if count > nMax : break
         if count % 100000 == 0: print("count={0:d}".format(count))
         genwt = event.genweight
     

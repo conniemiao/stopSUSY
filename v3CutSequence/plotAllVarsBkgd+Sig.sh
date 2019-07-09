@@ -26,12 +26,12 @@ done
 echo
 echo "Cutflows:"
 # Args to plotCutflows.py: test mode, display, same flav, mu pref
-# ./createCondorsubPlotting.sh plotCutflows.py 0 0 0 0
-# condor_submit condorsub_plotting
-# ./createCondorsubPlotting.sh plotCutflows.py 0 0 1 0
-# condor_submit condorsub_plotting
-# ./createCondorsubPlotting.sh plotCutflows.py 0 0 1 1
-# condor_submit condorsub_plotting
+./createCondorsubPlotting.sh plotCutflows.py 0 0 0 0
+condor_submit condorsub_plotting
+./createCondorsubPlotting.sh plotCutflows.py 0 0 1 0
+condor_submit condorsub_plotting
+./createCondorsubPlotting.sh plotCutflows.py 0 0 1 1
+condor_submit condorsub_plotting
 
 
 echo

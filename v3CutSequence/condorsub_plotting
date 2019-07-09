@@ -1,5 +1,5 @@
 executable  = plotSusyBkgd+Sig.py
-arguments   = 0 0 1 1 nocut lep1_pt lep1_eta lep1_relIso lep2_pt njets jet_pt jet_eta nbtag dR_lep1_jet lep1_mt lep2_mt met_pt jet_ht mt_sum mt_tot m_eff jet_ht_div_sqrt_met mt_tot_div_sqrt_met m_eff_div_sqrt_met
+arguments   = 0 0 0 0 njets<4 lep1_pt lep1_eta lep1_relIso lep2_pt njets jet_pt jet_eta nbtag dR_lep1_jet lep1_mt lep2_mt met_pt jet_ht mt_sum mt_tot m_eff jet_ht_div_sqrt_met mt_tot_div_sqrt_met m_eff_div_sqrt_met
 
 universe    = vanilla
 output      = ../../condorLogs/plotSusyBkgd+Sig.$(ClusterId).out

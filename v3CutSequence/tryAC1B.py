@@ -12,10 +12,10 @@ def checkDir(directory):
         print f 
         f = TFile(f)
     
-        try :
+        try:
             t = f.Get("AC1B")
             #print 'the filename is ',file, myTree.GetEntries()
-        except AttributeError :
+        except AttributeError:
             print "Problematic file:", f 
 
 if __name__ == "__main__":
