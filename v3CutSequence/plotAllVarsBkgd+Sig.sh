@@ -28,13 +28,13 @@ do
 done
 
 echo
-echo "Cutflows and pie charts:"
-# Args to plotCutflows.py: test mode, display, same flav, mu pref
-./createCondorsubPlotting.sh plotCutflows.py 0 0 0 0
+echo "Generate cutflow stats:"
+# Args to generateCutflows.py: test mode, same flav, mu pref
+./createCondorsubPlotting.sh generateCutflows.py 0 0 0
 condor_submit condorsub_plotting
-./createCondorsubPlotting.sh plotCutflows.py 0 0 1 0
+./createCondorsubPlotting.sh generateCutflows.py 0 1 0
 condor_submit condorsub_plotting
-./createCondorsubPlotting.sh plotCutflows.py 0 0 1 1
+./createCondorsubPlotting.sh generateCutflows.py 0 1 1
 condor_submit condorsub_plotting
 
 

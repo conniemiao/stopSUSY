@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-# NOTE: NEEDS 3 CMD LINE ARGS with values {0 (false) or 1 (true)}: 
-# testMode, findingSameFlavor, muPreference
-# True testMode plots only a few events.
+# NOTE: NEEDS 4 CMD LINE ARGS with values {0 (false) or 1 (true)}: 
+# testMode, experimental, findingSameFlavor, muPreference
+# True testMode plots only a few events. True experimental mode makes extra cuts
+# for cut optimization.
 # Implements additional cuts and then writes the counts of each sig/bkgd type
 # after each cut to an output file of the form cutflow_stats_[channel].txt in
 # the plots folder.
@@ -19,24 +20,19 @@ from collections import OrderedDict
 import numpy as np
 import time
 
-assert len(sys.argv) == 4, "needs 3 command line args: testMode{0,1}, findingSameFlavor{0,1}, muPreference{0,1}"
-
-# cuts = OrderedDict([("nocut",0), ("dilepton",1), ("nbtag<2",2), ("MET>80",3),\
-#         ("no3rdlept",4), ("njets<4",5)])
-
-cuts = OrderedDict([("nocut",0), ("dilepton",1), ("nbtag<2",2), ("MET>20",3),\
-        ("MET>50",4), ("MET>80",5), ("MET>110",6), ("no3rdlept",7), ("njets<4",8)])
-nCuts = len(cuts)
+assert len(sys.argv) == 5, "needs 4 command line args: testMode{0,1}, experimental{0,1}, findingSameFlavor{0,1}, muPreference{0,1}"
 
 # Determining adr of bkgd and sig ntuples.
 # limits the number of events and files to loop over
 testMode = bool(int(sys.argv[1]))
 print "Test mode:", testMode
+experimental = bool(int(sys.argv[2]))
+print "Experimental mode:", experimental
 # selecting for either mu-mu or el-el (as opposed to mu-el or el-mu)
-findingSameFlavor = bool(int(sys.argv[2]))
+findingSameFlavor = bool(int(sys.argv[3]))
 print "Finding same flavor:", findingSameFlavor
 # only applies if findingSameFlav; selects for mu-mu as opposed to el-el
-muPreference = bool(int(sys.argv[3]))
+muPreference = bool(int(sys.argv[4]))
 print "Mu preference:", muPreference
 channelName = ""
 if findingSameFlavor:
@@ -50,6 +46,15 @@ else:
     l1Flav = "muon"
     l2Flav = "electron"
 channelName = l1Flav[:2] + l2Flav[:2]
+
+cuts = OrderedDict([("nocut",0), ("dilepton",1), ("nbtag<2",2), ("MET>80",3),\
+        ("no3rdlept",4), ("njets<4",5)])
+if experimental:
+    cuts = OrderedDict([("nocut",0), ("dilepton",1), ("nbtag<2",2), ("MET>20",3),\
+            ("MET>50",4), ("MET>80",5), ("MET>110",6), ("no3rdlept",7), \
+            ("njets<4",8)])
+nCuts = len(cuts)
+
 
 # bkgd process name : color for plotting
 processes = OrderedDict([("W-Jets",38), ("Drell-Yan",46), ("Diboson",41), \
@@ -131,7 +136,7 @@ for subprocessLine in bkgdSubprocessesListFile:
     # tot for this subprocess:
     bkgdSubprocessGenweight = hBkgdGenweights.GetSumOfWeights()
     
-    nMax = 100000
+    nMax = 10000
 
     # ********** Looping over events. ***********
     for count, event in enumerate(tBkgd):
@@ -179,18 +184,22 @@ for subprocessLine in bkgdSubprocessesListFile:
             if event.nbtag > 1: continue
             hBkgd.Fill(cuts["nbtag<2"], genwt)
 
-        if nCuts > cuts["MET>20"]:
-            if event.met_pt < 20: continue
-            hBkgd.Fill(cuts["MET>20"], genwt)
-        if nCuts > cuts["MET>50"]:
-            if event.met_pt < 50: continue
-            hBkgd.Fill(cuts["MET>50"], genwt)
+        if experimental:
+            if nCuts > cuts["MET>20"]:
+                if event.met_pt < 20: continue
+                hBkgd.Fill(cuts["MET>20"], genwt)
+            if nCuts > cuts["MET>50"]:
+                if event.met_pt < 50: continue
+                hBkgd.Fill(cuts["MET>50"], genwt)
+
         if nCuts > cuts["MET>80"]:
             if event.met_pt < 80: continue
             hBkgd.Fill(cuts["MET>80"], genwt)
-        if nCuts > cuts["MET>110"]:
-            if event.met_pt < 110: continue
-            hBkgd.Fill(cuts["MET>110"], genwt)
+
+        if experimental:
+            if nCuts > cuts["MET>110"]:
+                if event.met_pt < 110: continue
+                hBkgd.Fill(cuts["MET>110"], genwt)
     
         if nCuts > cuts["no3rdlept"]:
             if event.found3rdLept: continue
@@ -298,18 +307,22 @@ for fileNum, line in enumerate(sigDataListFile):
             if event.nbtag > 1: continue
             hSig.Fill(cuts["nbtag<2"], genwt)
 
-        if nCuts > cuts["MET>20"]:
-            if event.met_pt < 20: continue
-            hSig.Fill(cuts["MET>20"], genwt)
-        if nCuts > cuts["MET>50"]:
-            if event.met_pt < 50: continue
-            hSig.Fill(cuts["MET>50"], genwt)
+        if experimental:
+            if nCuts > cuts["MET>20"]:
+                if event.met_pt < 20: continue
+                hSig.Fill(cuts["MET>20"], genwt)
+            if nCuts > cuts["MET>50"]:
+                if event.met_pt < 50: continue
+                hSig.Fill(cuts["MET>50"], genwt)
+
         if nCuts > cuts["MET>80"]:
             if event.met_pt < 80: continue
             hSig.Fill(cuts["MET>80"], genwt)
-        if nCuts > cuts["MET>100"]:
-            if event.met_pt < 110: continue
-            hSig.Fill(cuts["MET>110"], genwt)
+
+        if experimental:
+            if nCuts > cuts["MET>110"]:
+                if event.met_pt < 110: continue
+                hSig.Fill(cuts["MET>110"], genwt)
 
         if nCuts > cuts["no3rdlept"]:
             if event.found3rdLept: continue
@@ -341,7 +354,9 @@ for fileNum in range(numSigFiles):
     statsStack = np.append(statsStack, \
             np.array(hSigCutsCountDict[fileNum]).reshape(nCuts, 1), axis=1)
 statsFileName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-        "plots/v3CutSequence/cutflow_stats_"+channelName+".txt"
+        "plots/v3CutSequence/cutflow_stats_"+channelName
+if experimental: statsFileName += "_experimental"
+statsFileName += ".txt"
 np.savetxt(statsFileName, statsStack, delimiter='   ', header=statsHeader, \
         fmt='%-13s')
 print "Saved file", statsFileName

@@ -1,5 +1,5 @@
 # Creates a condorsub file for one of the plotting scripts (plotSusyBkgd+Sig.py, 
-# plotCutflows.py, plot2DMetPtGraphs.py) with $@[2:end] containing all the 
+# generateCutflows.py, plot2DMetPtGraphs.py) with $@[2:end] containing all the 
 # arguments and $1 containing the name of the script.
 
 # cat > testcondorsub <<EOF

@@ -159,11 +159,11 @@ for subprocessLine in bkgdSubprocessesListFile:
 
     hBkgd = hBkgdSubprocessesDict[subprocess]
 
-    nMax = 10000
+    # nMax = 10000
     
     # ********** Looping over events. ***********
     for count, event in enumerate(tBkgd):
-        if count > nMax : break
+        # if count > nMax : break
         if count % 100000 == 0: print("count={0:d}".format(count))
         genwt = event.genweight
     
@@ -253,7 +253,6 @@ for subprocessLine in bkgdSubprocessesListFile:
     hBkgd.Scale(xsec*lumi/bkgdTotGenweight)
     hBkgdStack.Add(hBkgd)
 
-    print
     bkgdFile.Close()
 
 # hBkgdStack.Draw("colz")
@@ -279,6 +278,7 @@ else:
     img.FromPad(c)
     img.WriteImage(imgName)
     print "Done plotting bkgd 2d hist."
+    print
 
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal data in a separate hist  ************
@@ -292,7 +292,6 @@ sigDataListFile = open("sig_SingleStop_files")
 
 hSigArr = []
 for fileNum, line in enumerate(sigDataListFile):
-    print
     if fileNum + 1 > numSigFiles: break
     if fileNum + 1 > 1: break # just want to plot from 1 sig for now
 
@@ -372,7 +371,7 @@ for fileNum, line in enumerate(sigDataListFile):
             elif plotVar[:4] == "lep2": 
                 valXY.append(np.reshape(getattr(event, l2Flav+plotVar[4:]), \
                         20)[l2Index])
-            elif plotVar[:6] == "jet_ht":
+            elif plotVar == "jet_ht":
                 valXY.append(event.jet_ht)
             elif plotVar[:6] == "mt_tot":
                 valXY.append(sqrt((np.reshape(getattr(event, l1Flav+"_mt"),\
@@ -388,6 +387,7 @@ for fileNum, line in enumerate(sigDataListFile):
                         l2Flav+"_pt"),20)[l2Index]
                 if event.njets > 0: val += event.jet_ht
                 valXY.append(val)
+            else: valXY.append(getattr(event, plotVar))
 
         if valXY[0] > xMax:
             if valXY[1] > yMax: # x and y overflow
