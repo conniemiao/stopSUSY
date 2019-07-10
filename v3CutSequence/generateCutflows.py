@@ -21,8 +21,11 @@ import time
 
 assert len(sys.argv) == 4, "needs 3 command line args: testMode{0,1}, findingSameFlavor{0,1}, muPreference{0,1}"
 
-cuts = OrderedDict([("nocut",0), ("dilepton",1), ("nbtag<2",2), ("MET>80",3),\
-        ("no3rdlept",4), ("njets<4",5)])
+# cuts = OrderedDict([("nocut",0), ("dilepton",1), ("nbtag<2",2), ("MET>80",3),\
+#         ("no3rdlept",4), ("njets<4",5)])
+
+cuts = OrderedDict([("nocut",0), ("dilepton",1), ("nbtag<2",2), ("MET>20",3),\
+        ("MET>50",4), ("MET>80",5), ("MET>110",6), ("no3rdlept",7), ("njets<4",8)])
 nCuts = len(cuts)
 
 # Determining adr of bkgd and sig ntuples.
@@ -175,10 +178,19 @@ for subprocessLine in bkgdSubprocessesListFile:
         if nCuts > cuts["nbtag<2"]:
             if event.nbtag > 1: continue
             hBkgd.Fill(cuts["nbtag<2"], genwt)
-    
+
+        if nCuts > cuts["MET>20"]:
+            if event.met_pt < 20: continue
+            hBkgd.Fill(cuts["MET>20"], genwt)
+        if nCuts > cuts["MET>50"]:
+            if event.met_pt < 50: continue
+            hBkgd.Fill(cuts["MET>50"], genwt)
         if nCuts > cuts["MET>80"]:
             if event.met_pt < 80: continue
             hBkgd.Fill(cuts["MET>80"], genwt)
+        if nCuts > cuts["MET>110"]:
+            if event.met_pt < 110: continue
+            hBkgd.Fill(cuts["MET>110"], genwt)
     
         if nCuts > cuts["no3rdlept"]:
             if event.found3rdLept: continue
@@ -286,9 +298,18 @@ for fileNum, line in enumerate(sigDataListFile):
             if event.nbtag > 1: continue
             hSig.Fill(cuts["nbtag<2"], genwt)
 
+        if nCuts > cuts["MET>20"]:
+            if event.met_pt < 20: continue
+            hSig.Fill(cuts["MET>20"], genwt)
+        if nCuts > cuts["MET>50"]:
+            if event.met_pt < 50: continue
+            hSig.Fill(cuts["MET>50"], genwt)
         if nCuts > cuts["MET>80"]:
             if event.met_pt < 80: continue
             hSig.Fill(cuts["MET>80"], genwt)
+        if nCuts > cuts["MET>100"]:
+            if event.met_pt < 110: continue
+            hSig.Fill(cuts["MET>110"], genwt)
 
         if nCuts > cuts["no3rdlept"]:
             if event.found3rdLept: continue

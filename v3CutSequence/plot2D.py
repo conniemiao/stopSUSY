@@ -125,8 +125,8 @@ start_time = time.time()
 print
 print "Plotting", plotVarsXY[1], "vs.", plotVarsXY[0], "from bkgd", thisProcess
 
-title = plotVarsXY[1]+" v. "+plotVarsXY[0]+" ("+thisProcess+" bkgd, "+channelName+\
-        ", cuts to "+lastcut+")"
+title = plotVarsXY[1]+" v. "+plotVarsXY[0]+" ("+thisProcess+" bkgd, "+channelName\
+        +", cuts to "+lastcut+")"
 hBkgdStack = THStack("hBkgdStack", title)
 bkgdSubprocessesListFile = open("bkgd_files")
 firstFile = True # indicates if this is the first subprocess file for this process
@@ -158,9 +158,12 @@ for subprocessLine in bkgdSubprocessesListFile:
     bkgdTotGenweight = hBkgdGenweights.GetSumOfWeights()
 
     hBkgd = hBkgdSubprocessesDict[subprocess]
+
+    nMax = 10000
     
     # ********** Looping over events. ***********
     for count, event in enumerate(tBkgd):
+        if count > nMax : break
         if count % 100000 == 0: print("count={0:d}".format(count))
         genwt = event.genweight
     
