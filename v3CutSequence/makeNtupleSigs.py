@@ -146,7 +146,7 @@ for fileNum, line in enumerate(sigDataListFile):
     nMax = nentries
     if testMode: nMax = 5000 
 
-    hGenweightsArr.append(TH1F("genweights","genweights",1,0,1))
+    hGenweightsArr.append(TH1F("genweights","genweights",1,-0.5,0.5))
 
     # ***** EVERYTHING BELOW THIS LINE MUST MATCH makeNtupleBkgd.py *****
     # ************ BEGIN LOOPING OVER EVENTS **********

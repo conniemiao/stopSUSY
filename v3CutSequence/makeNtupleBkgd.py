@@ -153,7 +153,7 @@ for processLine in bkgdSubprocessesListFile:
     tBkgd.Branch("met_phi", met_phi, "met_phi/F")
     tBkgd.Branch("genweight", genweight, "genweight/F")
     
-    hGenweights = TH1F("genweights","genweights",1,0,1)
+    hGenweights = TH1F("genweights","genweights",1,-0.5,0.5)
     
     for fileNum, ntuplesLine in enumerate(subProcessListFile):
         if fileNum + 1 > numBkgdFiles: break

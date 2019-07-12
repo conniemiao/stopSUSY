@@ -11,6 +11,7 @@ universe    = vanilla
 output      = ../../condorLogs/${1%.py}.\$(ClusterId).out
 error       = ../../condorLogs/${1%.py}.\$(ClusterId).err
 log         = ../../condorLogs/${1%.py}.\$(ClusterId).log
+
 +MaxRuntime = 100000
 
 transfer_input_files = stopSelection.py, sig_SingleStop_files, bkgd_files

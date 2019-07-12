@@ -10,6 +10,7 @@ universe    = vanilla
 output      = ../../condorLogs/makeNtupleBkgd.\$(ClusterId).out
 error       = ../../condorLogs/makeNtupleBkgd.\$(ClusterId).err
 log         = ../../condorLogs/makeNtupleBkgd.\$(ClusterId).log
+
 +MaxRuntime = 100000
 
 transfer_input_files = stopSelection.py, bkgd_files, bkgdProcesses/$4
