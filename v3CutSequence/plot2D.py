@@ -271,8 +271,8 @@ if displayMode:
 else:
     gSystem.ProcessEvents()
     imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-            "plots/v3CutSequence/bkgd_"+thisProcess+"_"+plotVarsXY[1]+"_v_"+\
-            plotVarsXY[0]+"_"+channelName+"_"+lastcut+".png"
+            "plots/v3CutSequence/plot2D/bkgd_"+thisProcess+"_"+plotVarsXY[1]+\
+            "_v_"+plotVarsXY[0]+"_"+channelName+"_"+lastcut+".png"
     print "Saving image", imgName
     img = TImage.Create()
     img.FromPad(c)
@@ -418,8 +418,8 @@ for fileNum, line in enumerate(sigDataListFile):
     else:
         gSystem.ProcessEvents()
         imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-                "plots/v3CutSequence/sig"+str(fileNum)+"_"+plotVarsXY[1]+"_v_"+\
-                plotVarsXY[0]+"_"+channelName+"_"+lastcut+".png"
+                "plots/v3CutSequence/plot2D/sig"+str(fileNum)+"_"+plotVarsXY[1]+\
+                "_v_"+plotVarsXY[0]+"_"+channelName+"_"+lastcut+".png"
         print "Saving image", imgName
         img = TImage.Create()
         img.FromPad(c)

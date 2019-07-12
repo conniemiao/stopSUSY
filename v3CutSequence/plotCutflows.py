@@ -201,7 +201,9 @@ if displayMode:
 else:
     gSystem.ProcessEvents()
     imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-            "plots/v3CutSequence/cutflow_"+channelName+".png"
+            "plots/v3CutSequence/cutflow/cutflow_"+channelName
+    if experimental: imgName += "_experimental"
+    imgName += ".png"
     print "Saving image", imgName
     img = TImage.Create()
     img.FromPad(c)
@@ -222,7 +224,7 @@ for process in processes:
 
 nocutPie = TPie("nocutPie", "Bkgd breakdown, no cuts ("+channelName+")", \
         len(nocutPieVals), array('f',nocutPieVals))
-nocutPie.SetLabelFormat("%txt %val (%perc)")
+nocutPie.SetLabelFormat("#splitline{%txt}{%val (%perc)}")
 nocutPie.SetFillColors(array('i',pieColors))
 nocutPie.SetValueFormat("%.0f")
 nocutPie.SetTextSize(0.02)
@@ -237,7 +239,7 @@ allcutsPie.SetValueFormat("%.0f")
 allcutsPie.SetTextSize(0.02)
 allcutsPie.SetRadius(0.3)
 
-for i, process in enumerate(hBkgdCutsCountDict.keys()):
+for i, process in enumerate(processes):
     nocutPie.SetEntryLabel(i, process)
     allcutsPie.SetEntryLabel(i, process)
 
@@ -250,7 +252,9 @@ if displayMode:
 else:
     gSystem.ProcessEvents()
     imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-            "plots/v3CutSequence/pie_nocut_"+channelName+".png"
+            "plots/v3CutSequence/cutflow/pie_nocut_"+channelName
+    if experimental: imgName += "_experimental"
+    imgName += ".png"
     print "Saving image", imgName
     img = TImage.Create()
     img.FromPad(c)
@@ -265,7 +269,9 @@ if displayMode:
 else:
     gSystem.ProcessEvents()
     imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-            "plots/v3CutSequence/pie_"+lastcut+"_"+channelName+".png"
+            "plots/v3CutSequence/cutflow/pie_"+lastcut+"_"+channelName
+    if experimental: imgName += "_experimental"
+    imgName += ".png"
     print "Saving image", imgName
     img = TImage.Create()
     img.FromPad(c)

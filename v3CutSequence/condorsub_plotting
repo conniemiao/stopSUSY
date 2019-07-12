@@ -1,10 +1,10 @@
-executable  = plotSusyBkgd+Sig.py
-arguments   = 0 0 1 0 njets<4 lep1_pt lep1_eta lep1_relIso lep2_pt njets jet_pt jet_eta nbtag dR_lep1_jet lep1_mt lep2_mt met_pt jet_ht mt_sum mt_tot m_eff jet_ht_div_sqrt_met mt_tot_div_sqrt_met m_eff_div_sqrt_met
+executable  = generateCutflows.py
+arguments   = 0 0 0 0
 
 universe    = vanilla
-output      = ../../condorLogs/plotSusyBkgd+Sig.$(ClusterId).out
-error       = ../../condorLogs/plotSusyBkgd+Sig.$(ClusterId).err
-log         = ../../condorLogs/plotSusyBkgd+Sig.$(ClusterId).log
+output      = ../../condorLogs/generateCutflows.$(ClusterId).out
+error       = ../../condorLogs/generateCutflows.$(ClusterId).err
+log         = ../../condorLogs/generateCutflows.$(ClusterId).log
 +MaxRuntime = 100000
 
 transfer_input_files = stopSelection.py, sig_SingleStop_files, bkgd_files

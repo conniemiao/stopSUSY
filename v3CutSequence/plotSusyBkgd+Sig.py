@@ -528,7 +528,8 @@ else:
     gSystem.ProcessEvents()
     for plotVar in plotVarArr:
         imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-                "plots/v3CutSequence/"+plotVar+"_"+channelName+"_"+lastcut+".png"
+                "plots/v3CutSequence/plot1D/"+plotVar+"_"+channelName+"_"+\
+                lastcut+".png"
         print "Saving image", imgName
         img = TImage.Create()
         img.FromPad(canvasDict[plotVar])

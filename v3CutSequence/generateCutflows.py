@@ -82,7 +82,7 @@ hBkgdDict = {}
 # hBkgdCutsCountDict maps every process to an array of size nCuts that keeps track
 # of the num evts remaining after each cut for that process
 hBkgdCutsCountDict = {}
-with open("bkgd_files_backup") as bkgdSubprocessesListFile:
+with open("bkgd_files") as bkgdSubprocessesListFile:
     for subprocessLine in bkgdSubprocessesListFile:
         subprocessLine = subprocessLine.rstrip('\n')
         subprocess, process, xsec = subprocessLine.split(" ")
@@ -104,7 +104,7 @@ gStyle.SetOptStat(0) # don't show any stats
 # ********** Looping over each subprocess. ***********
 prevProcess = "" # to determine when you got to the next process
 processNum = 0
-bkgdSubprocessesListFile = open("bkgd_files_backup")
+bkgdSubprocessesListFile = open("bkgd_files")
 for subprocessLine in bkgdSubprocessesListFile:
     subprocessLine = subprocessLine.rstrip('\n')
     subprocess, process, xsec = subprocessLine.split(" ")
@@ -136,11 +136,11 @@ for subprocessLine in bkgdSubprocessesListFile:
     # tot for this subprocess:
     bkgdSubprocessGenweight = hBkgdGenweights.GetSumOfWeights()
     
-    nMax = 10000
+    # nMax = 10000
 
     # ********** Looping over events. ***********
     for count, event in enumerate(tBkgd):
-        if count > nMax : break
+        # if count > nMax : break
         if count % 100000 == 0: print("count={0:d}".format(count))
         genwt = event.genweight
     
@@ -354,7 +354,7 @@ for fileNum in range(numSigFiles):
     statsStack = np.append(statsStack, \
             np.array(hSigCutsCountDict[fileNum]).reshape(nCuts, 1), axis=1)
 statsFileName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-        "plots/v3CutSequence/cutflow_stats_"+channelName
+        "plots/v3CutSequence/cutflow_stats/cutflow_stats_"+channelName
 if experimental: statsFileName += "_experimental"
 statsFileName += ".txt"
 np.savetxt(statsFileName, statsStack, delimiter='   ', header=statsHeader, \

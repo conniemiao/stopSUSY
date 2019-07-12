@@ -8,9 +8,9 @@ executable  = $1
 arguments   = ${@:2}
 
 universe    = vanilla
-output      = ../../condorLogs/plotSusyBkgd+Sig.\$(ClusterId).out
-error       = ../../condorLogs/plotSusyBkgd+Sig.\$(ClusterId).err
-log         = ../../condorLogs/plotSusyBkgd+Sig.\$(ClusterId).log
+output      = ../../condorLogs/${1%.py}.\$(ClusterId).out
+error       = ../../condorLogs/${1%.py}.\$(ClusterId).err
+log         = ../../condorLogs/${1%.py}.\$(ClusterId).log
 +MaxRuntime = 100000
 
 transfer_input_files = stopSelection.py, sig_SingleStop_files, bkgd_files
