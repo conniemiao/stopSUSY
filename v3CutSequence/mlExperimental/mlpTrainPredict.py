@@ -8,15 +8,12 @@ from sklearn.preprocessing import normalize
 import pandas as pd
 import matplotlib.pyplot as plt
 
-branches = ['met_pt','njets','nbtag','jet_ht']
-
 print "Training"
 sigTrainAdr = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/pandas_files/sig0_elel.hdf"
 bkgdTrainAdr = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/pandas_files/all_Bkgd_DY0Jets_MLL-50_TuneCUETP8M1_14TeV-madgraphMLM-pythia8_elel.hdf"
 sigTrainDF = pd.read_hdf(sigTrainAdr, "tSig0")
 bkgdTrainDF = pd.read_hdf(bkgdTrainAdr, "tBkgd")
 XTrain = normalize(pd.concat([bkgdTrainDF, sigTrainDF]), norm='max', axis=0)
-# XTrain = pd.concat([bkgdTrainDF, sigTrainDF])
 yTrain = [1]*sigTrainDF.shape[0]+[0]*bkgdTrainDF.shape[0]
 
 clf = MLPClassifier(hidden_layer_sizes=(4,2))
