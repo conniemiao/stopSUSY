@@ -153,7 +153,7 @@ for processLine in bkgdSubprocessesListFile:
     tBkgd.Branch("met_phi", met_phi, "met_phi/F")
     tBkgd.Branch("genweight", genweight, "genweight/F")
     
-    hGenweights = TH1F("genweights","genweights",1,-0.5,0.5)
+    hGenweights = TH1F("genweights","genweights",-0.5,0,0.5)
     
     for fileNum, ntuplesLine in enumerate(subProcessListFile):
         if fileNum + 1 > numBkgdFiles: break
@@ -174,7 +174,13 @@ for processLine in bkgdSubprocessesListFile:
             if count > nMax : break
             if count % 500000 == 0: print("count={0:d}".format(count))
     
-            hGenweights.Fill(0,event.genweight)
+            hGenweights.Fill(0, event.genweight)
+            if hGenweights.GetSumOfWeights() != hGenweights.GetEntries(): 
+                print count
+                print hGenweights.GetSumOfWeights(), hGenweights.GetEntries()
+                print event.genweight
+                break
+
             # ****** Loose selection of events with valid lep1, lep2, jets ******
             if findingSameFlavor:
                 if muPreference:
