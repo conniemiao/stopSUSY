@@ -12,6 +12,7 @@
 # Uses xsec info from sig_SingleStop_files
 # Possible lastcuts: listed in cuts below.
 
+print "Importing modules."
 import sys
 from ROOT import TFile, TTree, TH2F, TCanvas, TImage, TLegend, THStack
 from ROOT import gSystem, gStyle, gROOT, kTRUE, gPad
@@ -21,6 +22,7 @@ from collections import OrderedDict
 from math import sqrt, cos
 import numpy as np
 import time
+print "Beginning execution of", sys.argv
 
 assert len(sys.argv) == 9, "need 8 command line args: testMode{0,1}, displayMode{0,1}, findingSameFlavor{0,1}, muPreference{0,1}, lastcut, process, plotVarX, plotVarY"
 
@@ -81,8 +83,6 @@ print "Bkgd process:", thisProcess
 # assemble the sigsNtupleAdr and bkgdNtupleAdr
 # number of files to process
 numBkgdFiles = 27  # need to loop over all the files in order to have correct xsec
-if testMode: 
-    numBkgdFiles = 2 
 numSigFiles = 2 # just use the first signal one
 baseDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/"
 print "Plotting",str(plotVarsXY)
@@ -141,8 +141,7 @@ for subprocessLine in bkgdSubprocessesListFile:
 
     # assemble the bkgdNtupleAdr
     bkgdNtupleAdr = baseDir+"stopCut_"
-    if testMode: bkgdNtupleAdr += "test_"
-    else: bkgdNtupleAdr += "all_"
+    bkgdNtupleAdr += "all_"
     bkgdNtupleAdr += "Bkgd_"+subprocess+"_"+channelName+".root"
     print "Plotting from", bkgdNtupleAdr
 
@@ -159,11 +158,12 @@ for subprocessLine in bkgdSubprocessesListFile:
 
     hBkgd = hBkgdSubprocessesDict[subprocess]
 
-    # nMax = 10000
+    nMax = nentries
+    if testMode: nMax = 10000
     
     # ********** Looping over events. ***********
     for count, event in enumerate(tBkgd):
-        # if count > nMax : break
+        if count > nMax : break
         if count % 100000 == 0: print("count={0:d}".format(count))
         genwt = event.genweight
     
@@ -174,27 +174,15 @@ for subprocessLine in bkgdSubprocessesListFile:
             else: l2Flav = "electron"
         l1Index = event.lep1_index
         l2Index = event.lep2_index
+
         # ********** Additional cuts. ***********
-        if nCuts > cuts["dilepton"]:
+        if nCuts > cuts["dilepton"]: # currently just tighter relIso cuts
             if findingSameFlavor:
-                if muPreference:
-                    lepIndices = selectMuMu(event)
-                    # l1Flav, l2Flav set at runtime
-                else: 
-                    lepIndices = selectElEl(event)
-                    # l1Flav, l2Flav set at runtime
-                if lepIndices is None: continue
+                if event.lep1_relIso >= 0.1: continue
+                if event.lep2_relIso >= 0.1: continue
             else:
-                lepIndices = selectMuEl(event)
-                l1Flav = "muon"
-                l2Flav = "electron"
-                if lepIndices is None:
-                    lepIndices = selectElMu(event)
-                    if lepIndices is None: continue
-                    l1Flav = "electron"
-                    l2Flav = "muon"
-            l1Index = lepIndices[0]
-            l2Index = lepIndices[1]
+                if event.lep1_relIso >= 0.2: continue
+                if event.lep2_relIso >= 0.2: continue
     
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
     
@@ -212,31 +200,9 @@ for subprocessLine in bkgdSubprocessesListFile:
     
         # ********** Plotting. ***********
         valXY = []
-        if plotVar == "jet_ht" and event.njets == 0: continue # to next event
+        if "jet_ht" in plotVarsXY and event.njets == 0: continue # to next event
         for plotVar in plotVarsXY:
-            if plotVar[:4] == "lep1": 
-                valXY.append(np.reshape(getattr(event, l1Flav+plotVar[4:]),\
-                        20)[l1Index])
-            elif plotVar[:4] == "lep2": 
-                valXY.append(np.reshape(getattr(event, l2Flav+plotVar[4:]), \
-                        20)[l2Index])
-            elif plotVar == "jet_ht":
-                valXY.append(event.jet_ht)
-            elif plotVar[:6] == "mt_tot":
-                valXY.append(sqrt((np.reshape(getattr(event, l1Flav+"_mt"),\
-                        20)[l1Index])**2 + (np.reshape(getattr(event, \
-                        l2Flav+"_mt"),20)[l2Index])**2))
-            elif plotVar == "mt_sum":
-                valXY.append(np.reshape(getattr(event, l1Flav+"_mt"),\
-                        20)[l1Index] + np.reshape(getattr(event, \
-                        l2Flav+"_mt"),20)[l2Index])
-            elif plotVar[:5] == "m_eff":
-                val = event.met_pt + np.reshape(getattr(event, \
-                        l1Flav+"_pt"),20)[l1Index] + np.reshape(getattr(event, \
-                        l2Flav+"_pt"),20)[l2Index]
-                if event.njets > 0: val += event.jet_ht
-                valXY.append(val)
-            else: valXY.append(getattr(event, plotVar))
+            valXY.append(getattr(event, plotVar))
     
         if valXY[0] > xMax:
             if valXY[1] > yMax: # x and y overflow
@@ -326,26 +292,13 @@ for fileNum, line in enumerate(sigDataListFile):
         l2Index = event.lep2_index
 
         # ********** Additional cuts. ***********
-        if nCuts > cuts["dilepton"]:
+        if nCuts > cuts["dilepton"]: # currently just tighter relIso cuts
             if findingSameFlavor:
-                if muPreference:
-                    lepIndices = selectMuMu(event)
-                    # l1Flav, l2Flav set at runtime
-                else: 
-                    lepIndices = selectElEl(event)
-                    # l1Flav, l2Flav set at runtime
-                if lepIndices is None: continue
+                if event.lep1_relIso >= 0.1: continue
+                if event.lep2_relIso >= 0.1: continue
             else:
-                lepIndices = selectMuEl(event)
-                l1Flav = "muon"
-                l2Flav = "electron"
-                if lepIndices is None:
-                    lepIndices = selectElMu(event)
-                    if lepIndices is None: continue
-                    l1Flav = "electron"
-                    l2Flav = "muon"
-            l1Index = lepIndices[0]
-            l2Index = lepIndices[1]
+                if event.lep1_relIso >= 0.2: continue
+                if event.lep2_relIso >= 0.2: continue
 
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
 
@@ -363,31 +316,9 @@ for fileNum, line in enumerate(sigDataListFile):
 
         # ********** Plotting. ***********
         valXY = []
-        if plotVar == "jet_ht" and event.njets == 0: continue # to next event
+        if "jet_ht" in plotVarsXY and event.njets == 0: continue # to next event
         for plotVar in plotVarsXY:
-            if plotVar[:4] == "lep1": 
-                valXY.append(np.reshape(getattr(event, l1Flav+plotVar[4:]),\
-                        20)[l1Index])
-            elif plotVar[:4] == "lep2": 
-                valXY.append(np.reshape(getattr(event, l2Flav+plotVar[4:]), \
-                        20)[l2Index])
-            elif plotVar == "jet_ht":
-                valXY.append(event.jet_ht)
-            elif plotVar[:6] == "mt_tot":
-                valXY.append(sqrt((np.reshape(getattr(event, l1Flav+"_mt"),\
-                        20)[l1Index])**2 + (np.reshape(getattr(event, \
-                        l2Flav+"_mt"),20)[l2Index])**2))
-            elif plotVar == "mt_sum":
-                valXY.append(np.reshape(getattr(event, l1Flav+"_mt"),\
-                        20)[l1Index] + np.reshape(getattr(event, \
-                        l2Flav+"_mt"),20)[l2Index])
-            elif plotVar[:5] == "m_eff":
-                val = event.met_pt + np.reshape(getattr(event, \
-                        l1Flav+"_pt"),20)[l1Index] + np.reshape(getattr(event, \
-                        l2Flav+"_pt"),20)[l2Index]
-                if event.njets > 0: val += event.jet_ht
-                valXY.append(val)
-            else: valXY.append(getattr(event, plotVar))
+            valXY.append(getattr(event, plotVar))
 
         if valXY[0] > xMax:
             if valXY[1] > yMax: # x and y overflow

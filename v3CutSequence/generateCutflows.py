@@ -11,6 +11,7 @@
 # Uses xsec info from bkgd_files
 # Uses xsec info from sig_SingleStop_files
 
+print "Importing modules."
 import sys
 from ROOT import TFile, TTree, TH1F, TCanvas, TImage, TLegend, TText, THStack
 from ROOT import gSystem, gStyle, gROOT, kTRUE
@@ -19,6 +20,7 @@ from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
 from collections import OrderedDict
 import numpy as np
 import time
+print "Beginning execution of", sys.argv
 
 assert len(sys.argv) == 5, "needs 4 command line args: testMode{0,1}, experimental{0,1}, findingSameFlavor{0,1}, muPreference{0,1}"
 
@@ -59,14 +61,10 @@ nCuts = len(cuts)
 # bkgd process name : color for plotting
 processes = OrderedDict([("W-Jets",38), ("Drell-Yan",46), ("Diboson",41), \
         ("Single-Top",30), ("TT+X",7)])
-if testMode:
-    processes = OrderedDict([("Diboson",41), ("TT+X",7)])
 
 baseDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/"
 # number of files to process
 numBkgdFiles = float("inf")  # note: must loop over all files to have correct xsec
-if testMode: 
-    numBkgdFiles = 2 
 numSigFiles = 3 # max 25
 
 #--------------------------------------------------------------------------------#
@@ -115,8 +113,7 @@ for subprocessLine in bkgdSubprocessesListFile:
 
     # assemble the bkgdNtupleAdr
     bkgdNtupleAdr = baseDir+"stopCut_"
-    if testMode: bkgdNtupleAdr += "test_"
-    else: bkgdNtupleAdr += "all_"
+    bkgdNtupleAdr += "all_"
     bkgdNtupleAdr += "Bkgd_"+subprocess+"_"+channelName+".root"
     print "Plotting from", bkgdNtupleAdr
 
@@ -136,11 +133,12 @@ for subprocessLine in bkgdSubprocessesListFile:
     # tot for this subprocess:
     bkgdSubprocessGenweight = hBkgdGenweights.GetSumOfWeights()
     
-    # nMax = 10000
+    nMax = nentries
+    if testMode: nMax = 10000
 
     # ********** Looping over events. ***********
     for count, event in enumerate(tBkgd):
-        # if count > nMax : break
+        if count > nMax : break
         if count % 100000 == 0: print("count={0:d}".format(count))
         genwt = event.genweight
     
@@ -155,26 +153,13 @@ for subprocessLine in bkgdSubprocessesListFile:
         hBkgd.Fill(cuts["nocut"], genwt)
     
         # ********** Additional cuts. ***********
-        if nCuts > cuts["dilepton"]:
+        if nCuts > cuts["dilepton"]: # currently just tighter relIso cuts
             if findingSameFlavor:
-                if muPreference:
-                    lepIndices = selectMuMu(event)
-                    # l1Flav, l2Flav set at runtime
-                else: 
-                    lepIndices = selectElEl(event)
-                    # l1Flav, l2Flav set at runtime
-                if lepIndices is None: continue
+                if event.lep1_relIso >= 0.1: continue
+                if event.lep2_relIso >= 0.1: continue
             else:
-                lepIndices = selectMuEl(event)
-                l1Flav = "muon"
-                l2Flav = "electron"
-                if lepIndices is None:
-                    lepIndices = selectElMu(event)
-                    if lepIndices is None: continue
-                    l1Flav = "electron"
-                    l2Flav = "muon"
-            l1Index = lepIndices[0]
-            l2Index = lepIndices[1]
+                if event.lep1_relIso >= 0.2: continue
+                if event.lep2_relIso >= 0.2: continue
             hBkgd.Fill(cuts["dilepton"], genwt)
     
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
@@ -277,26 +262,13 @@ for fileNum, line in enumerate(sigDataListFile):
         hSig.Fill(cuts["nocut"], genwt)
 
         # ********** Additional cuts. ***********
-        if nCuts > cuts["dilepton"]:
+        if nCuts > cuts["dilepton"]: # currently just tighter relIso cuts
             if findingSameFlavor:
-                if muPreference:
-                    lepIndices = selectMuMu(event)
-                    # l1Flav, l2Flav set at runtime
-                else: 
-                    lepIndices = selectElEl(event)
-                    # l1Flav, l2Flav set at runtime
-                if lepIndices is None: continue
+                if event.lep1_relIso >= 0.1: continue
+                if event.lep2_relIso >= 0.1: continue
             else:
-                lepIndices = selectMuEl(event)
-                l1Flav = "muon"
-                l2Flav = "electron"
-                if lepIndices is None:
-                    lepIndices = selectElMu(event)
-                    if lepIndices is None: continue
-                    l1Flav = "electron"
-                    l2Flav = "muon"
-            l1Index = lepIndices[0]
-            l2Index = lepIndices[1]
+                if event.lep1_relIso >= 0.2: continue
+                if event.lep2_relIso >= 0.2: continue
             hSig.Fill(cuts["dilepton"], genwt)
 
 
