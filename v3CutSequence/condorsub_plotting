@@ -1,10 +1,11 @@
 executable  = generateCutflows.py
-arguments   = 0 0 0 0
+arguments   = 0 1 1 1
 
 universe    = vanilla
 output      = ../../condorLogs/generateCutflows.$(ClusterId).out
 error       = ../../condorLogs/generateCutflows.$(ClusterId).err
 log         = ../../condorLogs/generateCutflows.$(ClusterId).log
+
 +MaxRuntime = 100000
 
 transfer_input_files = stopSelection.py, sig_SingleStop_files, bkgd_files

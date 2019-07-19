@@ -9,7 +9,7 @@
 
 print "Importing modules."
 import sys
-from ROOT import TFile, TTree, TH1F, TCanvas, TLorentzVector, TImage, TLegend
+from ROOT import TFile, TTree, TH1D, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
 from stopSelection import deltaR,  getNumBtag, findValidJets
 from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
@@ -184,7 +184,8 @@ for fileNum, line in enumerate(sigDataListFile):
     nMax = nentries
     if testMode: nMax = 5000 
 
-    hGenweightsArr.append(TH1F("genweights","genweights",1,-0.5,0.5))
+    hGenweightsArr.append(TH1D("genweights"+str(fileNum),\
+            "genweights"+str(fileNum),1,-0.5,0.5))
 
     # ***** EVERYTHING BELOW THIS LINE MUST MATCH makeNtupleBkgd.py *****
     # ************ BEGIN LOOPING OVER EVENTS **********

@@ -15,7 +15,7 @@
 
 print "Importing modules."
 import sys
-from ROOT import TFile, TTree, TH1F, TCanvas, TImage, TLegend, TText, THStack
+from ROOT import TFile, TTree, TH1D, TCanvas, TImage, TLegend, TText, THStack
 from ROOT import gSystem, gStyle, gROOT, kTRUE
 from stopSelection import deltaR,  getNumBtag, findValidJets
 from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
@@ -135,7 +135,7 @@ for plotVar in plotVarArr: # add an entry to the plotVar:hist dictionary
             subprocessLine = subprocessLine.rstrip('\n')
             subprocess, process, xsec = subprocessLine.split(" ")
             if subprocess[0] == "#": continue # problematic input files
-            hBkgd = TH1F(subprocess+"_bkgd", \
+            hBkgd = TH1D(subprocess+"_bkgd", \
                     subprocess+"_bkgd", nBins, xMin, xMax)
             hBkgd.SetDirectory(0) # necessary to keep hist from closing
             hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
@@ -330,13 +330,13 @@ for fileNum, line in enumerate(sigDataListFile):
         xMin = plotSettings[plotVar][1]
         xMax = plotSettings[plotVar][2]
         hSigArr = hSigArrDict[plotVar]  # one hist for each signal file
-        hSig = TH1F("sig_" + filename, "sig_" + \
+        hSig = TH1D("sig_" + filename, "sig_" + \
                 filename[18:31], nBins, xMin, xMax)
         hSig.SetDirectory(0)
         hSig.SetDefaultSumw2() # automatically sum w^2 while filling
         hSigArr.append(hSig)
 
-    hSigGenweights = sigFile.Get("genweights")
+    hSigGenweights = sigFile.Get("genweights"+str(fileNum))
     sigTotGenweight = hSigGenweights.GetSumOfWeights()
 
     # ********** Looping over events. ***********

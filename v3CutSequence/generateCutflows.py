@@ -13,7 +13,7 @@
 
 print "Importing modules."
 import sys
-from ROOT import TFile, TTree, TH1F, TCanvas, TImage, TLegend, TText, THStack
+from ROOT import TFile, TTree, TH1D, TCanvas, TImage, TLegend, TText, THStack
 from ROOT import gSystem, gStyle, gROOT, kTRUE
 from stopSelection import deltaR,  getNumBtag, findValidJets
 from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
@@ -85,7 +85,7 @@ with open("bkgd_files") as bkgdSubprocessesListFile:
         subprocessLine = subprocessLine.rstrip('\n')
         subprocess, process, xsec = subprocessLine.split(" ")
         if subprocess[0] == "#": continue # problematic input files
-        hBkgd = TH1F("cutflow_"+subprocess+"_bkgd", \
+        hBkgd = TH1D("cutflow_"+subprocess+"_bkgd", \
                 "cutflow_"+subprocess+"_bkgd", nCuts, 0, nCuts)
         hBkgd.SetDirectory(0) # necessary to keep hist from closing
         hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
@@ -204,7 +204,9 @@ for subprocessLine in bkgdSubprocessesListFile:
 
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal in a separate hist  ************
+print
 print "Plotting from signal."
+print
 
 # assemble the sigsNtupleAdr
 sigsNtupleAdr = baseDir+"stopCut_"
@@ -234,7 +236,7 @@ for fileNum, line in enumerate(sigDataListFile):
     print("nentries={0:d}".format(nentries))
     assert nentries > 0, "You have no events in your tree..."
 
-    hSig = TH1F("sig_" + filename, "sig_" + filename[18:31], nCuts, 0, nCuts)
+    hSig = TH1D("sig_" + filename, "sig_" + filename[18:31], nCuts, 0, nCuts)
     hSig.SetDirectory(0)
     hSig.SetDefaultSumw2() # automatically sum w^2 while filling
     hSigArr.append(hSig)
@@ -244,7 +246,7 @@ for fileNum, line in enumerate(sigDataListFile):
         if i>nCuts: break
         hSig.GetXaxis().SetBinLabel(i, cut)
 
-    hSigGenweights = sigFile.Get("genweights")
+    hSigGenweights = sigFile.Get("genweights"+str(fileNum))
     sigTotGenweight = hSigGenweights.GetSumOfWeights()
 
     # ********** Looping over events. ***********

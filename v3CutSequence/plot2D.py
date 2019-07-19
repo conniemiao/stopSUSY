@@ -83,7 +83,7 @@ print "Bkgd process:", thisProcess
 # assemble the sigsNtupleAdr and bkgdNtupleAdr
 # number of files to process
 numBkgdFiles = 27  # need to loop over all the files in order to have correct xsec
-numSigFiles = 2 # just use the first signal one
+numSigFiles = 3
 baseDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/"
 print "Plotting",str(plotVarsXY)
 print "Cutting events up to and including", lastcut
@@ -258,7 +258,7 @@ sigDataListFile = open("sig_SingleStop_files")
 
 hSigArr = []
 for fileNum, line in enumerate(sigDataListFile):
-    if fileNum + 1 > numSigFiles: break
+    # if fileNum + 1 > numSigFiles: break
     if fileNum + 1 > 1: break # just want to plot from 1 sig for now
 
     filename, xsec = line.split(" ")
@@ -275,7 +275,7 @@ for fileNum, line in enumerate(sigDataListFile):
             nBinsX, xMin, xMax, nBinsY, yMin, yMax))
     hSigArr[fileNum].SetDefaultSumw2() # automatically sum w^2 while filling
 
-    hSigGenweights = sigFile.Get("genweights")
+    hSigGenweights = sigFile.Get("genweights"+str(fileNum))
     sigTotGenweight = hSigGenweights.GetSumOfWeights()
     
     # ********** Looping over events. ***********

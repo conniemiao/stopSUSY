@@ -14,7 +14,7 @@
 
 print "Importing modules."
 import sys
-from ROOT import TFile, TTree, TH1F, TCanvas, TLorentzVector, TImage, TLegend
+from ROOT import TFile, TTree, TH1D, TCanvas, TLorentzVector, TImage, TLegend
 from ROOT import gSystem, gStyle
 from stopSelection import deltaR,  getNumBtag, findValidJets
 from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
@@ -195,7 +195,7 @@ for processLine in bkgdSubprocessesListFile:
     tBkgd.Branch("m_eff", m_eff, "m_eff/F")
     tBkgd.Branch("genweight", genweight, "genweight/F")
     
-    hGenweights = TH1F("genweights","genweights",1,-0.5,0.5)
+    hGenweights = TH1D("genweights","genweights",1,-0.5,0.5)
     
     for fileNum, ntuplesLine in enumerate(subProcessListFile):
         if fileNum + 1 > numBkgdFiles: break
@@ -219,9 +219,10 @@ for processLine in bkgdSubprocessesListFile:
             if isMadgraph:
                 if event.genweight < 0: continue
             hGenweights.Fill(0, event.genweight)
-            # if hGenweights.GetSumOfWeights() != hGenweights.GetEntries(): 
-            #     print count, hGenweights.GetSumOfWeights(), \
-            #             hGenweights.GetEntries(), event.genweight
+            # if hGenweights.GetSumOfWeights() >= hGenweights.GetEntries(): 
+            #     print "WARNING: evt #", count, "genwt", event.genweight, \
+            #             "sumw", hGenweights.GetSumOfWeights(), \
+            #             "nentries", hGenweights.GetEntries() 
 
             # ****** Loose selection of events with valid lep1, lep2, jets ******
             if findingSameFlavor:

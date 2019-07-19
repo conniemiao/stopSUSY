@@ -10,7 +10,7 @@
 
 print "Importing modules."
 import sys
-from ROOT import TFile, TH1F, TCanvas, TImage, TLegend, TText, THStack, TPie
+from ROOT import TFile, TH1D, TCanvas, TImage, TLegend, TText, THStack, TPie
 from ROOT import gSystem, gStyle, gROOT, kTRUE
 from collections import OrderedDict
 import numpy as np
@@ -55,7 +55,7 @@ if not displayMode:
 #--------------------------------------------------------------------------------#
 
 statsFileAdr = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-        "plots/v3CutSequence/cutflow_stats_"+channelName
+        "plots/v3CutSequence/cutflow_stats/cutflow_stats_"+channelName
 if experimental: statsFileAdr += "_experimental"
 statsFileAdr += ".txt"
 print "Reading from", statsFileAdr
@@ -77,13 +77,13 @@ for col in range(1, numStatsCols):
     dataName = header[col]
     if dataName[:2] == "C1": 
         hSigCutsCountDict.update({dataName:cutflowArr})
-        hSig = TH1F("sig_" + dataName, "sig_" + dataName, nCuts, 0, nCuts)
+        hSig = TH1D("sig_" + dataName, "sig_" + dataName, nCuts, 0, nCuts)
         hSig.SetDirectory(0) # necessary to keep hist from closing
         hSig.SetDefaultSumw2() # automatically sum w^2 while filling
         hSigDict.update({dataName:hSig})
     else: 
         hBkgdCutsCountDict.update({dataName:cutflowArr})
-        hBkgd = TH1F("bkgd_"+dataName, "bkgd_"+dataName, nCuts, 0, nCuts)
+        hBkgd = TH1D("bkgd_"+dataName, "bkgd_"+dataName, nCuts, 0, nCuts)
         hBkgd.SetDirectory(0)
         hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
         hBkgdDict.update({dataName:hBkgd})
