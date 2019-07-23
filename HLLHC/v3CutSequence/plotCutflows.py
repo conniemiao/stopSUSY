@@ -55,7 +55,7 @@ if not displayMode:
 #--------------------------------------------------------------------------------#
 
 statsFileAdr = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-        "plots/v3CutSequence/cutflow_stats/cutflow_stats_"+channelName
+        "plots/HLLHC/v3CutSequence/cutflow_stats/cutflow_stats_"+channelName
 if experimental: statsFileAdr += "_experimental"
 statsFileAdr += ".txt"
 print "Reading from", statsFileAdr
@@ -203,7 +203,7 @@ if displayMode:
 else:
     gSystem.ProcessEvents()
     imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-            "plots/v3CutSequence/cutflow/cutflow_"+channelName
+            "plots/HLLHC/v3CutSequence/cutflow/cutflow_"+channelName
     if experimental: imgName += "_experimental"
     imgName += ".png"
     print "Saving image", imgName
@@ -254,7 +254,7 @@ if displayMode:
 else:
     gSystem.ProcessEvents()
     imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-            "plots/v3CutSequence/cutflow/pie_nocut_"+channelName
+            "plots/HLLHC/v3CutSequence/cutflow/pie_nocut_"+channelName
     if experimental: imgName += "_experimental"
     imgName += ".png"
     print "Saving image", imgName
@@ -271,7 +271,7 @@ if displayMode:
 else:
     gSystem.ProcessEvents()
     imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-            "plots/v3CutSequence/cutflow/pie_"+lastcut+"_"+channelName
+            "plots/HLLHC/v3CutSequence/cutflow/pie_"+lastcut+"_"+channelName
     if experimental: imgName += "_experimental"
     imgName += ".png"
     print "Saving image", imgName

@@ -7,9 +7,9 @@ executable  = makeNtupleBkgd.py
 arguments   = $1 $2 $3 $4
 
 universe    = vanilla
-output      = ../../condorLogs/makeNtupleBkgd.\$(ClusterId).out
-error       = ../../condorLogs/makeNtupleBkgd.\$(ClusterId).err
-log         = ../../condorLogs/makeNtupleBkgd.\$(ClusterId).log
+output      = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtupleBkgd.\$(ClusterId).out
+error       = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtupleBkgd.\$(ClusterId).err
+log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtupleBkgd.\$(ClusterId).log
 
 +MaxRuntime = 100000
 

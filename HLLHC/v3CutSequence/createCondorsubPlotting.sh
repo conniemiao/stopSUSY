@@ -8,9 +8,9 @@ executable  = $1
 arguments   = ${@:2}
 
 universe    = vanilla
-output      = ../../condorLogs/${1%.py}.\$(ClusterId).out
-error       = ../../condorLogs/${1%.py}.\$(ClusterId).err
-log         = ../../condorLogs/${1%.py}.\$(ClusterId).log
+output      = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/${1%.py}.\$(ClusterId).out
+error       = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/${1%.py}.\$(ClusterId).err
+log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/${1%.py}.\$(ClusterId).log
 
 +MaxRuntime = 100000
 

@@ -108,7 +108,7 @@ nEvtsLabels = []
 if not displayMode:
     gROOT.SetBatch(kTRUE) # prevent displaying canvases
 
-baseDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/"
+baseDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/HLLHC/"
 # number of files to process
 numBkgdFiles = float("inf")  # note: must loop over all files to have correct xsec
 numSigFiles = 3 # max 25
@@ -456,7 +456,7 @@ else:
     gSystem.ProcessEvents()
     for plotVar in plotVarArr:
         imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-                "plots/v3CutSequence/plot1D/"+plotVar+"_"+channelName+"_"+\
+                "plots/HLLHC/v3CutSequence/plot1D/"+plotVar+"_"+channelName+"_"+\
                 lastcut+".png"
         print "Saving image", imgName
         img = TImage.Create()

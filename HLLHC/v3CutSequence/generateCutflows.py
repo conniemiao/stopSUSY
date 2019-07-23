@@ -61,7 +61,7 @@ nCuts = len(cuts)
 processes = OrderedDict([("W-Jets",38), ("Drell-Yan",46), ("Diboson",41), \
         ("Single-Top",30), ("TT+X",7)])
 
-baseDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/"
+baseDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/HLLHC/"
 # number of files to process
 numBkgdFiles = float("inf")  # note: must loop over all files to have correct xsec
 numSigFiles = 3 # max 25
@@ -327,7 +327,7 @@ for fileNum in range(numSigFiles):
     statsStack = np.append(statsStack, \
             np.array(hSigCutsCountDict[fileNum]).reshape(nCuts, 1), axis=1)
 statsFileName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-        "plots/v3CutSequence/cutflow_stats/cutflow_stats_"+channelName
+        "plots/HLLHC/v3CutSequence/cutflow_stats/cutflow_stats_"+channelName
 if experimental: statsFileName += "_experimental"
 statsFileName += ".txt"
 np.savetxt(statsFileName, statsStack, delimiter='   ', header=statsHeader, \

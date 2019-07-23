@@ -61,7 +61,7 @@ numBkgdFiles = float("inf")  # note: must loop over all files to have correct xs
 if testMode: 
     numBkgdFiles = 2 
 
-outDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/"
+outDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/HLLHC/"
 
 #--------------------------------------------------------------------------------#
 # ************* Make all the arrays. *************
@@ -142,7 +142,7 @@ for processLine in bkgdSubprocessesListFile:
     outName += "Bkgd_"+subProcessName+"_"+channelName+".root"
     outFile = TFile(outName, "recreate")
     
-    subProcessListFile = open("/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/v3CutSequence/bkgdProcesses/"+process+"/"+subProcessName)
+    subProcessListFile = open("/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/HLLHC/v3CutSequence/bkgdProcesses/"+process+"/"+subProcessName)
 
     # SET UP THE OUTPUT TREE
     tBkgd = TTree("tBkgd", "SUSY stop cut events")
