@@ -2,7 +2,7 @@
 SUSY project with Alexis S2019-F2019
 
 ### Run2
-v4CutSequence:
+v1:
 Working with Run 2 NanoAOD data.
 
 ### HLLHC
