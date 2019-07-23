@@ -27,8 +27,8 @@ print "Beginning execution of", sys.argv
 
 assert len(sys.argv) >= 7, "need at least 6 command line args: testMode{0,1}, displayMode{0,1}, findingSameFlavor{0,1}, muPreference{0,1}, lastcut, plotVar1, plotVar2, ..."
 
-cuts = OrderedDict([("nocut",0), ("dilepton",1), ("nbtag<2",2), ("MET>80",3),\
-        ("no3rdlept",4), ("njets<4",5)])
+cuts = OrderedDict([("nocut",0), ("dilepton",1), ("no3rdlept",2), ("nbtag<2",3), \
+        ("MET>80",4),("njets<4",5)])
 lastcut = sys.argv[5]
 assert lastcut in cuts, "invalid last cut %s" % lastcut
 nCuts = cuts[lastcut]+1
@@ -207,14 +207,14 @@ for subprocessLine in bkgdSubprocessesListFile:
 
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
 
+        if nCuts > cuts["no3rdlept"]:
+            if event.found3rdLept: continue
+
         if nCuts > cuts["nbtag<2"]:
             if event.nbtag > 1: continue
 
         if nCuts > cuts["MET>80"]:
             if event.met_pt < 80: continue
-
-        if nCuts > cuts["no3rdlept"]:
-            if event.found3rdLept: continue
         
         if nCuts > cuts["njets<4"]:
             if event.njets >= 4: continue
@@ -241,7 +241,7 @@ for subprocessLine in bkgdSubprocessesListFile:
                 div_sqrt_met = True
                 plotVar = plotVar[:-13]
             # plotting a jet related var
-            if "jet" in plotVar:
+            if "jet" in plotVar and plotVar != "njets":
                 if event.njets == 0: continue # to the next plotVar
                 # just want to plot the jet var for the jet with max pt
                 if plotVar[:3] == "jet" and plotVar != "jet_ht":
@@ -363,14 +363,14 @@ for fileNum, line in enumerate(sigDataListFile):
 
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
 
+        if nCuts > cuts["no3rdlept"]:
+            if event.found3rdLept: continue
+
         if nCuts > cuts["nbtag<2"]:
             if event.nbtag > 1: continue
 
         if nCuts > cuts["MET>80"]:
             if event.met_pt < 80: continue
-
-        if nCuts > cuts["no3rdlept"]:
-            if event.found3rdLept: continue
         
         if nCuts > cuts["njets<4"]:
             if event.njets >= 4: continue
@@ -397,7 +397,7 @@ for fileNum, line in enumerate(sigDataListFile):
                 div_sqrt_met = True
                 plotVar = plotVar[:-13]
             # plotting a jet related var
-            if "jet" in plotVar:
+            if "jet" in plotVar and plotVar != "njets":
                 if event.njets == 0: continue # to the next plotVar
                 # just want to plot the jet var for the jet with max pt
                 if plotVar[:3] == "jet" and plotVar != "jet_ht":

@@ -49,12 +49,11 @@ else:
     l2Flav = "electron"
 channelName = l1Flav[:2] + l2Flav[:2]
 
-cuts = OrderedDict([("nocut",0), ("dilepton",1), ("nbtag<2",2), ("MET>80",3),\
-        ("no3rdlept",4), ("njets<4",5)])
+cuts = OrderedDict([("nocut",0), ("dilepton",1), ("no3rdlept",2), ("nbtag<2",3), \
+        ("MET>80",4),("njets<4",5)])
 if experimental:
-    cuts = OrderedDict([("nocut",0), ("dilepton",1), ("nbtag<2",2), ("MET>20",3),\
-            ("MET>50",4), ("MET>80",5), ("MET>110",6), ("no3rdlept",7), \
-            ("njets<4",8)])
+    cuts = OrderedDict([("nocut",0), ("dilepton",1), ("no3rdlept",2), ("nbtag<2",3),\
+            ("MET>20",4), ("MET>50",5), ("MET>80",6), ("MET>110",7), ("njets<4",8)])
 nCuts = len(cuts)
 
 
@@ -165,6 +164,10 @@ for subprocessLine in bkgdSubprocessesListFile:
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
         # hBkgd.Fill(cuts["deltaR(ll)>0.3"], genwt)
     
+        if nCuts > cuts["no3rdlept"]:
+            if event.found3rdLept: continue
+            hBkgd.Fill(cuts["no3rdlept"], genwt)
+    
         if nCuts > cuts["nbtag<2"]:
             if event.nbtag > 1: continue
             hBkgd.Fill(cuts["nbtag<2"], genwt)
@@ -185,10 +188,6 @@ for subprocessLine in bkgdSubprocessesListFile:
             if nCuts > cuts["MET>110"]:
                 if event.met_pt < 110: continue
                 hBkgd.Fill(cuts["MET>110"], genwt)
-    
-        if nCuts > cuts["no3rdlept"]:
-            if event.found3rdLept: continue
-            hBkgd.Fill(cuts["no3rdlept"], genwt)
             
         if nCuts > cuts["njets<4"]:
             if event.njets >= 4: continue
@@ -277,6 +276,10 @@ for fileNum, line in enumerate(sigDataListFile):
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
         # hSig.Fill(cuts["deltaR(ll)>0.3"], genwt)
 
+        if nCuts > cuts["no3rdlept"]:
+            if event.found3rdLept: continue
+            hSig.Fill(cuts["no3rdlept"], genwt)
+
         if nCuts > cuts["nbtag<2"]:
             if event.nbtag > 1: continue
             hSig.Fill(cuts["nbtag<2"], genwt)
@@ -297,10 +300,6 @@ for fileNum, line in enumerate(sigDataListFile):
             if nCuts > cuts["MET>110"]:
                 if event.met_pt < 110: continue
                 hSig.Fill(cuts["MET>110"], genwt)
-
-        if nCuts > cuts["no3rdlept"]:
-            if event.found3rdLept: continue
-            hSig.Fill(cuts["no3rdlept"], genwt)
         
         if nCuts > cuts["njets<4"]:
             if event.njets >= 4: continue
