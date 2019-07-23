@@ -1,9 +1,11 @@
 # stopSUSY
 SUSY project with Alexis S2019-F2019
 
+### Run2
 v4CutSequence:
 Working with Run 2 NanoAOD data.
 
+### HLLHC
 v3CutSequence:
 Handling stacking bkgd from multiple different sources, condor submit files are now automatically created, cutflows first created as a text file before an additional script plots the cutflows and pie charts for bkgd, actually FINALLY fixing correctly scaling everything using genweights.
 Played around with machine learning.
