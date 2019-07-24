@@ -10,12 +10,13 @@
 
 print "Importing modules."
 import sys
-from ROOT import TFile, TH1D, TCanvas, TImage, TLegend, TText, THStack, TPie
+from ROOT import TFile, TH1D, TCanvas, TImage, TLegend, TText, THStack, TPie, TLatex
 from ROOT import gSystem, gStyle, gROOT, kTRUE
 from collections import OrderedDict
 import numpy as np
 import time
 from array import array
+from math import sqrt
 print "Beginning execution of", sys.argv
 
 assert len(sys.argv) == 5, "needs 4 command line args: displayMode{0,1}, experimental{0,1}, findingSameFlavor{0,1}, muPreference{0,1}"
@@ -102,12 +103,15 @@ gStyle.SetOptStat(0) # don't show any stats
 lumi = 3000000 # luminosity = 3 /ab = 3000 /fb = 3,000,000 /fb
 
 # ********** Looping over each bkgd process. ***********
+# tot bkgd in each cut bin
+bkgdTot = [0]*nCuts
 for process in processes:
     hBkgd = hBkgdDict[process] 
     hBkgdCutsCount = hBkgdCutsCountDict[process]
     for i, cut in enumerate(cuts):
         if i>nCuts: break
         hBkgd.Fill(i, hBkgdCutsCount[i])
+        bkgdTot[i] += hBkgdCutsCount[i]
         hBkgd.GetXaxis().SetBinLabel(i+1, cut)
 
     c.cd()
@@ -123,26 +127,6 @@ hBkgdStack.GetYaxis().SetTitle("Number of Events, norm to 3000 /fb")
 hBkgdStack.SetMinimum(1)
 hBkgdStack.SetMaximum(10**12)
 
-# # show the number of events left over after each cut
-# processNum = 0
-# for process, color in processes.items():
-#     print
-#     print "Num surviving events after each cut from bkgd %s:" % process 
-#     for i, cut in enumerate(cuts):
-#         nEvtsLabel = TText()
-#         nEvtsLabel.SetNDC()
-#         nEvtsLabel.SetTextSize(0.02)
-#         nEvtsLabel.SetTextAlign(22)
-#         nEvtsLabel.SetTextAngle(0)
-#         nEvtsLabel.SetTextColor(color)
-#         nEvtsLabel.DrawText(0.1+0.4/nCuts+0.8*float(i)/nCuts, \
-#                 0.7-(processNum)*0.02, \
-#                 str(int(hBkgdCutsCountDict[process][i])))
-#         print cut, hBkgdCutsCountDict[process][i]
-#         nEvtsLabels.append(nEvtsLabel)
-#     processNum += 1
-# print
-
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal in a separate hist  ************
 print "Plotting from signal."
@@ -151,12 +135,15 @@ coloropts = [2,4,3,6,7,9,28,46] # some good colors for lines
 markeropts = [1,20,21,22,23] # some good marker styles for lines
 linestyleopts = [1,2,3,7,9] # some good styles for lines
 
+# tot signal in each cut bin
+sigTot = [0]*nCuts
 for fileNum, sig in enumerate(hSigCutsCountDict.keys()):
     hSig = hSigDict[sig] 
     hSigCutsCount = hSigCutsCountDict[sig]
     for i, cut in enumerate(cuts):
         if i>nCuts: break
         hSig.Fill(i, hSigCutsCount[i])
+        sigTot[i] += hSigCutsCount[i]
         hSig.GetXaxis().SetBinLabel(i+1, cut)
 
     hcolor = coloropts[fileNum % len(coloropts)]
@@ -172,28 +159,33 @@ for fileNum, sig in enumerate(hSigCutsCountDict.keys()):
     legend.AddEntry(hSig, hSig.GetTitle())
     hSig.Draw("hist same") # same pad
 
-    # # show the number of events left over after each cut
-    # print "Num surviving events after each cut from sig %s:" % filename 
-    # for i, cut in enumerate(cuts):
-    #     print cut, hSig.GetBinContent(i+1)
-    #     nEvtsLabel = TText()
-    #     nEvtsLabel.SetNDC()
-    #     nEvtsLabel.SetTextSize(0.02)
-    #     nEvtsLabel.SetTextAlign(22)
-    #     nEvtsLabel.SetTextAngle(0)
-    #     nEvtsLabel.SetTextColor(hcolor)
-    #     nEvtsLabel.DrawText(0.1+0.4/nCuts+0.8*float(i)/nCuts, \
-    #             0.7-(processNum)*0.02-(1+fileNum)*0.02, \
-    #             str(int(hSig.GetBinContent(i+1))))
-    #     nEvtsLabels.append(nEvtsLabel)
-    # print
-
-
 #--------------------------------------------------------------------------------#
 print "Drawing cutflow."
 
 legend.SetTextSize(0.02)
 legend.Draw("same")
+
+# prints average sig/sqrt(tot bkgd) onto the cutflow
+statsLabel = TLatex()
+statsLabel.SetNDC()
+statsLabel.SetTextSize(0.02)
+statsLabel.SetTextAlign(22)
+statsLabel.SetTextAngle(0)
+statsLabel.SetTextColor(1)
+statsLabel.DrawLatex(0.11+0.4/nCuts, 0.14, "Avg S /#sqrt{tot B}: ")
+nEvtsLabels = []
+for i in range(0,nCuts):
+    nEvtsLabel = TText()
+    nEvtsLabel.SetNDC()
+    nEvtsLabel.SetTextSize(0.02)
+    nEvtsLabel.SetTextAlign(22)
+    nEvtsLabel.SetTextAngle(0)
+    nEvtsLabel.SetTextColor(1)
+    numSigFiles = len(hSigCutsCountDict.keys())
+    nEvtsLabel.DrawText(0.1+0.4/nCuts+0.8*float(i)/nCuts, \
+                    0.11, "%.5f" % (sigTot[i]/numSigFiles/sqrt(bkgdTot[i])))
+    nEvtsLabels.append(nEvtsLabel)
+
 c.SetLogy()
 c.Update()
 

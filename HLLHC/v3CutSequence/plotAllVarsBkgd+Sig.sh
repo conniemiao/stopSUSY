@@ -13,18 +13,18 @@ variables=("lep1_pt" "lep1_eta" "lep1_relIso" "lep2_pt" "njets" "jet_pt" \
 # cuts=("nocut" "njets<4")
 cuts=("nbtag<2" "MET>80")
 
-for cut in "${cuts[@]}"
-do
-    ./createCondorsubPlotting.sh plotSusyBkgd+Sig.py 0 0 0 0 "$cut" \
-        "${variables[@]}"
-    condor_submit condorsub_plotting
-    ./createCondorsubPlotting.sh plotSusyBkgd+Sig.py 0 0 1 0 "$cut" \
-        "${variables[@]}"
-    condor_submit condorsub_plotting
-    ./createCondorsubPlotting.sh plotSusyBkgd+Sig.py 0 0 1 1 "$cut" \
-        "${variables[@]}"
-    condor_submit condorsub_plotting
-done
+# for cut in "${cuts[@]}"
+# do
+#     ./createCondorsubPlotting.sh plotSusyBkgd+Sig.py 0 0 0 0 "$cut" \
+#         "${variables[@]}"
+#     condor_submit condorsub_plotting
+#     ./createCondorsubPlotting.sh plotSusyBkgd+Sig.py 0 0 1 0 "$cut" \
+#         "${variables[@]}"
+#     condor_submit condorsub_plotting
+#     ./createCondorsubPlotting.sh plotSusyBkgd+Sig.py 0 0 1 1 "$cut" \
+#         "${variables[@]}"
+#     condor_submit condorsub_plotting
+# done
 
 #--------------------------------------------------------------------------------#
 
@@ -51,18 +51,18 @@ echo "Generate cutflow stats:"
 echo
 echo "Plot cutflows and pie charts:"
 
-# python plotCutflows.py 0 0 0 0
-# echo
-# python plotCutflows.py 0 0 1 0
-# echo
-# python plotCutflows.py 0 0 1 1
-# echo
-# python plotCutflows.py 0 1 0 0
-# echo
-# python plotCutflows.py 0 1 1 0
-# echo
-# python plotCutflows.py 0 1 1 1
-# echo
+python plotCutflows.py 0 0 0 0
+echo
+python plotCutflows.py 0 0 1 0
+echo
+python plotCutflows.py 0 0 1 1
+echo
+python plotCutflows.py 0 1 0 0
+echo
+python plotCutflows.py 0 1 1 0
+echo
+python plotCutflows.py 0 1 1 1
+echo
 
 #--------------------------------------------------------------------------------#
 
