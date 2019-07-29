@@ -46,8 +46,8 @@ else:
 channelName = l1Flav[:2] + l2Flav[:2]
 
 # bkgd process name : color for plotting
-processes = OrderedDict([("W-Jets",38), ("Drell-Yan",46), ("Diboson",41), \
-        ("Single-Top",30), ("TT+X",7)])
+processes = OrderedDict([("W-Jets",38), ("Drell-Yan",46), ("TTBar",30), \
+        ("Diboson",41), ("Single-Top",40), ("TT+X",7)])
 
 if not displayMode:
     gROOT.SetBatch(kTRUE) # prevent displaying canvases

@@ -74,7 +74,8 @@ else:
     l2Flav = "Electron"
 channelName = l1Flav[:2] + l2Flav[:2]
 
-processes = {"W-Jets", "Drell-Yan", "Diboson", "Single-Top", "TT+X"}
+processes = {"W-Jets":38, "Drell-Yan":46, "TTBar":30, "Diboson":41, "Single-Top":40, \
+        "TT+X":7}
 
 thisProcess = sys.argv[6]
 assert thisProcess in processes, "invalid process %s" % thisProcess
@@ -177,6 +178,7 @@ for subprocessLine in bkgdSubprocessesListFile:
 
         # ********** Additional cuts. ***********
         if nCuts > cuts["dilepton"]: # currently just tighter relIso cuts
+            if event.lep1_charge * event.lep2_charge >= 0: continue
             if findingSameFlavor:
                 if event.lep1_relIso >= 0.1: continue
                 if event.lep2_relIso >= 0.1: continue
@@ -293,6 +295,7 @@ for fileNum, line in enumerate(sigDataListFile):
 
         # ********** Additional cuts. ***********
         if nCuts > cuts["dilepton"]: # currently just tighter relIso cuts
+            if event.lep1_charge * event.lep2_charge >= 0: continue
             if findingSameFlavor:
                 if event.lep1_relIso >= 0.1: continue
                 if event.lep2_relIso >= 0.1: continue

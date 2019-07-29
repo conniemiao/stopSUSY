@@ -97,7 +97,7 @@ channelName = l1Flav[:2] + l2Flav[:2]
 print "Cutting events up to and including", lastcut
 
 # bkgd process name : color for plotting
-processes = {"W-Jets":38, "Drell-Yan":46, "Diboson":41, "Single-Top":30, \
+processes = {"W-Jets":38, "Drell-Yan":46, "TTBar":30, "Diboson":41, "Single-Top":40, \
         "TT+X":7}
 
 canvasDict = {}
@@ -198,6 +198,7 @@ for subprocessLine in bkgdSubprocessesListFile:
     
         # ********** Additional cuts. ***********
         if nCuts > cuts["dilepton"]: # currently just tighter relIso cuts
+            if event.lep1_charge * event.lep2_charge >= 0: continue
             if findingSameFlavor:
                 if event.lep1_relIso >= 0.1: continue
                 if event.lep2_relIso >= 0.1: continue
@@ -354,6 +355,7 @@ for fileNum, line in enumerate(sigDataListFile):
 
         # ********** Additional cuts. ***********
         if nCuts > cuts["dilepton"]: # currently just tighter relIso cuts
+            if event.lep1_charge * event.lep2_charge >= 0: continue
             if findingSameFlavor:
                 if event.lep1_relIso >= 0.1: continue
                 if event.lep2_relIso >= 0.1: continue

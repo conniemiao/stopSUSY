@@ -229,7 +229,7 @@ for fileNum, line in enumerate(sigDataListFile):
             Muon_pt[i] = list(event.Muon_pt)[i]
             Muon_eta[i] = list(event.Muon_eta)[i]
             Muon_phi[i] = list(event.Muon_phi)[i]
-            Muon_relIso[i] = list(event.Muon_relIso)[i]
+            Muon_relIso[i] = list(event.Muon_pfRelIso04_all)[i]
             Muon_charge[i] = list(event.Muon_charge)[i]
             Muon_mt[i] = sqrt(2 * Muon_pt[i] * event.MET_pt * \
                     (1 - cos(Muon_phi[i] - event.MET_phi)))
@@ -240,7 +240,7 @@ for fileNum, line in enumerate(sigDataListFile):
             Electron_pt[i] = list(event.Electron_pt)[i]
             Electron_eta[i] = list(event.Electron_eta)[i]
             Electron_phi[i] = list(event.Electron_phi)[i]
-            Electron_relIso[i] = list(event.Electron_relIso)[i]
+            Electron_relIso[i] = list(event.Electron_pfRelIso03_all)[i]
             Electron_charge[i] = list(event.Electron_charge)[i]
             Electron_mt[i] = sqrt(2 * Electron_pt[i] * event.MET_pt * \
                     (1 - cos(Electron_phi[i] - event.MET_phi)))
@@ -250,7 +250,8 @@ for fileNum, line in enumerate(sigDataListFile):
         lep1_pt[0] = list(getattr(event, l1Flav+"_pt"))[l1Index]
         lep1_eta[0] = list(getattr(event, l1Flav+"_eta"))[l1Index]
         lep1_phi[0] = list(getattr(event, l1Flav+"_phi"))[l1Index]
-        lep1_relIso[0] = list(getattr(event, l1Flav+"_relIso"))[l1Index]
+        if lep1_isMu: lep1_relIso[0] = Muon_relIso[l1Index]
+        else: lep1_relIso[0] = Electron_relIso[l1Index]
         lep1_charge[0] = list(getattr(event, l1Flav+"_charge"))[l1Index]
         lep1_mt[0] = sqrt(2 * lep1_pt[0] * event.MET_pt * \
                     (1 - cos(lep1_phi[0] - event.MET_phi)))
@@ -259,7 +260,8 @@ for fileNum, line in enumerate(sigDataListFile):
         lep2_pt[0] = list(getattr(event, l2Flav+"_pt"))[l2Index]
         lep2_eta[0] = list(getattr(event, l2Flav+"_eta"))[l2Index]
         lep2_phi[0] = list(getattr(event, l2Flav+"_phi"))[l2Index]
-        lep2_relIso[0] = list(getattr(event, l2Flav+"_relIso"))[l2Index]
+        if lep2_isMu: lep2_relIso[0] = Muon_relIso[l2Index]
+        else: lep2_relIso[0] = Electron_relIso[l2Index]
         lep2_charge[0] = list(getattr(event, l2Flav+"_charge"))[l2Index]
         lep2_mt[0] = sqrt(2 * lep2_pt[0] * event.MET_pt * \
                     (1 - cos(lep2_phi[0] - event.MET_phi)))
