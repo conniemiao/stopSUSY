@@ -1,30 +1,31 @@
 #!/usr/bin/env python
 
-# NOTE: NEEDS 4 CMD LINE ARGS with values {0 (false) or 1 (true)}: 
-# testMode, findingSameFlavor, muPreference, process
-# For each process listed in bkgd_files, outputs an ntuple located in ../myData/, 
-# each containing 1 tree which contains the events from all ntuples listed in 
-# the corresponding bkgdProcesses file(s) that have survived loose dilepton 
-# selection cuts.
-# The tree in each outputted ntuple, tBkgd, has branches for the same variables 
-# as the tSig{i} outputted by makeNtupleSigs.py.
-# Uses bkgd_files for xsec and process lists
-# Uses files in bkgdProcesses dir for ntuple lists.
-# Process options: TT+X Diboson W-Jets Drell-Yan Single-Top
+# NOTE: NEEDS 3 CMD LINE ARGS with values {0 (false) or 1 (true)}: 
+# testMode, findingSameFlavor, muPreference
+#
+# Depending on the selected channel, loops over the relevant datasets (SingleMuon 
+# for mumu, SingleElectron for elel) and outputs one ntuple for every dataset, 
+# located in ../myData/, each containing 1 tree with all events that have survived
+# loose dilepton selection cuts.
+# The tree in each outputted ntuple, tData, has branches for the same variables 
+# as the trees outputted by makeNtupleBkgd.py and makeNtupleSigs.py.
+# Uses data_datasets to get names of datasets
+# Uses files in dataChannels dir for ntuple lists.
 
 print "Importing modules."
 import sys
 from ROOT import TFile, TTree, TH1D, TCanvas, TImage, TLegend
 from ROOT import gSystem, gStyle
-from stopSelection import deltaR,  getNumBtag, findValidJets
-from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
 import numpy as np
 from math import sqrt, cos
 from array import array
 import time
+from stopSelection import deltaR,  getNumBtag, findValidJets
+from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
+from jsonChecker import jsonChecker
 print "Beginning execution of", sys.argv
 
-assert len(sys.argv) == 5, "need 4 command line args: testMode{0,1}, findingSameFlavor{0,1}, muPreference{0,1}, process"
+assert len(sys.argv) == 4, "need 3 command line args: testMode{0,1}, findingSameFlavor{0,1}, muPreference{0,1}"
 
 # limits the number of events and files to loop over
 testMode = bool(int(sys.argv[1]))
@@ -36,31 +37,28 @@ print "Finding same flavor:", findingSameFlavor
 muPreference = bool(int(sys.argv[3]))
 print "Mu preference:", muPreference
 
-# name of the eventual process that this output root file will be hstacked into
-process = sys.argv[4]
-processes = {"W-Jets":38, "Drell-Yan":46, "TTBar":30, "Diboson":41, "Single-Top":40, \
-        "TT+X":7}
-assert process in processes, "invalid process %s" % process
-print "Process:", process
-
 if findingSameFlavor:
     if muPreference: 
         l1Flav = "Muon"
         l2Flav = "Muon"
+        expectedDatasetChannel = "SingleMuon"
     else: 
         l1Flav = "Electron"
         l2Flav = "Electron"
+        expectedDatasetChannel = "SingleElectron"
 else: 
     # these 2 lines just matter for creating the outFile name; actual 
     # selection of leading/trailing flavors occurs when looping over events:
     l1Flav = "Muon"
     l2Flav = "Electron"
+    assert False, "not supported yet!"
 channelName = l1Flav[:2] + l2Flav[:2]
 
-# number of ntuples to loop on for each background process
-numBkgdFiles = float("inf")  # note: must loop over all files to have correct xsec
+# number of ntuples to loop on for each dataset
+# note: must loop over all files and all datasets to have correct xsec
+numDataFiles = float("inf") 
 if testMode: 
-    numBkgdFiles = 2 
+    numDataFiles = 2 
 
 outDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/Run2/"
 
@@ -113,93 +111,90 @@ met_phi = array('f',[0.])
 mt_tot = array('f',[0.])
 mt_sum = array('f',[0.])
 m_eff = array('f',[0.])
-genWeight = array('f',[0.])
+run = array('i',[0])
+luminosityBlock = array('i',[0])
 
 #--------------------------------------------------------------------------------#
 start_time = time.time()
-# ********************** Filling bkgd events  **********************
+# ********************** Filling events **********************
 print "Storing variables from background."
 
-bkgdSubprocessesListFile = open("bkgd_files")
+dataDatasetsListFile = open("data_datasets")
+jc = jsonChecker()
 
-for processLine in bkgdSubprocessesListFile:
-    processLine = processLine.rstrip('\n')
-    subProcessName, processName, xsec = processLine.split(" ")
-    if subProcessName[0] == "#": continue # problematic input files
-    if not processName == process: continue
-    # all subProcesses with the same processName will be hstacked with the same
-    # color during plotting.
+for datasetLine in dataDatasetsListFile:
+    datasetLine = datasetLine.rstrip('\n')
+    datasetLine = datasetLine.split()
+    datasetName = datasetLine[0]
+    datasetChannel = datasetLine[1]
+    if datasetName[0] == "#": continue
+    if not datasetChannel == expectedDatasetChannel: continue
     print
-    print "Filling from", subProcessName, "for", processName
+    print "Filling from", datasetName, "for", datasetChannel 
 
-    # skip evts with < 0 genWeight if it's a madgraph file
-    isMadgraph = False
-    if subProcessName[-19:-11] == "madgraph": isMadgraph = True
-    
     # assemble the outName
     outName = outDir+"stopCut_"
     if testMode: outName += "test_"
     else: outName+="all_"
-    outName += "Bkgd_"+subProcessName+"_"+channelName+".root"
+    outName += "Data_"+datasetName+"_"+channelName+".root"
     outFile = TFile(outName, "recreate")
     
-    subProcessListFile = open("/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1/bkgdProcesses/"+process+"/"+subProcessName)
+    dataNtuplesListFile = open("/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1/dataChannels/"+datasetChannel+"/"+datasetName)
 
     # SET UP THE OUTPUT TREE
-    tBkgd = TTree("tBkgd", "SUSY stop cut events")
-    tBkgd.Branch("nMuon", nMuon, "nMuon/i")
-    tBkgd.Branch("Muon_pt", Muon_pt, "Muon_pt[20]/F")
-    tBkgd.Branch("Muon_eta", Muon_eta, "Muon_eta[20]/F")
-    tBkgd.Branch("Muon_phi", Muon_phi, "Muon_phi[20]/F")
-    tBkgd.Branch("Muon_relIso", Muon_relIso, "Muon_relIso[20]/F")
-    tBkgd.Branch("Muon_charge", Muon_charge, "Muon_charge[20]/F")
-    tBkgd.Branch("Muon_mt", Muon_mt, "Muon_mt[20]/F")
-    tBkgd.Branch("nElectron", nElectron, "nElectron/i")
-    tBkgd.Branch("Electron_pt", Electron_pt, "Electron_pt[20]/F")
-    tBkgd.Branch("Electron_eta", Electron_eta, "Electron_eta[20]/F")
-    tBkgd.Branch("Electron_phi", Electron_phi, "Electron_phi[20]/F")
-    tBkgd.Branch("Electron_relIso", Electron_relIso, "Electron_relIso[20]/F")
-    tBkgd.Branch("Electron_charge", Electron_charge, "Electron_charge[20]/F")
-    tBkgd.Branch("Electron_mt", Electron_mt, "Electron_mt[20]/F")
-    tBkgd.Branch("found3rdLept", found3rdLept, "found3rdLept/i")
-    tBkgd.Branch("lep1_isMu", lep1_isMu, "lep1_isMu/i")
-    tBkgd.Branch("lep1_index", lep1_index, "lep1_index/i")
-    tBkgd.Branch("lep1_pt", lep1_pt, "lep1_pt/F")
-    tBkgd.Branch("lep1_eta", lep1_eta, "lep1_eta/F")
-    tBkgd.Branch("lep1_phi", lep1_phi, "lep1_phi/F")
-    tBkgd.Branch("lep1_relIso", lep1_relIso, "lep1_relIso/F")
-    tBkgd.Branch("lep1_charge", lep1_charge, "lep1_charge/F")
-    tBkgd.Branch("lep1_mt", lep1_mt, "lep1_mt/F")
-    tBkgd.Branch("lep2_isMu", lep2_isMu, "lep2_isMu/i")
-    tBkgd.Branch("lep2_index", lep2_index, "lep2_index/i")
-    tBkgd.Branch("lep2_pt", lep2_pt, "lep2_pt/F")
-    tBkgd.Branch("lep2_eta", lep2_eta, "lep2_eta/F")
-    tBkgd.Branch("lep2_phi", lep2_phi, "lep2_phi/F")
-    tBkgd.Branch("lep2_relIso", lep2_relIso, "lep2_relIso/F")
-    tBkgd.Branch("lep2_charge", lep2_charge, "lep2_charge/F")
-    tBkgd.Branch("lep2_mt", lep2_mt, "lep2_mt/F")
-    tBkgd.Branch("nJet", nJet, "nJet/i")
-    tBkgd.Branch("Jet_pt", Jet_pt, "Jet_pt[20]/F")
-    tBkgd.Branch("Jet_eta", Jet_eta, "Jet_eta[20]/F")
-    tBkgd.Branch("Jet_phi", Jet_phi, "Jet_phi[20]/F")
-    tBkgd.Branch("Jet_ht", Jet_ht, "Jet_ht/F")
-    # tBkgd.Branch("Jet_flavour", Jet_flavour, "Jet_flavour/F")
-    tBkgd.Branch("dR_lep1_jet", dR_lep1_jet, "dR_lep1_jet/F")
-    tBkgd.Branch("dR_lep2_jet", dR_lep2_jet, "dR_lep2_jet/F")
-    tBkgd.Branch("nbtag", nbtag, "nbtag/i")
-    tBkgd.Branch("nbtagLoose", nbtagLoose, "nbtagLoose/i")
-    tBkgd.Branch("nbtagTight", nbtagTight, "nbtagTight/i")
-    tBkgd.Branch("met_pt", met_pt, "met_pt/F")
-    tBkgd.Branch("met_phi", met_phi, "met_phi/F")
-    tBkgd.Branch("mt_tot", mt_tot, "mt_tot/F")
-    tBkgd.Branch("mt_sum", mt_sum, "mt_sum/F")
-    tBkgd.Branch("m_eff", m_eff, "m_eff/F")
-    tBkgd.Branch("genWeight", genWeight, "genWeight/F")
+    tData = TTree("tData", "SUSY stop cut events")
+    tData.Branch("nMuon", nMuon, "nMuon/i")
+    tData.Branch("Muon_pt", Muon_pt, "Muon_pt[20]/F")
+    tData.Branch("Muon_eta", Muon_eta, "Muon_eta[20]/F")
+    tData.Branch("Muon_phi", Muon_phi, "Muon_phi[20]/F")
+    tData.Branch("Muon_relIso", Muon_relIso, "Muon_relIso[20]/F")
+    tData.Branch("Muon_charge", Muon_charge, "Muon_charge[20]/F")
+    tData.Branch("Muon_mt", Muon_mt, "Muon_mt[20]/F")
+    tData.Branch("nElectron", nElectron, "nElectron/i")
+    tData.Branch("Electron_pt", Electron_pt, "Electron_pt[20]/F")
+    tData.Branch("Electron_eta", Electron_eta, "Electron_eta[20]/F")
+    tData.Branch("Electron_phi", Electron_phi, "Electron_phi[20]/F")
+    tData.Branch("Electron_relIso", Electron_relIso, "Electron_relIso[20]/F")
+    tData.Branch("Electron_charge", Electron_charge, "Electron_charge[20]/F")
+    tData.Branch("Electron_mt", Electron_mt, "Electron_mt[20]/F")
+    tData.Branch("found3rdLept", found3rdLept, "found3rdLept/i")
+    tData.Branch("lep1_isMu", lep1_isMu, "lep1_isMu/i")
+    tData.Branch("lep1_index", lep1_index, "lep1_index/i")
+    tData.Branch("lep1_pt", lep1_pt, "lep1_pt/F")
+    tData.Branch("lep1_eta", lep1_eta, "lep1_eta/F")
+    tData.Branch("lep1_phi", lep1_phi, "lep1_phi/F")
+    tData.Branch("lep1_relIso", lep1_relIso, "lep1_relIso/F")
+    tData.Branch("lep1_charge", lep1_charge, "lep1_charge/F")
+    tData.Branch("lep1_mt", lep1_mt, "lep1_mt/F")
+    tData.Branch("lep2_isMu", lep2_isMu, "lep2_isMu/i")
+    tData.Branch("lep2_index", lep2_index, "lep2_index/i")
+    tData.Branch("lep2_pt", lep2_pt, "lep2_pt/F")
+    tData.Branch("lep2_eta", lep2_eta, "lep2_eta/F")
+    tData.Branch("lep2_phi", lep2_phi, "lep2_phi/F")
+    tData.Branch("lep2_relIso", lep2_relIso, "lep2_relIso/F")
+    tData.Branch("lep2_charge", lep2_charge, "lep2_charge/F")
+    tData.Branch("lep2_mt", lep2_mt, "lep2_mt/F")
+    tData.Branch("nJet", nJet, "nJet/i")
+    tData.Branch("Jet_pt", Jet_pt, "Jet_pt[20]/F")
+    tData.Branch("Jet_eta", Jet_eta, "Jet_eta[20]/F")
+    tData.Branch("Jet_phi", Jet_phi, "Jet_phi[20]/F")
+    tData.Branch("Jet_ht", Jet_ht, "Jet_ht/F")
+    # tData.Branch("Jet_flavour", Jet_flavour, "Jet_flavour/F")
+    tData.Branch("dR_lep1_jet", dR_lep1_jet, "dR_lep1_jet/F")
+    tData.Branch("dR_lep2_jet", dR_lep2_jet, "dR_lep2_jet/F")
+    tData.Branch("nbtag", nbtag, "nbtag/i")
+    tData.Branch("nbtagLoose", nbtagLoose, "nbtagLoose/i")
+    tData.Branch("nbtagTight", nbtagTight, "nbtagTight/i")
+    tData.Branch("met_pt", met_pt, "met_pt/F")
+    tData.Branch("met_phi", met_phi, "met_phi/F")
+    tData.Branch("mt_tot", mt_tot, "mt_tot/F")
+    tData.Branch("mt_sum", mt_sum, "mt_sum/F")
+    tData.Branch("m_eff", m_eff, "m_eff/F")
+    tData.Branch("run", run, "run/i")
+    tData.Branch("luminosityBlock", luminosityBlock, "luminosityBlock/i")
     
-    hGenweights = TH1D("genWeights","genWeights",1,-0.5,0.5)
-    
-    for fileNum, ntuplesLine in enumerate(subProcessListFile):
-        if fileNum + 1 > numBkgdFiles: break
+    for fileNum, ntuplesLine in enumerate(dataNtuplesListFile):
+        if fileNum + 1 > numDataFiles: break
         filename = ntuplesLine.rstrip()
         print filename
     
@@ -211,19 +206,13 @@ for processLine in bkgdSubprocessesListFile:
         nMax = nentries
         if testMode: nMax = 500 
     
-        # ***** EVERYTHING BELOW THIS LINE MUST MATCH makeNtupleSigs.py *****
+        # ***** EVERYTHING BELOW THIS LINE MUST MATCH THE OTHER MAKENTUPLES *****
         # ************ BEGIN LOOPING OVER EVENTS **********
         for count, event in enumerate(inTree):
             if count > nMax : break
             if count % 500000 == 0: print "count =", count
-    
-            if isMadgraph:
-                if event.genWeight < 0: continue
-            hGenweights.Fill(0, event.genWeight)
-            # if hGenweights.GetSumOfWeights() >= hGenweights.GetEntries(): 
-            #     print "WARNING: evt #", count, "genwt", event.genWeight, \
-            #             "sumw", hGenweights.GetSumOfWeights(), \
-            #             "nentries", hGenweights.GetEntries() 
+
+            if not jc.checkJSON(event.luminosityBlock, event.run): continue
 
             # ****** Loose selection of events with valid lep1, lep2, jets ******
             if findingSameFlavor:
@@ -316,7 +305,7 @@ for processLine in bkgdSubprocessesListFile:
             if numGoodJets > 0:
                 Jet_ht[0] = 0
                 iMaxPtJ = jets[0] # =index within the Events jets arr
-                for j in range(numGoodJets): # =index within the tBkgd jets arr
+                for j in range(numGoodJets): # =index within the tData jets arr
                     jIndex = jets[j] #  =index within the Events jets arr
                     Jet_pt[j] = list(event.Jet_pt)[jIndex]
                     if Jet_pt[j] > list(event.Jet_pt)[iMaxPtJ]:
@@ -332,15 +321,16 @@ for processLine in bkgdSubprocessesListFile:
             met_phi[0] = event.MET_phi
             mt_tot[0] = sqrt(lep1_mt[0]**2+ lep2_mt[0]**2)
             mt_sum[0] = lep1_mt[0] + lep2_mt[0]
-            genWeight[0] = event.genWeight
             m_eff[0] = met_pt[0] + lep1_pt[0]+ lep2_pt[0]
             if nJet[0] > 0: m_eff[0] += Jet_ht[0]
     
-            tBkgd.Fill()
+            run[0] = event.run
+            luminosityBlock[0] = event.luminosityBlock
+
+            tData.Fill()
     
     outFile.cd() # cd to outFile to write to it
-    tBkgd.Write()
-    hGenweights.Write()
+    tData.Write()
     
     outFile.Close()
     print "Finished creating", outName
@@ -350,11 +340,10 @@ print
 print int(time.time()-start_time), "secs of processing."
 
 # f = TFile.Open(outName, "READ")
-# t = f.Get("tBkgd")
+# t = f.Get("tData")
 # for event in t:
 #     for j in range(event.nJet):
 #         print event.Jet_pt[j]
-# h = f.Get("bkgd_cutflow")
 # h.Sumw2()
 # h.Draw()
 # raw_input()

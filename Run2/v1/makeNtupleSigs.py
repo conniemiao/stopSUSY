@@ -111,7 +111,7 @@ genWeight = array('f',[0.])
 
 #--------------------------------------------------------------------------------#
 start_time = time.time()
-# *************** Filling each signal data in a separate tree  **************
+# *************** Filling each signal events in a separate tree  **************
 print "Storing variables from signal."
 sigDataDir = "/eos/user/a/alkaloge/HLLHC/Skims/v3/SingleStop/"
 sigDataListFile = open("sig_SingleStop_files")
