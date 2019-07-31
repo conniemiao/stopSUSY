@@ -1,0 +1,15 @@
+executable  = makeNtuple.py
+arguments   = real data mumu DoubleMuon
+
+universe    = vanilla
+output      = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtuple.$(ClusterId).out
+error       = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtuple.$(ClusterId).err
+log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtuple.$(ClusterId).log
+
+use_x509userproxy = true
+
++MaxRuntime = 100000
+
+transfer_input_files = stopSelection.py, data_fileRedirector, data_NtupleLists/DoubleMuon, Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt
+
+queue
