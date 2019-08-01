@@ -4,3 +4,4 @@ condorLogs/
 cmiao.cc
 *.pyc
 Xsecs
+*.root
