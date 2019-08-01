@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 
 # NOTE: NEEDS 4 CMD LINE ARGS with values: 
-# testMode {test, real}, input type {data, bkgd, sig}, channel {mumu, elel, muel}, 
+# testMode {test, all}, input type {data, bkgd, sig}, channel {mumu, elel, muel}, 
 # process
 # Process options: 
 #   data: DoubleMuon, DoubleEG, MuonEG
 #   bkgd: TTBar TT+X Diboson W-Jets Drell-Yan Single-Top
-#   sig: 
+#   sig: Stop-Pair
 #
 # Depending on the selected channel, loops over the relevant datasets (SingleMuon 
 # for mumu, SingleElectron for elel) and outputs one ntuple for every dataset, 
 # located in ../myData/, each containing the Events tree with all events that have
 # survived loose dilepton selection cuts.
-# Uses {data/bkgd/sig}_fileRedirector to get names of datasets
+#
+# Uses {data/bkgd/sig}_fileRedirector to get names of datasets and for MC, xsecs too
 # Uses files in {data/bkgd/sig}NtupleLists/{process}/ dir for ntuple lists.
 # Uses Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt for data 
 # json checking
@@ -30,12 +31,12 @@ from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
 from jsonChecker import jsonChecker
 print "Beginning execution of", sys.argv
 
-assert len(sys.argv) == 5, "need 4 command line args: testMode {test, real}, input type {data, bkgd, sig}, channel {mumu, elel, muel}, process"
+assert len(sys.argv) == 5, "need 4 command line args: testMode {test, all}, input type {data, bkgd, sig}, channel {mumu, elel, muel}, process"
 
 # limits the number of events and files to loop over
 if sys.argv[1] == "test": testMode = True
-elif sys.argv[1] == "real": testMode = False
-else: assert False, "invalid test mode, need {test, real}"
+elif sys.argv[1] == "all": testMode = False
+else: assert False, "invalid test mode, need {test, all}"
 
 # slightly different processing for data, bkgd, and sig
 inputType = sys.argv[2]
@@ -46,7 +47,6 @@ elif inputType == "bkgd":
     isData = False
     isSig = False
 elif inputType == "sig":
-    assert False, "not supported yet!"
     isData = False
     isSig = True
 else: assert False, "invalid type, need {data, bkgd, sig}"
@@ -76,13 +76,18 @@ channelName = l1Flav[:2] + l2Flav[:2]
 
 # handle the parent folder for the dataset you want to run
 if isData:
-    assert sys.argv[4] == expectedSubfolder, "mismatch b/w selected process and channel; for "+sys.argv[3]+", process should be "+expectedSubfolder
-elif not isSig:
+    assert sys.argv[4] == expectedSubfolder, \
+            "mismatch b/w selected process and channel; for "+sys.argv[3]+\
+            ", process should be "+expectedSubfolder
+elif isSig:
+    expectedSubfolder = "Stop-Pair"
+    assert sys.argv[4] == expectedSubfolder, \
+            "signal input type expects 'Stop-Pair' as the process"
+else: # bkgd
     expectedSubfolder = sys.argv[4]
     processes = {"W-Jets":38, "Drell-Yan":46, "TTBar":30, "Diboson":41, \
             "Single-Top":40, "TT+X":7}
     assert expectedSubfolder in processes, "invalid process %s" % expectedSubfolder
-else: assert False, "not supported yet!"
 
 # number of ntuples to loop on for each dataset
 # note: must loop over all files and all datasets to have correct xsec
