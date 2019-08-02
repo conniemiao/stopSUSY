@@ -17,6 +17,8 @@
 # Uses files in {data/bkgd/sig}NtupleLists/{process}/ dir for ntuple lists.
 # Uses Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt for data 
 # json checking
+# Uses Data_Pileup_2016_271036-284044_80bins.root and MC_Moriond17_PU25ns_V1.root for
+# puWeight calculation.
 
 print "Importing modules."
 import sys
@@ -26,7 +28,7 @@ import numpy as np
 from math import sqrt, cos
 from array import array
 import time
-from stopSelection import deltaR,  getNumBtag, findValidJets
+from stopSelection import deltaR,  getBtagIndices, findValidJets
 from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
 from jsonChecker import jsonChecker
 print "Beginning execution of", sys.argv
@@ -97,8 +99,16 @@ if testMode:
 
 outDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/Run2/"
 
+dataPileupRoot = TFile.Open("/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1/Data_Pileup_2016_271036-284044_80bins.root", "READ")
+dataPileupHist = dataPileupRoot.Get("pileup")
+mcPileupRoot = TFile.Open("/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1/MC_Moriond17_PU25ns_V1.root", "READ")
+mcPileupHist = mcPileupRoot.Get("pileup")
+
 #--------------------------------------------------------------------------------#
 # ************* Make all the arrays. *************
+# Note: the vector branches and the jet branches do not zero out the elements that
+# were not filled in the event, so need to check the number of objects to loop over
+# before reading these branches (i.e. nMuon, nElectron, nJet).
 nMuon = array('i',[0])
 Muon_pt = np.zeros(20, dtype=np.float32)
 Muon_eta = np.zeros(20, dtype=np.float32)
@@ -135,18 +145,10 @@ Electron_dxy = np.zeros(20, dtype=np.float32)
 Electron_dz = np.zeros(20, dtype=np.float32)
 Electron_mass = np.zeros(20, dtype=np.float32)
 Electron_miniPFRelIso_all = np.zeros(20, dtype=np.float32)
-# Electron_inTimeMuon = np.zeros(20, dtype=np.int32) # read as bool
 Electron_ip3d = np.zeros(20, dtype=np.float32)
-# Electron_isGlobal = np.zeros(20, dtype=np.int32) # read as bool
 Electron_isPFcand = np.zeros(20, dtype=np.int32) # read as bool
-# Electron_isTracker = np.zeros(20, dtype=np.int32) # read as bool
 Electron_jetIdx = np.zeros(20, dtype=np.int32)
 Electron_pdgId = np.zeros(20, dtype=np.int32)
-# Electron_looseId = np.zeros(20, dtype=np.int32) # read as bool
-# Electron_mediumId = np.zeros(20, dtype=np.int32) # read as bool
-# Electron_mediumPromptId = np.zeros(20, dtype=np.int32) # read as bool
-# Electron_mvaId = np.zeros(20, dtype=np.int32)
-# Electron_tightId = np.zeros(20, dtype=np.int32) # read as bool
 Electron_genPartFlav = np.zeros(20, dtype=np.int32)
 Electron_genPartIdx = np.zeros(20, dtype=np.int32)
 Electron_mt = np.zeros(20, dtype=np.float32)
@@ -161,13 +163,15 @@ Jet_pt = np.zeros(20, dtype=np.float32)
 Jet_eta = np.zeros(20, dtype=np.float32)
 Jet_phi = np.zeros(20, dtype=np.float32)
 Jet_ht = array('f',[0.])
-# Jet_flavour = array('f',[0])
 dR_lep1_jet = array('f',[0.])
 dR_lep2_jet = array('f',[0.])
 nJet = array('i',[0])
 nbtag = array('i',[0])
 nbtagLoose = array('i',[0])
 nbtagTight = array('i',[0])
+btag_indices = np.zeros(20, dtype=np.int32) # indices in the arr of saved good jets
+btagLoose_indices = np.zeros(20, dtype=np.int32)
+btagTight_indices = np.zeros(20, dtype=np.int32)
 
 MET_pt = array('f',[0.])
 MET_phi = array('f',[0.])
@@ -197,6 +201,7 @@ PV_npvsGood = array('i',[0])
 luminosityBlock = array('i',[0])
 run = array('i',[0])
 genWeight = array('f',[0.])
+puWeight = array('f',[0.])
 
 #--------------------------------------------------------------------------------#
 start_time = time.time()
@@ -285,12 +290,14 @@ for line in redirectorFile:
     Events.Branch("Jet_eta", Jet_eta, "Jet_eta[20]/F")
     Events.Branch("Jet_phi", Jet_phi, "Jet_phi[20]/F")
     Events.Branch("Jet_ht", Jet_ht, "Jet_ht/F")
-    # Events.Branch("Jet_flavour", Jet_flavour, "Jet_flavour/F")
     Events.Branch("dR_lep1_jet", dR_lep1_jet, "dR_lep1_jet/F")
     Events.Branch("dR_lep2_jet", dR_lep2_jet, "dR_lep2_jet/F")
     Events.Branch("nbtag", nbtag, "nbtag/I")
     Events.Branch("nbtagLoose", nbtagLoose, "nbtagLoose/I")
     Events.Branch("nbtagTight", nbtagTight, "nbtagTight/I")
+    Events.Branch("btag_indices", btag_indices, "btag_indices[20]/I")
+    Events.Branch("btagLoose_indices", btagLoose_indices, "btagLoose_indices[20]/I")
+    Events.Branch("btagTight_indices", btagTight_indices, "btagTight_indices[20]/I")
     Events.Branch("MET_pt", MET_pt, "MET_pt/F")
     Events.Branch("MET_phi", MET_phi, "MET_phi/F")
     Events.Branch("MET_significance", MET_significance, "MET_significance/F")
@@ -316,6 +323,7 @@ for line in redirectorFile:
     Events.Branch("luminosityBlock", luminosityBlock, "luminosityBlock/I")
     Events.Branch("run", run, "run/I")
     Events.Branch("genWeight", genWeight, "genWeight/F")
+    Events.Branch("puWeight", puWeight, "puWeight/F")
 
     if not isData:
         hGenweights = TH1D("genWeights","genWeights",1,-0.5,0.5)
@@ -372,9 +380,9 @@ for line in redirectorFile:
             jets = findValidJets(event, l1Flav, l1Index, l2Flav, l2Index)
             numGoodJets = len(jets)
     
-            numBtag = getNumBtag(event, jets)
-            numBtagLoose = getNumBtag(event, jets, 0)
-            numBtagTight = getNumBtag(event, jets, 2)
+            evt_btag_indices = getBtagIndices(event, jets)
+            evt_btagLoose_indices = getBtagIndices(event, jets, 0)
+            evt_btagTight_indices = getBtagIndices(event, jets, 2)
     
             # *********** STORE THE DATA. *************
             # Save all the leptons' and jets' info for this event if it could 
@@ -420,18 +428,10 @@ for line in redirectorFile:
                 Electron_dz[i] = list(event.Electron_dz)[i]
                 Electron_mass[i] = list(event.Electron_mass)[i]
                 Electron_miniPFRelIso_all[i] = list(event.Electron_miniPFRelIso_all)[i]
-                # Electron_inTimeMuon[i] = list(event.Electron_inTimeMuon)[i]
                 Electron_ip3d[i] = list(event.Electron_ip3d)[i]
-                # Electron_isGlobal[i] = list(event.Electron_isGlobal)[i]
                 Electron_isPFcand[i] = list(event.Electron_isPFcand)[i]
-                # Electron_isTracker[i] = list(event.Electron_isTracker)[i]
                 Electron_jetIdx[i] = list(event.Electron_jetIdx)[i]
                 Electron_pdgId[i] = list(event.Electron_pdgId)[i]
-                # Electron_looseId[i] = list(event.Electron_looseId)[i]
-                # Electron_mediumId[i] = list(event.Electron_mediumId)[i]
-                # Electron_mediumPromptId[i] = list(event.Electron_mediumPromptId)[i]
-                # Electron_mvaId[i] = ord(list(event.Electron_mvaId)[i])
-                # Electron_tightId[i] = list(event.Electron_tightId)[i]
                 Electron_genPartFlav[i] = ord(list(event.Electron_genPartFlav)[i])
                 Electron_genPartIdx[i] = list(event.Electron_genPartIdx)[i]
                 Electron_mt[i] = sqrt(2 * Electron_pt[i] * event.MET_pt * \
@@ -454,9 +454,18 @@ for line in redirectorFile:
                 if selectElEl(event) is not None: found3rdLept[0] = True
     
             nJet[0] = numGoodJets
-            nbtag[0] = numBtag
-            nbtagLoose[0] = numBtagLoose
-            nbtagTight[0] = numBtagTight
+            nbtag[0] = len(evt_btag_indices)
+            nbtagLoose[0] = len(evt_btagLoose_indices)
+            nbtagTight[0] = len(evt_btagTight_indices)
+
+            # j = an index within the btag_indices arr; iGoodJets = an index within
+            # the good jets array
+            for j, iGoodJets in enumerate(evt_btag_indices):
+                btag_indices[j] = iGoodJets
+            for j, iGoodJets in enumerate(evt_btagLoose_indices):
+                btagLoose_indices[j] = iGoodJets
+            for j, iGoodJets in enumerate(evt_btagTight_indices):
+                btagTight_indices[j] = iGoodJets
     
             if numGoodJets > 0:
                 Jet_ht[0] = 0
@@ -516,6 +525,13 @@ for line in redirectorFile:
             luminosityBlock[0] = event.luminosityBlock
             run[0] = event.run
             genWeight[0] = event.genWeight
+
+            # calculate pileup weight
+            evtPU = event.Pileup_nPU
+            dataPUBin = dataPileupHist.GetBin(evtPU)
+            mcPUBin = mcPileupHist.GetBin(evtPU)
+            puWeight[0] = dataPileupHist.GetBinContent(dataPUBin) / \
+                    mcPileupHist.GetBinContent(mcPUBin)
 
             Events.Fill()
     
