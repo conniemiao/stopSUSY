@@ -1,7 +1,8 @@
 executable  = makeNtuple.py
-arguments   = test sig elel Single-Top
+arguments   = test bkgd elel /store/mc/RunIISummer16NanoAODv5/TTJets_DiLept_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/NANOAODSIM/PUMoriond17_Nano1June2019_102X_mcRun2_asymptotic_v7_ext1-v1/40000/99D39253-1DD2-2441-BFD3-0BB6025B5C4C.root TTJets_DiLept TTBar
 
 universe    = vanilla
+initialdir  = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1
 output      = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtuple.$(ClusterId).out
 error       = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtuple.$(ClusterId).err
 log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtuple.$(ClusterId).log
@@ -10,6 +11,6 @@ use_x509userproxy = true
 
 +MaxRuntime = 100000
 
-transfer_input_files = stopSelection.py, sig_fileRedirector, sig_NtupleLists/Single-Top, Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt
+transfer_input_files = stopSelection.py, jsonChecker.py, bkgd_fileRedirector, bkgdNtupleLists/TTBar
 
 queue

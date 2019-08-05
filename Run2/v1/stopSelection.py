@@ -31,7 +31,7 @@ def deltaR(event, type1, index1, type2, index2):
 # l1 is always the leading lepton (satisfies the higher pt cut), l2 is trailing.
 # All the max/min parameters should be specified by selectMuMu/ElEl/MuEl/ElMu.
 def __selectLepts(event, findingSameFlav, muPreference, maxL1OkEta, maxL2OkEta, \
-        l1MinOkPt, l2MinOkPt, maxOkIso):
+        l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz):
     if findingSameFlav:
         if muPreference: # mumu
             l1Flav = "Muon"
@@ -54,6 +54,8 @@ def __selectLepts(event, findingSameFlav, muPreference, maxL1OkEta, maxL2OkEta, 
     l1count = getattr(event, "n"+l1Flav)
     for i1 in range(l1count):
         pt = list(getattr(event, l1Flav+"_pt"))[i1]
+        absDxy = abs(list(getattr(event, l1Flav+"_dxy"))[i1])
+        absDz = abs(list(getattr(event, l1Flav+"_dz"))[i1])
         if l1Flav[0] == "M": # Muon:
             iso = list(getattr(event, "Muon_pfRelIso04_all"))[i1]
         else: # Electron 
@@ -61,7 +63,7 @@ def __selectLepts(event, findingSameFlav, muPreference, maxL1OkEta, maxL2OkEta, 
         absEta = abs(list(getattr(event, l1Flav+"_eta"))[i1])
         if pt > l1MinOkPt and iso < maxOkIso and absEta < maxL1OkEta \
                 and ((iso < minFoundIso) or (iso == minFoundIso \
-                and pt > maxFoundPt)):
+                and pt > maxFoundPt)) and absDxy < maxOkDxy and absDz < maxOkDz:
             minFoundIso = iso
             maxFoundPt = pt
             l1Index = i1
@@ -73,13 +75,15 @@ def __selectLepts(event, findingSameFlav, muPreference, maxL1OkEta, maxL2OkEta, 
     maxFoundPt = 0
     l2count = getattr(event, "n"+l2Flav)
     for i2 in range(l2count):
+        absDxy = abs(list(getattr(event, l2Flav+"_dxy"))[i2])
+        absDz = abs(list(getattr(event, l2Flav+"_dz"))[i2])
         if l1Flav[0] == "M": # Muon:
             iso = list(getattr(event, "Muon_pfRelIso04_all"))[i1]
         else: # Electron 
             iso = list(getattr(event, "Electron_pfRelIso03_all"))[i1]
         absEta = abs(list(getattr(event, l2Flav+"_eta"))[i2])
         if pt > l2MinOkPt and absEta < maxL2OkEta \
-                and iso < maxOkIso:
+                and iso < maxOkIso and absDxy < maxOkDxy and absDz < maxOkDz:
             pt = list(getattr(event, l2Flav+"_pt"))[i2]
             if (iso < minFoundIso) or (iso == minFoundIso and pt > maxFoundPt):
                 minFoundIso = iso
@@ -103,24 +107,24 @@ def __selectLepts(event, findingSameFlav, muPreference, maxL1OkEta, maxL2OkEta, 
 # max eta, min pt, and max iso values.
 
 def selectMuMu(event, maxL1OkEta=2.4, maxL2OkEta=2.4, l1MinOkPt=20, \
-        l2MinOkPt=-0.01, maxOkIso=1):
+        l2MinOkPt=-0.01, maxOkIso=1, maxOkDxy=1, maxOkDz=1):
     return __selectLepts(event, True, True, maxL1OkEta, maxL2OkEta, \
-            l1MinOkPt, l2MinOkPt, maxOkIso)
+            l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
 
 def selectElEl(event, maxL1OkEta=1.6, maxL2OkEta=1.6, l1MinOkPt=20, \
-        l2MinOkPt=-0.01, maxOkIso=1):
+        l2MinOkPt=-0.01, maxOkIso=1, maxOkDxy=1, maxOkDz=1):
     return __selectLepts(event, True, False, maxL1OkEta, maxL2OkEta, \
-            l1MinOkPt, l2MinOkPt, maxOkIso)
+            l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
 
 def selectMuEl(event, maxL1OkEta=2.4, maxL2OkEta=1.6, l1MinOkPt=12, \
-        l2MinOkPt=15, maxOkIso=1):
+        l2MinOkPt=15, maxOkIso=1, maxOkDxy=1, maxOkDz=1):
     return __selectLepts(event, False, True, maxL1OkEta, maxL2OkEta, \
-            l1MinOkPt, l2MinOkPt, maxOkIso)
+            l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
 
 def selectElMu(event, maxL1OkEta=1.6, maxL2OkEta=2.4, l1MinOkPt=25, \
-        l2MinOkPt=5, maxOkIso=1):
+        l2MinOkPt=5, maxOkIso=1, maxOkDxy=1, maxOkDz=1):
     return __selectLepts(event, False, False, maxL1OkEta, maxL2OkEta, \
-            l1MinOkPt, l2MinOkPt, maxOkIso)
+            l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
 
 #--------------------------------------------------------------------------------#
 
@@ -145,19 +149,20 @@ def findValidJets(event, l1Flav, l1Index, l2Flav, l2Index):
 
 #--------------------------------------------------------------------------------#
     
-# Given the jets array containing the indices of the accepted jets, returns 
-# number of btags fulfilling some strictness (0=loose, 1=medium, 2=tight).
+# Given the jets array containing the indices (within all the jets) of the accepted
+# jets, returns an array containing the indices (within the good jets) of btagged jets
+# fulfilling some strictness (0=loose, 1=medium, 2=tight).
 # threshold = [0.5803, 0.8838, 0.9693] # Jet_btagCSSV2
 # threshold = [0.1522, 0.4941, 0.8001] # Jet_btagDeepB 
 threshold = [0.0521, 0.3033, 0.7489] # Jet_btagDeepFlavB 
-def getNumBtag(event, jets, strictness=1):
+def getBtagIndices(event, jets, strictness=1):
     # bool Jet_btag[jet][0, 1, 2]: 0, 1, 2 = passed loose, medium, tight cuts
     # stored as float so > 0.5 = True
-    numBTag = 0
+    indices = []
     Jet_btag = list(event.Jet_btagDeepFlavB)
-    for jIndex in jets:
-        if Jet_btag[jIndex] > threshold[strictness]: numBTag += 1
-    return numBTag
+    for iGoodJets, iAllJets in enumerate(jets):
+        if Jet_btag[iAllJets] > threshold[strictness]: indices.append(iGoodJets)
+    return indices 
 
 #--------------------------------------------------------------------------------#
 
