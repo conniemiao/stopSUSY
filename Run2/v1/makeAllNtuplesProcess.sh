@@ -7,7 +7,8 @@
 #   (optional) sig: Stop-Pair
 # 
 # Creates a submit file and submits the job to condor for every dataset (aka 
-# subprocess) in the selected input type, channel, and process.
+# subprocess) in the selected input type, channel, and process. (This is the
+# script that actually does the condor submission handling)
 #
 # Args to makeNtuple.py: 
 # testMode {test, all}, input type {data, bkgd, sig}, channel {mumu, elel, muel}, 
@@ -41,6 +42,11 @@ elif [[ "$inputType" == "sig" ]]; then
     expectedSubfolder="Stop-Pair"
 fi 
 
+# necessary for condor to work nicely with das
+cp /tmp/x509up_u112655 .
+chmod 777 x509up_u112655
+
+# start submitting files
 while read -r datasetName subfolder xsec
 do
     if [[ "$datasetName" =~ \#.* ]]; then 

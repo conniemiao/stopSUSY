@@ -15,11 +15,9 @@ output      = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLog
 error       = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtuple.\$(ClusterId).err
 log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtuple.\$(ClusterId).log
 
-use_x509userproxy = true
-
 +MaxRuntime = 100000
 
-transfer_input_files = stopSelection.py, jsonChecker.py, $fileRedirector, $ntupleListsDir
+transfer_input_files = stopSelection.py, jsonChecker.py, $fileRedirector, $ntupleListsDir, x509up_u112655
 
 queue
 EOF
