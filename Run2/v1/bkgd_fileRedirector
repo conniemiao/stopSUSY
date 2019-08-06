@@ -1,33 +1,44 @@
-#WJetsToLNu W-Jets 
-W1JetsToLNu W-Jets 10330
-W2JetsToLNu W-Jets 3314
-W3JetsToLNu W-Jets 1891
-#W4JetsToLNu W-Jets 1891
-DYJetsToLL_M-50 Drell-Yan 16750
-DY1Jets_M-50 Drell-Yan 1096
-DY2Jets_M-50 Drell-Yan 384
-DY3Jets_M-50 Drell-Yan 165.6
-# DY4Jets_M-50 Drell-Yan 165.6
-VVTo2L2Nu_13TeV Diboson 13.35
-WWW_4F Diboson 0.2362
-WWZ Diboson 0.1889
-WZG Diboson 0.04611
-WZZ Diboson 0.06376
-ZZZ Diboson 0.0158
-ST_s-channel Single-Top 11.15
-ST_tW_antitop Single-Top 45
-ST_tW_top Single-Top 45
-ST_t-channel_top Single-Top 48.3
-ST_t-channel_antitop Single-Top 29.2
-TTJets_DiLept TTBar 67.75
-TGJets_leptonic TT+X 1.139
-TTGamma_Dilept TT+X 0.6231
-TTGamma_SingleLeptFromT TT+X 0.77
-TTGamma_SingleLeptFromTbar TT+X 0.77
-TTWJetsToLNu TT+X 0.2253
-TTWW TT+X 0.00788
-TTWZ TT+X 0.00294
-TTZZ TT+X 0.001538
-#TTZJets TT+X 0.7152
-tZq_ll TT+X 0.085
-#tZq_nunu TT+X 0.1655
+WJetsToLNu W-Jets 61526.7
+W1JetsToLNu W-Jets 8104
+W2JetsToLNu W-Jets 2793
+W3JetsToLNu W-Jets 992.5
+W4JetsToLNu W-Jets 
+DYJetsToLL_M-50 Drell-Yan 2075.14
+DY1Jets_M-50 Drell-Yan 877.8
+DY2Jets_M-50 Drell-Yan 304.4
+DY3Jets_M-50 Drell-Yan 111.5
+DY4Jets_M-50 Drell-Yan 44.03
+DYJetsToLL_M-10to50 Drell-Yan 71310
+VVTo2L2Nu_13TeV Diboson 11.95
+WWW_4F Diboson 0.2086
+WWZ Diboson 0.1651
+WZG Diboson 0.04123
+WZZ Diboson 0.05565
+ZZZ Diboson 0.01398
+ST_s-channel Single-Top 3.36
+ST_tW_antitop Single-Top 35.85
+ST_tW_top Single-Top 35.85
+ST_t-channel_top Single-Top 44.33
+ST_t-channel_antitop Single-Top 26.38
+TTJets_DiLept TTBar 
+TTJets_SingleLeptFromTbar TTBar
+TTJets_SingleLeptFromT TTBar
+TGJets_leptonic TT+X 2.967
+TTGamma_Dilept TT+X 
+TTGamma_SingleLeptFromT TT+X 
+TTGamma_SingleLeptFromTbar TT+X 
+TTGamma_Hadronic TT+X
+TTWJetsToQQ TT+X 0.4062
+TTWJetsToLNu TT+X 0.2043
+TTZH TT+X
+TTWH TT+X
+TTTW TT+X
+TTTT TT+X 0.009103
+TTTJ TT+X
+TTHH TT+X
+TTWW TT+X 
+TTWZ TT+X 
+TTZZ TT+X 
+#TTZJets TT+X 
+tZq_ll TT+X 0.0758
+tZq_nunu TT+X 0.1379

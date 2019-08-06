@@ -202,6 +202,7 @@ run = array('i',[0])
 if not isData:
     genWeight = array('f',[0.])
     puWeight = array('f',[0.])
+    Pileup_nPU = array('i',[0])
 
 #--------------------------------------------------------------------------------#
 # ********************** Filling events **********************
@@ -301,6 +302,7 @@ Events.Branch("run", run, "run/I")
 if not isData:
     Events.Branch("genWeight", genWeight, "genWeight/F")
     Events.Branch("puWeight", puWeight, "puWeight/F")
+    Events.Branch("Pileup_nPU", Pileup_nPU, "Pileup_nPU/I")
 
 if not isData:
     hGenweights = TH1D("genWeights","genWeights",1,-0.5,0.5)
@@ -514,6 +516,7 @@ for count, event in enumerate(inTree):
         mcPUBin = mcPileupHist.FindBin(evtPU)
         puWeight[0] = dataPileupHist.GetBinContent(dataPUBin) / \
                 mcPileupHist.GetBinContent(mcPUBin)
+        Pileup_nPU[0] = evtPU
 
     Events.Fill()
 

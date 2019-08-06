@@ -14,22 +14,29 @@ if [ "$1" != "test" ] && [ "$1" != "all" ]; then
     exit 1
 fi
 
-declare -a channels=("mumu" "muel" "elel")
+# declare -a channels=("mumu" "muel" "elel")
+declare -a channels=("elel")
+# declare -a bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top")
+declare -a bkgdProcesses=("Single-Top")
 
-declare -a bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top")
-# declare -a bkgdProcesses=("TTBar")
 for channel in "${channels[@]}"
 do
+    echo ------------------ "$channel" ------------------
     # Bkgd
+    echo --- bkgd ---
     for process in "${bkgdProcesses[@]}"
     do
         bash makeAllNtuplesProcess.sh $1 bkgd "$channel" "$process"
+        echo
     done
 
     # Sig
+    echo --- sig ---
     bash makeAllNtuplesProcess.sh $1 sig "$channel"
+    echo
 
     # Data 
+    echo --- data ---
     bash makeAllNtuplesProcess.sh $1 data "$channel"
     
 done

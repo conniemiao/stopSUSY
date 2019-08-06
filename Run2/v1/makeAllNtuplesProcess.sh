@@ -15,11 +15,12 @@
 # ntuple, subprocess, process (only required for bkgd)
 
 testMode=$1
-# number of ntuples to loop on for each dataset
 # note: must loop over all files and all datasets to have correct xsec
-numNtuples=10000
+numNtuples=10000 # number of ntuples to loop on for each dataset
+numDatasets=10000 # number of datasets to loop on for the process
 if [[ "$testMode" == "test" ]]; then 
     numNtuples=2 
+    numDatasets=2
 fi
 
 inputType=$2
@@ -47,8 +48,12 @@ cp /tmp/x509up_u112655 .
 chmod 777 x509up_u112655
 
 # start submitting files
+datasetNum=0
 while read -r datasetName subfolder xsec
 do
+    if [[ $datasetNum+1 > $numDatasets ]]; then
+        break 
+    fi
     if [[ "$datasetName" =~ \#.* ]]; then 
         continue
     fi
@@ -68,7 +73,8 @@ do
         condor_submit condorsub_makeNtuple
         # ./makeNtuple.py $1 $2 $3 $ntupleFileName $datasetName $subfolder
         
-        echo
         let "fileNum++"
     done < $ntuplesListFile
+    let "datasetNum++"
+    echo
 done < $redirectorFileAdr
