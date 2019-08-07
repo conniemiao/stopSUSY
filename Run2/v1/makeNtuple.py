@@ -15,12 +15,9 @@
 # which contains the Events tree with all events that have survived loose dilepton 
 # selection cuts.
 #
-# Uses Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt for data 
-# json checking, and Data_Pileup_2016_271036-284044_80bins.root and 
+# Uses Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt (indirectly) 
+# for data json checking, and Data_Pileup_2016_271036-284044_80bins.root and 
 # MC_Moriond17_PU25ns_V1.root for puWeight calculation (all located in myDataDir/Run2)
-#
-# Uses {data/bkgd/sig}_fileRedirector to get names of datasets and for MC, xsecs too
-# Uses files in {data/bkgd/sig}NtupleLists/{process}/ dir for ntuple lists.
 
 print "Importing modules."
 import sys, os
@@ -317,19 +314,17 @@ nMax = nentries
 if testMode: nMax = 500 
 
 # ************ BEGIN LOOPING OVER EVENTS **********
-start_time = time.time()
 if not isData:
     # skip evts with < 0 genWeight if it's a madgraph file
     isMadgraph = False
     if "madgraph" in ntupleFileName: isMadgraph = True
 for count, event in enumerate(inTree):
     if count > nMax : break
+    if count == 0: start_time = time.time()
     if count % 500000 == 0: print "count =", count
 
     if isData:
-        if not jc.checkJSON(event.luminosityBlock, event.run):
-            print "json fail"
-            continue
+        if not jc.checkJSON(event.luminosityBlock, event.run): continue
     else:
         if isMadgraph:
             if event.genWeight < 0: continue

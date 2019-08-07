@@ -1,0 +1,12 @@
+executable  = haddSubprocess.sh
+arguments   = test data elel Run2016D-Nano1June2019-v1 DoubleEG
+
+universe    = vanilla
+initialdir  = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1
+output      = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/haddSubprocess.$(ClusterId).out
+error       = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/haddSubprocess.$(ClusterId).err
+log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/haddSubprocess.$(ClusterId).log
+
++MaxRuntime = 100000
+
+queue

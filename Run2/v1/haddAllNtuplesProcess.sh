@@ -1,23 +1,19 @@
 # NOTE: NEEDS 3-4 CMD LINE ARGS with values: 
 # testMode {test, all}, input type {data, bkgd, sig}, channel {mumu, elel, muel}, 
 # process (only required for bkgd)
-# Process options: 
-#   (optional) data: DoubleMuon, DoubleEG, MuonEG
-#   bkgd: TTBar TT+X Diboson W-Jets Drell-Yan Single-Top
-#   (optional) sig: Stop-Pair
-# 
-# Creates a makeNtuple submit file and submits it to condor for every dataset (aka 
+#
+# Creates an hadd submit file and submits it to condor for every dataset (aka 
 # subprocess) in the selected input type, channel, and process. (This is the
 # script that actually does the condor submission handling)
 #
-# Args to makeNtuple.py: 
+# Args to haddSubprocess.sh:
 # testMode {test, all}, input type {data, bkgd, sig}, channel {mumu, elel, muel}, 
-# ntuple, subprocess, process (only required for bkgd)
+# subprocess, process
 
 testMode=$1
 inputType=$2
 channel=$3
-process=$4 # only required for bkgd
+process=$4
 
 # note: must loop over all files and all datasets to have correct xsec
 numNtuples=10000 # number of ntuples to loop on for each dataset
@@ -45,10 +41,6 @@ elif [[ "$inputType" == "sig" ]]; then
     expectedSubfolder="Stop-Pair"
 fi 
 
-# necessary for condor to work nicely with das
-cp /tmp/x509up_u112655 .
-chmod 777 x509up_u112655
-
 # start submitting files
 datasetNum=0
 while read -r datasetName subfolder xsec
@@ -62,22 +54,11 @@ do
     if [[ "$subfolder" != "$expectedSubfolder" ]]; then
         continue
     fi
-    echo Submitting $datasetName ntuples from $subfolder
-    ntuplesListFile=/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1/$inputType"NtupleLists/"$subfolder/$datasetName
 
-    fileNum=0
-    while read -r ntupleFileName
-    do
-        if [[ $fileNum+1 > $numNtuples ]]; then
-            break 
-        fi
-        bash createCondorsubNtupling.sh $testMode $inputType $channel $ntupleFileName\
-            $datasetName $subfolder
-        # condor_submit condorsub_makeNtuple
-        ./makeNtuple.py $testMode $inputType $channel $ntupleFileName $datasetName $subfolder
-        
-        let "fileNum++"
-    done < $ntuplesListFile
+    bash createCondorsubHadd.sh $testMode $inputType $channel $datasetName $subfolder
+    # condor_submit condorsub_haddSubprocess
+    ./haddSubprocess.sh $testMode $inputType $channel $datasetName $subfolder
+
     let "datasetNum++"
     echo
 done < $redirectorFileAdr
