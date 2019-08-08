@@ -18,7 +18,7 @@ fi
 # declare -a channels=("mumu" "muel" "elel")
 declare -a channels=("elel")
 # declare -a bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top")
-declare -a bkgdProcesses=("Single-Top")
+declare -a bkgdProcesses=("Diboson")
 
 for channel in "${channels[@]}"
 do

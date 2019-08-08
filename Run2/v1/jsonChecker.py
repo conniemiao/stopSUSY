@@ -5,7 +5,7 @@ import json
 
 class jsonChecker():
 
-    def __init__(self, filein='Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt'):
+    def __init__(self, filein='/afs/cern.ch/work/c/cmiao/private/myDataSusy/Run2/Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt'):
         self.good, self.bad = 0, 0
         input_file = open(filein)
         self.json_array = json.load(input_file)

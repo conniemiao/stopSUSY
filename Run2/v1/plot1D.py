@@ -13,7 +13,7 @@
 # Possible lastcuts: listed in cuts below.
 
 print "Importing modules."
-import sys
+import sys, os
 from ROOT import TFile, TTree, TH1D, TCanvas, TImage, TLegend, TText, THStack
 from ROOT import gSystem, gStyle, gROOT, kTRUE
 from stopSelection import deltaR
@@ -483,7 +483,6 @@ print
 print "----------- Plotting from data. -----------"
 data_redirector = open("data_fileRedirector")
 
-process = dataProcess
 # hDataPlotVarDict maps each plotVar to a hist (which contains all the data from the
 # process)
 hDataPlotVarDict = {}
@@ -491,6 +490,8 @@ for fileNum, subprocessLine in enumerate(data_redirector):
     subprocessLine = subprocessLine.rstrip('\n').split(" ")
     subprocess = subprocessLine[0]
     if subprocess[0] == "#": continue
+    process = subprocessLine[1]
+    if process != dataProcess: continue
 
     # assemble the dataNtupleAdr
     dataNtupleAdr = myDataDir+"data/"+process+"/"+subprocess+"/"+subprocess+"_"
@@ -610,22 +611,22 @@ for fileNum, subprocessLine in enumerate(data_redirector):
             # Fill.
             if val <= xMax: hData.Fill(val, 1)
             else: hData.Fill(xMax - binwidth/2, 1) # overflow 
-    
-    hcolor = 1 # black
-    hmarkerstyle = 22 # triangles
-    
-    for plotVar in plotSettings:
-        c = canvasDict[plotVar]
-        c.cd()
-        hData = hDataPlotVarDict[plotVar]
-        hData.SetLineColor(hcolor) 
-        hData.SetMarkerStyle(hmarkerstyle)
-        hData.SetMarkerColor(hcolor)
-    
-        legend = legendDict[plotVar]
-    #     legend.AddEntry(hData, hData.GetTitle())
-        hData.Draw("hist same") # same pad
     dataFile.Close()
+    
+hcolor = 1 # black
+hmarkerstyle = 3 # asterisk (to match with the *H draw option)
+    
+for plotVar in plotSettings:
+    c = canvasDict[plotVar]
+    c.cd()
+    hData = hDataPlotVarDict[plotVar]
+    hData.SetLineColor(hcolor) 
+    hData.SetMarkerStyle(hmarkerstyle)
+    hData.SetMarkerColor(hcolor)
+
+    legend = legendDict[plotVar]
+    legend.AddEntry(hData, hData.GetTitle())
+    hData.Draw("* hist same") # same pad
 
 
 #--------------------------------------------------------------------------------#
@@ -643,18 +644,21 @@ for plotVar in plotSettings:
     c.Update()
 
 if displayMode:
-    print "Done. Press enter to finish."
+    print "Done. Press enter to finish (plots not saved)."
     raw_input()
 else:
     gSystem.ProcessEvents()
-    outHistFileAdr = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-            "plots/Run2/v1/plot1D"+"_"
+    imgDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
+            "plots/Run2/v1/plot1D/"
+    if not os.path.exists(imgDir): os.makedirs(imgDir) 
+    outHistFileAdr = imgDir+"plot1D_"
     if testMode: outHistFileAdr += "test_"
     else: outHistFileAdr += "all_"
     outHistFileAdr += channelName+"_"+lastcut+".root"
-    outHistFile = TFile(outName, "recreate")
+    outHistFile = TFile(outHistFileAdr, "recreate")
     for plotVar in plotSettings:
-        outHistFile.WriteTObject(canvasDict[plotVar])
+        canvasDict[plotVar].Write()
     outHistFile.Close()
+    print "Saved hists in", outHistFileAdr
     print "Done."
 
