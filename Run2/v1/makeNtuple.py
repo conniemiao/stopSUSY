@@ -208,6 +208,15 @@ print "Storing variables from background."
 if isData: jc = jsonChecker()
 
 # SET UP THE OUTPUT TREE
+outDir = myDataDir+inputType+"/"+process+"/"+subprocess+"/"
+if not os.path.exists(outDir): os.makedirs(outDir) 
+outName = outDir+"stopCut_"
+if testMode: outName += "test_"
+else: outName+="all_"
+outName += ntupleFileName[1+ntupleFileName.rfind("/"):ntupleFileName.rfind(".")]+\
+        "_"+channelName+".root"
+outFile = TFile(outName, "recreate")
+outFile.cd() # cd to outFile to write to it
 Events = TTree("Events", "SUSY stop cut events")
 Events.Branch("nMuon", nMuon, "nMuon/I")
 Events.Branch("Muon_pt", Muon_pt, "Muon_pt[20]/F")
@@ -509,23 +518,15 @@ for count, event in enumerate(inTree):
         evtPU = event.Pileup_nPU
         dataPUBin = dataPileupHist.FindBin(evtPU)
         mcPUBin = mcPileupHist.FindBin(evtPU)
-        puWeight[0] = dataPileupHist.GetBinContent(dataPUBin) / \
-                mcPileupHist.GetBinContent(mcPUBin)
+        if mcPileupHist.GetBinContent(mcPUBin) == 0:
+            puWeight[0] = 1
+        else:
+            puWeight[0] = dataPileupHist.GetBinContent(dataPUBin) / \
+                    mcPileupHist.GetBinContent(mcPUBin)
         Pileup_nPU[0] = evtPU
 
     Events.Fill()
 
-# Write the tree out 
-outDir = myDataDir+inputType+"/"+process+"/"+subprocess+"/"
-if not os.path.exists(outDir): os.makedirs(outDir) 
-outName = outDir+"stopCut_"
-if testMode: outName += "test_"
-else: outName+="all_"
-outName += ntupleFileName[1+ntupleFileName.rfind("/"):ntupleFileName.rfind(".")]+\
-        "_"+channelName+".root"
-outFile = TFile(outName, "recreate")
-outFile.cd() # cd to outFile to write to it
-Events.SetDirectory(outFile)
 Events.Write()
 if not isData: hGenweights.Write()
 

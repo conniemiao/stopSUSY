@@ -1,4 +1,4 @@
-# Creates a condorsub file for one of the plotting scripts (plotSusyBkgd+Sig.py, 
+# Creates a condorsub file for one of the plotting scripts (plot1D.py, 
 # generateCutflows.py, plot2DMetPtGraphs.py) with $@[2:end] containing all the 
 # arguments and $1 containing the name of the script.
 
@@ -14,7 +14,7 @@ log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLog
 
 +MaxRuntime = 100000
 
-transfer_input_files = stopSelection.py, sig_SingleStop_files, bkgd_files
+transfer_input_files = stopSelection.py, sig_fileRedirector, bkgd_fileRedirector
 
 queue
 EOF

@@ -95,8 +95,8 @@ plotSettings = { # [nBins,xMin,xMax,units]
         }
 
 # bkgd process name : color for plotting
-processes = {"W-Jets":38, "Drell-Yan":46, "TTBar":30, "Diboson":41, "Single-Top":40, \
-        "TT+X":7}
+processes = OrderedDict([("W-Jets",38), ("Drell-Yan",46), ("TTBar",30), \
+        ("Diboson",41), ("Single-Top",40), ("TT+X",7)])
 
 canvasDict = {}
 legendDict = {}
@@ -115,7 +115,7 @@ if not displayMode:
 myDataDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/Run2/"
 # number of files to process
 numBkgdFiles = float("inf")  # note: must loop over all files to have correct xsec
-numSigFiles = 3 # max 25
+numSigFiles = 3
 
 #--------------------------------------------------------------------------------#
 # *************** Filling bkgd data summed together  ************
@@ -197,6 +197,7 @@ for subprocessLine in bkgdSubprocessesListFile:
         if count % 100000 == 0: print "count =", count
         genwt = event.genWeight
         puwt = event.puWeight
+        evtwt = genwt*puwt
     
         # ********** Additional cuts. ***********
 
@@ -275,8 +276,8 @@ for subprocessLine in bkgdSubprocessesListFile:
                 val /= sqrt(event.MET_pt)
 
             # Fill.
-            if val <= xMax: hBkgd.Fill(val, genwt*puwt)
-            else: hBkgd.Fill(xMax - binwidth/2, genwt*puwt) # overflow 
+            if val <= xMax: hBkgd.Fill(val, evtwt)
+            else: hBkgd.Fill(xMax - binwidth/2, evtwt) # overflow 
     
     newProcess = False
     if not prevProcess == process:
@@ -376,6 +377,7 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
         if count % 100000 == 0: print "count =", count
         genwt = event.genWeight
         puwt = event.puWeight
+        evtwt = genwt*puwt
 
         # ********** Additional cuts. ***********
 
@@ -454,8 +456,8 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
                 val /= sqrt(event.MET_pt)
 
             # Fill.
-            if val <= xMax: hSig.Fill(val, genwt*puwt)
-            else: hSig.Fill(xMax - binwidth/2, genwt*puwt) # overflow 
+            if val <= xMax: hSig.Fill(val, evtwt)
+            else: hSig.Fill(xMax - binwidth/2, evtwt) # overflow 
 
     hcolor = coloropts[fileNum % len(coloropts)]
     hmarkerstyle = markeropts[(fileNum/len(coloropts)) % len(markeropts)]

@@ -1,5 +1,5 @@
 executable  = makeNtuple.py
-arguments   = test data elel /store/data/Run2016D/DoubleEG/NANOAOD/Nano1June2019-v1/40000/07DAEE2F-4FC4-284D-9DD0-C336CCE6BEBA.root Run2016D-Nano1June2019-v1 DoubleEG
+arguments   = all sig muel /store/mc/RunIISummer16NanoAODv5/SMS-T2tt_mStop-200_mLSP-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/NANOAODSIM/PUMoriond17_Nano1June2019_102X_mcRun2_asymptotic_v7-v1/110000/DBC19E1C-FCF2-9141-99E8-3CE29AFD8648.root SMS-T2tt_mStop-200_mLSP-50 Stop-Pair
 
 universe    = vanilla
 initialdir  = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1
@@ -9,6 +9,6 @@ log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLog
 
 +MaxRuntime = 100000
 
-transfer_input_files = stopSelection.py, jsonChecker.py, data_fileRedirector, dataNtupleLists/DoubleEG, x509up_u112655
+transfer_input_files = stopSelection.py, jsonChecker.py, sig_fileRedirector, sigNtupleLists/Stop-Pair, x509up_u112655
 
 queue
