@@ -9,7 +9,7 @@
 
 print "Importing modules."
 import sys
-from ROOT import TFile, TCanvas, TImage
+from ROOT import gSystem, TFile, TCanvas, TImage
 from collections import OrderedDict
 print "Beginning execution of", sys.argv
 
@@ -58,8 +58,12 @@ if displayMode:
     raw_input()
 else:
     for plotVar in plotVars:
+        gSystem.ProcessEvents()
         c = histFile.Get("c_"+plotVar)
+        c.Draw()
         imgName = imgDir+plotVar+"_"+channel+"_"+lastcut+".png"
-        c.SaveAs(imgName)
+        img = TImage.Create()
+        img.FromPad(c)
+        img.WriteImage(imgName)
         print "Saved image", imgName
     print "Done."

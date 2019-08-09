@@ -113,9 +113,14 @@ if not displayMode:
     gROOT.SetBatch(kTRUE) # prevent displaying canvases
 
 myDataDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/Run2/"
-# number of files to process
+# limit the number of files to process (other than what is commented out in the file
+# redirector)
 numBkgdFiles = float("inf")  # note: must loop over all files to have correct xsec
 numSigFiles = 3
+
+lumi = 35921 # 2016 lumi in /pb
+
+gStyle.SetOptStat(0) # don't show any stats
 
 #--------------------------------------------------------------------------------#
 # *************** Filling bkgd data summed together  ************
@@ -140,9 +145,6 @@ with open("bkgd_fileRedirector") as bkgdSubprocessesListFile:
             hBkgd.SetDirectory(0) # necessary to keep hist from closing
             hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
             hBkgdSubprocessesPlotVarDict[subprocess].update({plotVar:hBkgd})
-lumi = 35921 # 2016 lumi in /pb
-
-gStyle.SetOptStat(0) # don't show any stats
 
 # ********** Looping over each subprocess. ***********
 prevProcess = "" # to determine when you got to the next process
@@ -171,8 +173,7 @@ for subprocessLine in bkgdSubprocessesListFile:
                 ", skipping\n")
         continue
     
-    try:
-        nentries = tBkgd.GetEntries()
+    try: nentries = tBkgd.GetEntries()
     except:
         sys.stderr.write("WARNING: unable to get entries from "+bkgdNtupleAdr+\
                 ", skipping\n")

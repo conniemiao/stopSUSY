@@ -330,7 +330,7 @@ if not isData:
 for count, event in enumerate(inTree):
     if count > nMax : break
     if count == 0: start_time = time.time()
-    if count % 500000 == 0: print "count =", count
+    if count % 5000 == 0: print "count =", count
 
     if isData:
         if not jc.checkJSON(event.luminosityBlock, event.run): continue
