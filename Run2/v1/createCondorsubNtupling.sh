@@ -17,7 +17,9 @@ log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLog
 
 +MaxRuntime = 100000
 
-transfer_input_files = stopSelection.py, jsonChecker.py, $fileRedirector, $ntupleListsDir, x509up_u112655
+x509userproxy = /afs/cern.ch/user/c/cmiao/x509up_u112655
+
+transfer_input_files = stopSelection.py, jsonChecker.py, $fileRedirector, $ntupleListsDir
 
 queue
 EOF

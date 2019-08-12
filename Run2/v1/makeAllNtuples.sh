@@ -10,31 +10,33 @@
 # ntuple, subprocess, process (only required for bkgd)
 
 testMode=$1
-if [ "$testMode" != "test" ] && [ "$testMode" != "all" ]; then
+if [[ "$testMode" == "test" ]]; then 
+    declare -a channels=("elel")
+    declare -a bkgdProcesses=("Diboson")
+elif [[ "$testMode" == "all" ]]; then
+    declare -a channels=("mumu" "muel" "elel")
+    declare -a bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top")
+else
     echo "need {test, all} as arg to makeAllNtuples.sh"
     exit 1
 fi
 
-# declare -a channels=("mumu" "muel" "elel")
-declare -a channels=("elel")
-# declare -a bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top")
-declare -a bkgdProcesses=("Diboson")
 
 for channel in "${channels[@]}"
 do
     echo ------------------ "$channel" ------------------
-    # # Bkgd
-    # echo --- bkgd ---
-    # for process in "${bkgdProcesses[@]}"
-    # do
-    #     bash makeAllNtuplesProcess.sh $testMode bkgd "$channel" "$process"
-    #     echo
-    # done
+    # Bkgd
+    echo --- bkgd ---
+    for process in "${bkgdProcesses[@]}"
+    do
+        bash makeAllNtuplesProcess.sh $testMode bkgd "$channel" "$process"
+        echo
+    done
 
-    # # Sig
-    # echo --- sig ---
-    # bash makeAllNtuplesProcess.sh $testMode sig "$channel"
-    # echo
+    # Sig
+    echo --- sig ---
+    bash makeAllNtuplesProcess.sh $testMode sig "$channel"
+    echo
 
     # Data 
     echo --- data ---

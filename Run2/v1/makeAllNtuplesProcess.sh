@@ -46,8 +46,9 @@ elif [[ "$inputType" == "sig" ]]; then
 fi 
 
 # necessary for condor to work nicely with das
-cp /tmp/x509up_u112655 .
-chmod 777 x509up_u112655
+cp /tmp/x509up_u112655 /afs/cern.ch/user/c/cmiao
+chmod 777 /afs/cern.ch/user/c/cmiao/x509up_u112655
+export X509_USER_PROXY=/afs/cern.ch/user/c/cmiao/x509up_u112655
 
 # start submitting files
 datasetNum=0
@@ -73,8 +74,8 @@ do
         fi
         bash createCondorsubNtupling.sh $testMode $inputType $channel $ntupleFileName\
             $datasetName $subfolder
-        # condor_submit condorsub_makeNtuple
-        ./makeNtuple.py $testMode $inputType $channel $ntupleFileName $datasetName $subfolder
+        condor_submit condorsub_makeNtuple
+        # ./makeNtuple.py $testMode $inputType $channel $ntupleFileName $datasetName $subfolder
         
         let "fileNum++"
     done < $ntuplesListFile

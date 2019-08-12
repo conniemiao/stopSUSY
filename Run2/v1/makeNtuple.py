@@ -527,9 +527,9 @@ for count, event in enumerate(inTree):
 
     Events.Fill()
 
+outFile.cd()
 Events.Write()
 if not isData: hGenweights.Write()
-
 outFile.Close()
 print "Finished creating", outName
 
