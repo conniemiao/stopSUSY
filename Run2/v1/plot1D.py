@@ -130,12 +130,29 @@ print "----------- Plotting from background. -----------"
 # hBkgdSubprocessesPlotVarDict maps each bkgd subprocess to another dictionary,
 # which maps each plotVar to a hist.
 hBkgdSubprocessesPlotVarDict = {}
+WNJetsXsecs = []
+DYNJetsXsecs = []
 with open("bkgd_fileRedirector") as bkgdSubprocessesListFile:
     for subprocessLine in bkgdSubprocessesListFile:
         subprocessLine = subprocessLine.rstrip('\n').split(" ")
         subprocess = subprocessLine[0]
         if subprocess[0] == "#": continue
-        hBkgdSubprocessesPlotVarDict.update({subprocess:{}})
+
+        if subprocess[0] == "W" and subprocess[2:] == "JetsToLNu":
+            WNJetsXsecs.append[subprocessLine[2]]
+        if subprocess[0] == "DY" and subprocess[2:] == "JetsToLL_M-50":
+            DYNJetsXsecs.append[subprocessLine[2]]
+
+        if subprocess == "WJetsToLNu":
+            for i in range(1,5):
+                hBkgdSubprocessesPlotVarDict.update({subprocess+"_"+str(i)+\
+                        "Parton":{}})
+        elif subprocess == "DYJetsToLL_M-50":
+            for i in range(1,5):
+                hBkgdSubprocessesPlotVarDict.update({subprocess+"_"+str(i)+\
+                        "Parton":{}})
+        else: hBkgdSubprocessesPlotVarDict.update({subprocess:{}})
+
         for plotVar in plotSettings:
             nBins = plotSettings[plotVar][0]
             xMin = plotSettings[plotVar][1]
@@ -150,6 +167,8 @@ with open("bkgd_fileRedirector") as bkgdSubprocessesListFile:
 prevProcess = "" # to determine when you got to the next process
 processNum = 0
 bkgdSubprocessesListFile = open("bkgd_fileRedirector")
+WIncl_totgenwt = 0
+DYIncl_totgenwt = 0
 for subprocessLine in bkgdSubprocessesListFile:
     subprocessLine = subprocessLine.rstrip('\n').split(" ")
     subprocess = subprocessLine[0]
@@ -160,8 +179,9 @@ for subprocessLine in bkgdSubprocessesListFile:
 
     # assemble the bkgdNtupleAdr
     bkgdNtupleAdr = myDataDir+"bkgd/"+process+"/"+subprocess+"/"+subprocess+"_"
-    if testMode: bkgdNtupleAdr += "test_"
-    else: bkgdNtupleAdr += "all_"
+    # if testMode: bkgdNtupleAdr += "test_"
+    # else: bkgdNtupleAdr += "all_"
+    bkgdNtupleAdr += "all_"  
     bkgdNtupleAdr += channelName+".root"
     print "Plotting from", bkgdNtupleAdr
 
@@ -186,7 +206,20 @@ for subprocessLine in bkgdSubprocessesListFile:
 
     hBkgdGenweights = bkgdFile.Get("genWeights")
     bkgdTotGenweight = hBkgdGenweights.GetSumOfWeights() # tot for this subprocess
-    hBkgdPlotVarDict = hBkgdSubprocessesPlotVarDict[subprocess]
+    if subprocess[:4] != "WJet" and subprocess != "DYJetsToLL_M-50":
+        hBkgdPlotVarDict = hBkgdSubprocessesPlotVarDict[subprocess]
+
+    if subprocess == "WJetsToLNu":
+        WxGenweightsArr = []
+        for i in range(1,5):
+            WxGenweightsArr.append(bkgdFile.Get("W"+str(i)+"genWeights")\
+                    .GetSumOfWeights())
+    if subprocess == "DYJetsToLL_M-50":
+        DYxGenweightsArr = []
+        for i in range(1,5):
+            DYxGenweightsArr.append(bkgdFile.Get("DY"+str(i)+"genWeights").\
+                    GetSumOfWeights())
+
 
     nMax = nentries
     if testMode: nMax = 10000
@@ -235,7 +268,7 @@ for subprocessLine in bkgdSubprocessesListFile:
         if nCuts > cuts["nJet<4"]:
             if event.nJet >= 4: continue
 
-        # ********** Plotting. ***********
+        # ********** Filling. ***********
         if event.nJet > 0:
             Jet_pt_arr = np.reshape(event.Jet_pt, 20)
             jMaxPt = 0
@@ -243,7 +276,10 @@ for subprocessLine in bkgdSubprocessesListFile:
                 if Jet_pt_arr[j] > Jet_pt_arr[jMaxPt]: jMaxPt = j
 
         for plotVar in plotSettings:
-            hBkgd = hBkgdPlotVarDict[plotVar]
+            if subprocess[:4] == "WJet" or subprocess == "DYJetsToLL_M-50":
+                hBkgd = hBkgdSubprocessesPlotVarDict[subprocess+"_"+str(event.Njets)\
+                        +"Parton"][plotVar]
+            else: hBkgd = hBkgdPlotVarDict[plotVar]
             nBins = plotSettings[plotVar][0]
             xMin = plotSettings[plotVar][1]
             xMax = plotSettings[plotVar][2]
@@ -280,16 +316,45 @@ for subprocessLine in bkgdSubprocessesListFile:
             if val <= xMax: hBkgd.Fill(val, evtwt)
             else: hBkgd.Fill(xMax - binwidth/2, evtwt) # overflow 
     
+    # ********** Drawing. ***********
     newProcess = False
     if not prevProcess == process:
         processNum += 1
         newProcess = True
     prevProcess = process
 
+    # default:
+    norm = xsec*lumi/bkgdTotGenweight
+
+    # special processing for WJets and DYJets inclusive:
+    nPartons = event.LHE_Njets
+    if subprocess == "WJetsToLNu":
+        WIncl_totgenwt = bkgdTotGenweight
+        WIncl_xsec = xsec
+        bkgdTotGenweight = WxGenweightsArr[nPartons-1]
+    if subprocess == "DYJetsToLL_M-50":
+        DYIncl_totgenwt = bkgdTotGenweight
+        DYIncl_xsec = xsec
+        bkgdTotGenweight = DYxGenweightsArr[nPartons-1]
+    # for all DY/W with n partons:
+    if subprocess[0] == "W" and "JetsToLNU" in subprocess:
+        kfactor = 1.221
+        if WIncl_totgenwt == 0: continue # missed the WIncl file
+        norm = lumi/(WIncl_totgenwt/WIncl_xsec + \
+                bkgdTotGenweight/(WNJetsXsecs[nPartons-1]*kfactor))
+    if subprocess[0] == "DY" and "Jets_M-50" in subprocess:
+        kfactor = 1.1637
+        if DYIncl_totgenwt == 0: continue # missed the DYIncl file
+        norm = lumi/(DYIncl_totgenwt/DYIncl_xsec + \
+                bkgdTotGenweight/(DYNJetsXsecs[nPartons-1]*kfactor))
+
     for plotVar in plotSettings:
+        if subprocess[:4] == "WJet" or subprocess == "DYJetsToLL_M-50":
+            hBkgd = hBkgdSubprocessesPlotVarDict[subprocess+"_"+str(nPartons)\
+                    +"Parton"][plotVar]
         hBkgd = hBkgdPlotVarDict[plotVar]
         # hBkgd.Sumw2() # already summed while filling
-        hBkgd.Scale(xsec*lumi/bkgdTotGenweight)
+        hBkgd.Scale(norm)
         hBkgd.SetFillColor(processes[process])
         hBkgd.SetLineColor(processes[process])
         hBkgdStacksDict[plotVar].Add(hBkgd)
@@ -335,8 +400,9 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
     
     # assemble the sigNtupleAdr
     sigNtupleAdr = myDataDir+"sig/"+process+"/"+subprocess+"/"+subprocess+"_"
-    if testMode: sigNtupleAdr += "test_"
-    else: sigNtupleAdr += "all_"
+    # if testMode: sigNtupleAdr += "test_"
+    # else: sigNtupleAdr += "all_"
+    sigNtupleAdr += "all_"
     sigNtupleAdr += channelName+".root"
 
     try:
@@ -415,7 +481,7 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
         if nCuts > cuts["nJet<4"]:
             if event.nJet >= 4: continue
 
-        # ********** Plotting. ***********
+        # ********** Filling. ***********
         if event.nJet > 0:
             Jet_pt_arr = np.reshape(event.Jet_pt, 20)
             jMaxPt = 0
@@ -460,8 +526,11 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
             if val <= xMax: hSig.Fill(val, evtwt)
             else: hSig.Fill(xMax - binwidth/2, evtwt) # overflow 
 
+    # ********** Drawing. ***********
     hcolor = coloropts[fileNum % len(coloropts)]
     hmarkerstyle = markeropts[(fileNum/len(coloropts)) % len(markeropts)]
+
+    norm = xsec*lumi/sigTotGenweight
 
     for plotVar in plotSettings:
         c = canvasDict[plotVar]
@@ -474,7 +543,7 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
                 len(linestyleopts)]
         hSig.SetLineStyle(hlinestyle)
 
-        hSig.Scale(xsec*lumi/sigTotGenweight)
+        hSig.Scale(norm)
         legend = legendDict[plotVar]
         legend.AddEntry(hSig, hSig.GetTitle())
         hSig.Draw("hist same") # same pad
@@ -498,8 +567,9 @@ for fileNum, subprocessLine in enumerate(data_redirector):
 
     # assemble the dataNtupleAdr
     dataNtupleAdr = myDataDir+"data/"+process+"/"+subprocess+"/"+subprocess+"_"
-    if testMode: dataNtupleAdr += "test_"
-    else: dataNtupleAdr += "all_"
+    # if testMode: dataNtupleAdr += "test_"
+    # else: dataNtupleAdr += "all_"
+    dataNtupleAdr += "all_"
     dataNtupleAdr += channelName+".root"
     print dataNtupleAdr
     
@@ -570,7 +640,7 @@ for fileNum, subprocessLine in enumerate(data_redirector):
         if nCuts > cuts["nJet<4"]:
             if event.nJet >= 4: continue
     
-        # ********** Plotting. ***********
+        # ********** Filling. ***********
         if event.nJet > 0:
             Jet_pt_arr = np.reshape(event.Jet_pt, 20)
             jMaxPt = 0
@@ -616,6 +686,7 @@ for fileNum, subprocessLine in enumerate(data_redirector):
             else: hData.Fill(xMax - binwidth/2, 1) # overflow 
     dataFile.Close()
     
+# ********** Drawing. ***********
 hcolor = 1 # black
 hmarkerstyle = 3 # asterisk (to match with the *H draw option)
     

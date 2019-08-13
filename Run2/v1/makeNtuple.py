@@ -179,12 +179,10 @@ m_eff = array('f',[0.])
 if not isData:
     LHE_HT = array('f',[0.])
     LHE_HTIncoming = array('f',[0.])
-    LHE_Njets = array('i',[0])
     LHE_Nb = array('i',[0])
     LHE_Nuds = array('i',[0])
     LHE_Nglu = array('i',[0])
-    LHE_NpNLO = array('i',[0])
-    LHE_NpLO = array('i',[0])
+    LHE_Njets = array('i',[0])
     # LHEPart_pt = array('f',[0.])
     # LHEPart_eta = array('f',[0.])
     # LHEPart_phi = array('f',[0.])
@@ -290,11 +288,10 @@ Events.Branch("m_eff", m_eff, "m_eff/F")
 if not isData:
     Events.Branch("LHE_HT", LHE_HT, "LHE_HT/F")
     Events.Branch("LHE_HTIncoming", LHE_HTIncoming, "LHE_HTIncoming/F")
-    Events.Branch("LHE_Njets", LHE_Njets, "LHE_Njets/I")
     Events.Branch("LHE_Nb", LHE_Nb, "LHE_Nb/I")
     Events.Branch("LHE_Nuds", LHE_Nuds, "LHE_Nuds/I")
     Events.Branch("LHE_Nglu", LHE_Nglu, "LHE_Nglu/I")
-    Events.Branch("LHE_NpNLO", LHE_NpNLO, "LHE_NpNLO/I")
+    Events.Branch("LHE_Njets", LHE_Njets, "LHE_Njets/I")
     # Events.Branch("LHEPart_pt", LHEPart_pt, "LHEPart_pt/F")
     # Events.Branch("LHEPart_eta", LHEPart_eta, "LHEPart_eta/F")
     # Events.Branch("LHEPart_phi", LHEPart_phi, "LHEPart_phi/F")
@@ -311,6 +308,16 @@ if not isData:
     Events.Branch("Pileup_nPU", Pileup_nPU, "Pileup_nPU/I")
 
 if not isData:
+    if subprocess == "WJetsToLNu":
+        hWxGenweightsArr = []
+        for i in range(1,5):
+            hWxGenweightsArr.append(TH1D("W"+str(i)+"genWeights",\
+                    "W"+str(i)+"genWeights",1,-0.5,0.5))
+    elif subprocess == "DYJetsToLL_M-50":
+        hDYxGenweightsArr = []
+        for i in range(1,5):
+            hDYxGenweightsArr.append(TH1D("DY"+str(i)+"genWeights",\
+                    "DY"+str(i)+"genWeights",1,-0.5,0.5))
     hGenweights = TH1D("genWeights","genWeights",1,-0.5,0.5)
 
 try: inFile = TFile.Open("root://cms-xrd-global.cern.ch//"+ntupleFileName, "READ")
@@ -337,7 +344,13 @@ for count, event in enumerate(inTree):
     else:
         if isMadgraph:
             if event.genWeight < 0: continue
+        npartons = ord(event.LHE_Njets)
+        if subprocess == "WJetsToLNu" and npartons > 0 and npartons <= 4:
+            hWxGenweightsArr[npartons-1].Fill(0, event.genWeight)
+        if subprocess == "DYJetsToLL_M-50" and npartons > 0 and npartons <= 4:
+            hDYxGenweightsArr[npartons-1].Fill(0, event.genWeight)
         hGenweights.Fill(0, event.genWeight)
+
         # if hGenweights.GetSumOfWeights() >= hGenweights.GetEntries(): 
         #     print "WARNING: evt #", count, "genwt", event.genWeight, \
         #             "sumw", hGenweights.GetSumOfWeights(), \
@@ -499,8 +512,6 @@ for count, event in enumerate(inTree):
         LHE_Nb[0] = ord(event.LHE_Nb)
         LHE_Nuds[0] = ord(event.LHE_Nuds)
         LHE_Nglu[0] = ord(event.LHE_Nglu)
-        LHE_NpNLO[0] = ord(event.LHE_NpNLO)
-        LHE_NpLO[0] = ord(event.LHE_NpLO)
         # LHEPart_pt[0] = event.LHEPart_pt
         # LHEPart_eta[0] = event.LHEPart_eta
         # LHEPart_phi[0] = event.LHEPart_phi
@@ -529,7 +540,14 @@ for count, event in enumerate(inTree):
 
 outFile.cd()
 Events.Write()
-if not isData: hGenweights.Write()
+if not isData: 
+    if subprocess == "WJetsToLNu":
+        for i in range(len(hWxGenweightsArr)):
+            hWxGenweightsArr[i].Write()
+    elif subprocess == "DYJetsToLL_M-50":
+        for i in range(len(hDYxGenweightsArr)):
+            hDYxGenweightsArr[i].Write()
+    hGenweights.Write()
 outFile.Close()
 print "Finished creating", outName
 
