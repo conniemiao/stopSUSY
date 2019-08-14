@@ -64,7 +64,9 @@ do
 
     bash createCondorsubNtuplingSubprocess.sh $testMode $inputType $channel \
         $subprocess $process
-    condor_submit condorsub_makeNtuple
+    if [[ "$testMode" == "all" ]]; then 
+        condor_submit condorsub_makeNtuple
+    fi
 
     let "datasetNum++"
     echo

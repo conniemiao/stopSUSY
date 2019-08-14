@@ -1,13 +1,13 @@
-executable  = plotSusyBkgd+Sig.py
-arguments   = 0 0 1 1 MET>80 lep1_pt lep1_eta lep1_relIso lep2_pt njets jet_pt jet_eta nbtag dR_lep1_jet lep1_mt lep2_mt met_pt jet_ht mt_sum mt_tot m_eff jet_ht_div_sqrt_met mt_tot_div_sqrt_met m_eff_div_sqrt_met
+executable  = plot1D.py
+arguments   = test show elel nocut
 
 universe    = vanilla
-output      = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/plotSusyBkgd+Sig.$(ClusterId).out
-error       = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/plotSusyBkgd+Sig.$(ClusterId).err
-log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/plotSusyBkgd+Sig.$(ClusterId).log
+output      = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/plot1D.$(ClusterId).out
+error       = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/plot1D.$(ClusterId).err
+log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/plot1D.$(ClusterId).log
 
 +MaxRuntime = 100000
 
-transfer_input_files = stopSelection.py, sig_SingleStop_files, bkgd_files
+transfer_input_files = stopSelection.py, sig_fileRedirector, bkgd_fileRedirector
 
 queue

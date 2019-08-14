@@ -112,13 +112,15 @@ nEvtsLabels = []
 if not displayMode:
     gROOT.SetBatch(kTRUE) # prevent displaying canvases
 
-myDataDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/Run2/"
+myDataDir = "/eos/user/c/cmiao/private/myDataSusy/Run2/"
 # limit the number of files to process (other than what is commented out in the file
 # redirector)
 numBkgdFiles = float("inf")  # note: must loop over all files to have correct xsec
 numSigFiles = 3
 
 lumi = 35921 # 2016 lumi in /pb
+WJets_kfactor = 1.221
+DYJets_kfactor = 1.1637
 
 gStyle.SetOptStat(0) # don't show any stats
 
@@ -139,29 +141,36 @@ with open("bkgd_fileRedirector") as bkgdSubprocessesListFile:
         if subprocess[0] == "#": continue
 
         if subprocess[0] == "W" and subprocess[2:] == "JetsToLNu":
-            WNJetsXsecs.append[subprocessLine[2]]
+            WNJetsXsecs.append(float(subprocessLine[2]))
         if subprocess[0] == "DY" and subprocess[2:] == "JetsToLL_M-50":
-            DYNJetsXsecs.append[subprocessLine[2]]
+            DYNJetsXsecs.append(float(subprocessLine[2]))
 
-        if subprocess == "WJetsToLNu":
+        if subprocess == "WJetsToLNu" or subprocess == "DYJetsToLL_M-50":
             for i in range(1,5):
-                hBkgdSubprocessesPlotVarDict.update({subprocess+"_"+str(i)+\
-                        "Parton":{}})
-        elif subprocess == "DYJetsToLL_M-50":
-            for i in range(1,5):
-                hBkgdSubprocessesPlotVarDict.update({subprocess+"_"+str(i)+\
-                        "Parton":{}})
-        else: hBkgdSubprocessesPlotVarDict.update({subprocess:{}})
-
-        for plotVar in plotSettings:
-            nBins = plotSettings[plotVar][0]
-            xMin = plotSettings[plotVar][1]
-            xMax = plotSettings[plotVar][2]
-            binwidth = (xMax - xMin)/nBins
-            hBkgd = TH1D(subprocess+"_bkgd", subprocess+"_bkgd", nBins, xMin, xMax)
-            hBkgd.SetDirectory(0) # necessary to keep hist from closing
-            hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
-            hBkgdSubprocessesPlotVarDict[subprocess].update({plotVar:hBkgd})
+                name = subprocess+"_"+str(i)+"Parton"
+                hBkgdSubprocessesPlotVarDict.update({name:{}})
+                for plotVar in plotSettings:
+                    nBins = plotSettings[plotVar][0]
+                    xMin = plotSettings[plotVar][1]
+                    xMax = plotSettings[plotVar][2]
+                    binwidth = (xMax - xMin)/nBins
+                    hBkgd = TH1D(name+"_bkgd", name+"_bkgd", nBins, \
+                            xMin, xMax)
+                    hBkgd.SetDirectory(0) # necessary to keep hist from closing
+                    hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
+                    hBkgdSubprocessesPlotVarDict[name].update({plotVar:hBkgd})
+        else:
+            hBkgdSubprocessesPlotVarDict.update({subprocess:{}})
+            for plotVar in plotSettings:
+                nBins = plotSettings[plotVar][0]
+                xMin = plotSettings[plotVar][1]
+                xMax = plotSettings[plotVar][2]
+                binwidth = (xMax - xMin)/nBins
+                hBkgd = TH1D(subprocess+"_bkgd", subprocess+"_bkgd", nBins, xMin, \
+                        xMax)
+                hBkgd.SetDirectory(0) # necessary to keep hist from closing
+                hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
+                hBkgdSubprocessesPlotVarDict[subprocess].update({plotVar:hBkgd})
 
 # ********** Looping over each subprocess. ***********
 prevProcess = "" # to determine when you got to the next process
@@ -179,9 +188,9 @@ for subprocessLine in bkgdSubprocessesListFile:
 
     # assemble the bkgdNtupleAdr
     bkgdNtupleAdr = myDataDir+"bkgd/"+process+"/"+subprocess+"/"+subprocess+"_"
-    # if testMode: bkgdNtupleAdr += "test_"
-    # else: bkgdNtupleAdr += "all_"
-    bkgdNtupleAdr += "all_"  
+    if testMode: bkgdNtupleAdr += "test_"
+    else: bkgdNtupleAdr += "all_"
+    # bkgdNtupleAdr += "all_"  
     bkgdNtupleAdr += channelName+".root"
     print "Plotting from", bkgdNtupleAdr
 
@@ -269,6 +278,9 @@ for subprocessLine in bkgdSubprocessesListFile:
             if event.nJet >= 4: continue
 
         # ********** Filling. ***********
+        nPartons = event.LHE_Njets
+        if nPartons < 1 or nPartons > 4: continue
+
         if event.nJet > 0:
             Jet_pt_arr = np.reshape(event.Jet_pt, 20)
             jMaxPt = 0
@@ -277,8 +289,8 @@ for subprocessLine in bkgdSubprocessesListFile:
 
         for plotVar in plotSettings:
             if subprocess[:4] == "WJet" or subprocess == "DYJetsToLL_M-50":
-                hBkgd = hBkgdSubprocessesPlotVarDict[subprocess+"_"+str(event.Njets)\
-                        +"Parton"][plotVar]
+                hBkgd = hBkgdSubprocessesPlotVarDict[subprocess+"_"+\
+                        str(nPartons)+"Parton"][plotVar]
             else: hBkgd = hBkgdPlotVarDict[plotVar]
             nBins = plotSettings[plotVar][0]
             xMin = plotSettings[plotVar][1]
@@ -327,40 +339,63 @@ for subprocessLine in bkgdSubprocessesListFile:
     norm = xsec*lumi/bkgdTotGenweight
 
     # special processing for WJets and DYJets inclusive:
-    nPartons = event.LHE_Njets
     if subprocess == "WJetsToLNu":
-        WIncl_totgenwt = bkgdTotGenweight
+        WIncl_totgenwt = bkgdTotGenweight # will be used later for WxJets
         WIncl_xsec = xsec
-        bkgdTotGenweight = WxGenweightsArr[nPartons-1]
-    if subprocess == "DYJetsToLL_M-50":
-        DYIncl_totgenwt = bkgdTotGenweight
+        for i in range(1,5):
+            norm = lumi/(WIncl_totgenwt/WIncl_xsec + \
+                    WxGenweightsArr[i-1]/(WNJetsXsecs[i-1]*WJets_kfactor))
+            for plotVar in plotSettings:
+                hBkgd = hBkgdSubprocessesPlotVarDict[subprocess+"_"+str(i)\
+                            +"Parton"][plotVar]
+                hBkgd.Scale(norm)
+                hBkgd.SetFillColor(processes[process])
+                hBkgd.SetLineColor(processes[process])
+                hBkgdStacksDict[plotVar].Add(hBkgd)
+                if i == 1:
+                    legend = legendDict[plotVar]
+                    legend.AddEntry(hBkgd, process+"_bkgd")
+    elif subprocess == "DYJetsToLL_M-50":
+        DYIncl_totgenwt = bkgdTotGenweight # will be used later for DYxJets
         DYIncl_xsec = xsec
-        bkgdTotGenweight = DYxGenweightsArr[nPartons-1]
-    # for all DY/W with n partons:
-    if subprocess[0] == "W" and "JetsToLNU" in subprocess:
-        kfactor = 1.221
-        if WIncl_totgenwt == 0: continue # missed the WIncl file
-        norm = lumi/(WIncl_totgenwt/WIncl_xsec + \
-                bkgdTotGenweight/(WNJetsXsecs[nPartons-1]*kfactor))
-    if subprocess[0] == "DY" and "Jets_M-50" in subprocess:
-        kfactor = 1.1637
-        if DYIncl_totgenwt == 0: continue # missed the DYIncl file
-        norm = lumi/(DYIncl_totgenwt/DYIncl_xsec + \
-                bkgdTotGenweight/(DYNJetsXsecs[nPartons-1]*kfactor))
+        for i in range(1,5):
+            norm = lumi/(DYIncl_totgenwt/DYIncl_xsec + \
+                    DYxGenweightsArr[i-1]/(DYNJetsXsecs[i-1]*DYJets_kfactor))
+            for plotVar in plotSettings:
+                hBkgd = hBkgdSubprocessesPlotVarDict[subprocess+"_"+str(i)\
+                            +"Parton"][plotVar]
+                hBkgd.Scale(norm)
+                hBkgd.SetFillColor(processes[process])
+                hBkgd.SetLineColor(processes[process])
+                hBkgdStacksDict[plotVar].Add(hBkgd)
+                if i == 1:
+                    legend = legendDict[plotVar]
+                    legend.AddEntry(hBkgd, process+"_bkgd")
 
-    for plotVar in plotSettings:
-        if subprocess[:4] == "WJet" or subprocess == "DYJetsToLL_M-50":
-            hBkgd = hBkgdSubprocessesPlotVarDict[subprocess+"_"+str(nPartons)\
-                    +"Parton"][plotVar]
-        hBkgd = hBkgdPlotVarDict[plotVar]
-        # hBkgd.Sumw2() # already summed while filling
-        hBkgd.Scale(norm)
-        hBkgd.SetFillColor(processes[process])
-        hBkgd.SetLineColor(processes[process])
-        hBkgdStacksDict[plotVar].Add(hBkgd)
-        if newProcess:
-            legend = legendDict[plotVar]
-            legend.AddEntry(hBkgd, process+"_bkgd")
+    # all subprocesses other than WJets incl and DYJets incl:
+    else:
+        # special processing for WnJets and DYnJets:
+        if subprocess[0] == "W" and subprocess[2:] == "JetsToLNU":
+            if WIncl_totgenwt == 0: continue # missed the WIncl file
+            norm = lumi/(WIncl_totgenwt/WIncl_xsec + bkgdTotGenweight/\
+                    (WNJetsXsecs[int(subprocess[1])-1]*WJets_kfactor))
+        elif subprocess[0] == "DY" and subprocess[2:] == "Jets_M-50":
+            if DYIncl_totgenwt == 0: continue # missed the DYIncl file
+            norm = lumi/(DYIncl_totgenwt/DYIncl_xsec + bkgdTotGenweight/\
+                    (DYNJetsXsecs[int(subprocess[1])-1]*DYJets_kfactor))
+        # all subprocesses other than WJets incl and DYJets incl:
+        for plotVar in plotSettings:
+            hBkgd = hBkgdPlotVarDict[plotVar]
+            # hBkgd.Sumw2() # already summed while filling
+            hBkgd.Scale(norm)
+            hBkgd.SetFillColor(processes[process])
+            hBkgd.SetLineColor(processes[process])
+            hBkgdStacksDict[plotVar].Add(hBkgd)
+            if newProcess:
+                legend = legendDict[plotVar]
+                legend.AddEntry(hBkgd, process+"_bkgd")
+
+    # all subprocesses:
     bkgdFile.Close()
 
 for plotVar in plotSettings:
@@ -400,9 +435,9 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
     
     # assemble the sigNtupleAdr
     sigNtupleAdr = myDataDir+"sig/"+process+"/"+subprocess+"/"+subprocess+"_"
-    # if testMode: sigNtupleAdr += "test_"
-    # else: sigNtupleAdr += "all_"
-    sigNtupleAdr += "all_"
+    if testMode: sigNtupleAdr += "test_"
+    else: sigNtupleAdr += "all_"
+    # sigNtupleAdr += "all_"
     sigNtupleAdr += channelName+".root"
 
     try:
@@ -567,9 +602,9 @@ for fileNum, subprocessLine in enumerate(data_redirector):
 
     # assemble the dataNtupleAdr
     dataNtupleAdr = myDataDir+"data/"+process+"/"+subprocess+"/"+subprocess+"_"
-    # if testMode: dataNtupleAdr += "test_"
-    # else: dataNtupleAdr += "all_"
-    dataNtupleAdr += "all_"
+    if testMode: dataNtupleAdr += "test_"
+    else: dataNtupleAdr += "all_"
+    # dataNtupleAdr += "all_"
     dataNtupleAdr += channelName+".root"
     print dataNtupleAdr
     

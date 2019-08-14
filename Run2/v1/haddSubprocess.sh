@@ -26,9 +26,9 @@ fi
 subprocess=$4
 process=$5
 
-myDataDir=/afs/cern.ch/work/c/cmiao/private/myDataSusy
-inDir=$myDataDir/Run2/$inputType/$process/$subprocess
-outDir=$myDataDir/Run2/$inputType/$process/$subprocess
+myDataDir="/eos/user/c/cmiao/private/myDataSusy/Run2"
+inDir=$myDataDir/$inputType/$process/$subprocess
+outDir=$myDataDir/$inputType/$process/$subprocess
 if [ ! -d "$outDir" ]; then
     mkdir -p $outDir
 fi

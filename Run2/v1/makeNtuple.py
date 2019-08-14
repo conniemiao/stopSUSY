@@ -11,13 +11,14 @@
 # Subprocess: name of the dataset for data and sig, or name of the subprocess for bkgd
 #
 # Loops over events in the specified ntuple and outputs another ntuple located in 
-# /afs/cern.ch/work/c/cmiao/private/myDataSusy/Run2/{input}/{process}/{subprocess}/
+# /eos/user/c/cmiao/private/myDataSusy/Run2/{input}/{process}/{subprocess}/
 # which contains the Events tree with all events that have survived loose dilepton 
 # selection cuts.
 #
 # Uses Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt (indirectly) 
 # for data json checking, and Data_Pileup_2016_271036-284044_80bins.root and 
-# MC_Moriond17_PU25ns_V1.root for puWeight calculation (all located in myDataDir/Run2)
+# MC_Moriond17_PU25ns_V1.root for puWeight calculation (all located in 
+# /afs/cern.ch/work/c/cmiao/private/myDataSusy/Run2/)
 
 print "Importing modules."
 import sys, os
@@ -88,12 +89,14 @@ if inputType == "bkgd":
     assert process in processes, "invalid process %s" % process
 elif inputType == "sig": process = "Stop-Pair"
 
-myDataDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/Run2/"
+myReferenceDataDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/Run2/"
+myDataDir = "/eos/user/c/cmiao/private/myDataSusy/Run2/"
+
 if not isData:
-    dataPileupRoot = TFile.Open(myDataDir+"Data_Pileup_2016_271036-284044_80bins.root", "READ")
+    dataPileupRoot = TFile.Open(myReferenceDataDir+"Data_Pileup_2016_271036-284044_80bins.root", "READ")
     dataPileupHist = dataPileupRoot.Get("pileup")
     dataPileupHist.Scale(1/dataPileupHist.Integral())
-    mcPileupRoot = TFile.Open(myDataDir+"MC_Moriond17_PU25ns_V1.root", "READ")
+    mcPileupRoot = TFile.Open(myReferenceDataDir+"MC_Moriond17_PU25ns_V1.root", "READ")
     mcPileupHist = mcPileupRoot.Get("pileup")
     mcPileupHist.Scale(1/mcPileupHist.Integral())
 
@@ -322,7 +325,11 @@ if not isData:
 
 try: inFile = TFile.Open("root://cms-xrd-global.cern.ch//"+ntupleFileName, "READ")
 except: exit()
-inTree = inFile.Get("Events")
+
+try: inTree = inFile.Get("Events")
+except:
+    sys.stderr.write("WARNING: unable to get tree from "+ntupleFileName+", skipping\n")
+    continue
 nentries = inTree.GetEntries()
 print "nentries =", nentries
 

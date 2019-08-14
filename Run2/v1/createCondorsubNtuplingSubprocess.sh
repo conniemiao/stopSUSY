@@ -20,11 +20,11 @@ executable  = makeNtuple.py
 
 universe    = vanilla
 initialdir  = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1
-output      = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtuple.\$(ClusterId).out
-error       = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtuple.\$(ClusterId).err
-log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtuple.\$(ClusterId).log
+output      = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtuple.\$(ClusterId).\$(ProcId).out
+error       = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtuple.\$(ClusterId).\$(ProcId).err
+log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtuple.\$(ClusterId).\$(ProcId).log
 
-+MaxRuntime = 100000
++JobFlavour = "tomorrow"
 
 x509userproxy = /afs/cern.ch/user/c/cmiao/x509up_u112655
 
@@ -45,8 +45,12 @@ do
     # appending to condor sub
     echo $testMode $inputType $channel $ntupleFileName $subprocess $process | \
         cat - >> condorsub_makeNtuple
-    # ./makeNtuple.py $testMode $inputType $channel $ntupleFileName $subprocess $process
-    echo "makeNtuple.py $testMode $inputType $channel $ntupleFileName $subprocess $process"
+    if [[ "$testMode" == "test" ]]; then 
+        ./makeNtuple.py $testMode $inputType $channel $ntupleFileName $subprocess \
+            $process
+    fi
+    echo "makeNtuple.py $testMode $inputType $channel $ntupleFileName $subprocess \
+        $process"
     let "fileNum++"
 done < $ntuplesListFile
 

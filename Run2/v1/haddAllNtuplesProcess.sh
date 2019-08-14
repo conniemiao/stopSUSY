@@ -56,8 +56,11 @@ do
     fi
 
     bash createCondorsubHadd.sh $testMode $inputType $channel $datasetName $subfolder
-    condor_submit condorsub_haddSubprocess
-    # ./haddSubprocess.sh $testMode $inputType $channel $datasetName $subfolder
+    if [[ "$testMode" == "all" ]]; then 
+        condor_submit condorsub_haddSubprocess
+    else
+        ./haddSubprocess.sh $testMode $inputType $channel $datasetName $subfolder
+    fi
 
     let "datasetNum++"
     echo

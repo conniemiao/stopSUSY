@@ -12,7 +12,7 @@
 testMode=$1
 if [[ "$testMode" == "test" ]]; then 
     declare -a channels=("elel")
-    declare -a bkgdProcesses=("Diboson")
+    declare -a bkgdProcesses=("TTBar" "W-Jets")
 elif [[ "$testMode" == "all" ]]; then
     declare -a channels=("mumu" "muel" "elel")
     declare -a bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top")

@@ -20,24 +20,23 @@ ST_tW_antitop Single-Top 35.85
 ST_tW_top Single-Top 35.85
 ST_t-channel_top Single-Top 44.33
 ST_t-channel_antitop Single-Top 26.38
-TTJets_DiLept TTBar 
-TTJets_SingleLeptFromTbar TTBar
-TTJets_SingleLeptFromT TTBar
+TTJets_DiLept TTBar 56.86
+TTJets_SingleLeptFromTbar TTBar 114.0
+TTJets_SingleLeptFromT TTBar 114.0
 TGJets_leptonic TT+X 2.967
-TTGamma_Dilept TT+X 
-TTGamma_SingleLeptFromT TT+X 
-TTGamma_SingleLeptFromTbar TT+X 
-TTGamma_Hadronic TT+X
+TTGamma_Dilept TT+X 0.6326
+TTGamma_SingleLeptFromT TT+X 0.7659
+TTGamma_SingleLeptFromTbar TT+X 0.7659
+TTGamma_Hadronic TT+X 0.7953
 TTWJetsToQQ TT+X 0.4062
 TTWJetsToLNu TT+X 0.2043
-TTZH TT+X
-TTWH TT+X
-TTTW TT+X
-TTTT TT+X 0.009103
-TTTJ TT+X
-TTHH TT+X
-TTWW TT+X 
-TTWZ TT+X 
-TTZZ TT+X 
+#TTZH TT+X 0.001244
+#TTWH TT+X 0.001344
+#TTTW TT+X 0.0008612
+#TTTT TT+X 0.009103
+#TTTJ TT+X 0.0004812
+#TTWW TT+X 0.007834
+#TTWZ TT+X 0.002938
+#TTZZ TT+X 0.001563
 tZq_ll TT+X 0.0758
 tZq_nunu TT+X 0.1379
