@@ -62,10 +62,16 @@ nCuts = len(cuts)
 processes = OrderedDict([("W-Jets",38), ("Drell-Yan",46), ("TTBar",30), \
         ("Diboson",41), ("Single-Top",40), ("TT+X",7)])
 
-myDataDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/Run2/"
+myDataDir = "/eos/user/c/cmiao/private/myDataSusy/Run2/"
 # number of files to process
 numBkgdFiles = float("inf")  # note: must loop over all files to have correct xsec
 numSigFiles = 3 # max 25
+
+lumi = 35921 # 2016 lumi in /pb
+WJets_kfactor = 1.221
+DYJets_kfactor = 1.1637
+
+gStyle.SetOptStat(0) # don't show any stats
 
 #--------------------------------------------------------------------------------#
 start_time = time.time()
@@ -79,24 +85,43 @@ hBkgdDict = {}
 # hBkgdCutsCountDict maps every process to an array of size nCuts that keeps track
 # of the num evts remaining after each cut for that process
 hBkgdCutsCountDict = {}
+WNJetsXsecs = []
+DYNJetsXsecs = []
 with open("bkgd_fileRedirector") as bkgdSubprocessesListFile:
     for subprocessLine in bkgdSubprocessesListFile:
         subprocessLine = subprocessLine.rstrip('\n').split(" ")
         subprocess = subprocessLine[0]
         if subprocess[0] == "#": continue # problematic input files
-        hBkgd = TH1D("cutflow_"+subprocess+"_bkgd", \
-                "cutflow_"+subprocess+"_bkgd", nCuts, 0, nCuts)
-        hBkgd.SetDirectory(0) # necessary to keep hist from closing
-        hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
-        hBkgdDict.update({subprocess:hBkgd})
+
+        if subprocess[0] == "W" and subprocess[2:] == "JetsToLNu":
+            WNJetsXsecs.append(float(subprocessLine[2]))
+        if subprocess[0] == "DY" and subprocess[2:] == "JetsToLL_M-50":
+            DYNJetsXsecs.append(float(subprocessLine[2]))
+
+        if subprocess == "WJetsToLNu" or subprocess == "DYJetsToLL_M-50":
+            for i in range(1,5):
+                name = subprocess+"_"+str(i)+"Parton"
+                hBkgd = TH1D("cutflow_"+name+"_bkgd", \
+                        "cutflow_"+name+"_bkgd", nCuts, 0, nCuts)
+                for i, cut in enumerate(cuts, start=1):
+                    if i>nCuts: break
+                    hBkgd.GetXaxis().SetBinLabel(i, cut)
+                hBkgd.SetDirectory(0) # necessary to keep hist from closing
+                hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
+                hBkgdDict.update({name:hBkgd})
+        else:
+            hBkgd = TH1D("cutflow_"+subprocess+"_bkgd", \
+                    "cutflow_"+subprocess+"_bkgd", nCuts, 0, nCuts)
+            for i, cut in enumerate(cuts, start=1):
+                if i>nCuts: break
+                hBkgd.GetXaxis().SetBinLabel(i, cut)
+            hBkgd.SetDirectory(0) # necessary to keep hist from closing
+            hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
+            hBkgdDict.update({subprocess:hBkgd})
 for process in processes:
     hBkgdCutsCountDict.update({process:[0]*nCuts})
 title = "cutflow ("+channelName+")"
 hBkgdStack = THStack("cutflow_bkgdStack", title)
-
-lumi = 35921 # 2016 lumi in /pb
-
-gStyle.SetOptStat(0) # don't show any stats
 
 # ********** Looping over each subprocess. ***********
 prevProcess = "" # to determine when you got to the next process
@@ -137,14 +162,21 @@ for subprocessLine in bkgdSubprocessesListFile:
                 " Skipping\n")
         continue
 
-    hBkgd = hBkgdDict[subprocess] 
-    for i, cut in enumerate(cuts, start=1):
-        if i>nCuts: break
-        hBkgd.GetXaxis().SetBinLabel(i, cut)
+    if subprocess[:4] != "WJet" and subprocess != "DYJetsToLL_M-50":
+        hBkgd = hBkgdDict[subprocess] 
     
     hBkgdGenweights = bkgdFile.Get("genWeights")
-    # tot for this subprocess:
-    bkgdSubprocessGenweight = hBkgdGenweights.GetSumOfWeights()
+    bkgdTotGenweight = hBkgdGenweights.GetSumOfWeights() # tot for this subprocess
+    if subprocess == "WJetsToLNu":
+        WxGenweightsArr = []
+        for i in range(1,5):
+            WxGenweightsArr.append(bkgdFile.Get("W"+str(i)+"genWeights")\
+                    .GetSumOfWeights())
+    elif subprocess == "DYJetsToLL_M-50":
+        DYxGenweightsArr = []
+        for i in range(1,5):
+            DYxGenweightsArr.append(bkgdFile.Get("DY"+str(i)+"genWeights").\
+                    GetSumOfWeights())
     
     nMax = nentries
     if testMode: nMax = 10000
@@ -156,6 +188,11 @@ for subprocessLine in bkgdSubprocessesListFile:
         genwt = event.genWeight
         puwt = event.puWeight
         evtwt = genwt*puwt
+
+        if subprocess[:4] == "WJet" or subprocess == "DYJetsToLL_M-50":
+            nPartons = event.LHE_Njets
+            if nPartons < 1 or nPartons > 4: continue
+            hBkgd = hBkgdDict[subprocess+"_"+str(nPartons)+"Parton"]
     
         # ********** Additional cuts. ***********
         # if findingSameFlavor, l1/l2Flav set at runtime
@@ -211,14 +248,55 @@ for subprocessLine in bkgdSubprocessesListFile:
             if event.nJet >= 4: continue
             hBkgd.Fill(cuts["nJet<4"], evtwt)
     
-    # hBkgd.Sumw2() # already summed while filling
-    hBkgd.Scale(xsec*lumi/bkgdSubprocessGenweight)
+    # default:
+    norm = xsec*lumi/bkgdTotGenweight
 
-    for i, cut in enumerate(cuts):
-        hBkgdCutsCountDict[process][i] += int(hBkgd.GetBinContent(i+1))
-        print i, hBkgdCutsCountDict[process][i]
+    # special processing for WJets and DYJets inclusive:
+    if subprocess == "WJetsToLNu":
+        WIncl_totgenwt = bkgdTotGenweight # will be used later for WxJets
+        WIncl_xsec = xsec
+        for i in range(1,5):
+            norm = lumi/(WIncl_totgenwt/WIncl_xsec + \
+                    WxGenweightsArr[i-1]/(WNJetsXsecs[i-1]*WJets_kfactor))
+            hBkgd = hBkgdDict[subprocess+"_"+str(i)+"Parton"]
+            hBkgd.Scale(norm)
+            print subprocess+"_"+str(i)+"Parton"
+            for i, cut in enumerate(cuts):
+                hBkgdCutsCountDict[process][i] += int(hBkgd.GetBinContent(i+1))
+                print i, hBkgdCutsCountDict[process][i]
+    elif subprocess == "DYJetsToLL_M-50":
+        DYIncl_totgenwt = bkgdTotGenweight # will be used later for DYxJets
+        DYIncl_xsec = xsec
+        for i in range(1,5):
+            norm = lumi/(DYIncl_totgenwt/DYIncl_xsec + \
+                    DYxGenweightsArr[i-1]/(DYNJetsXsecs[i-1]*DYJets_kfactor))
+            hBkgd = hBkgdDict[subprocess+"_"+str(i)+"Parton"]
+            hBkgd.Scale(norm)
+            print subprocess+"_"+str(i)+"Parton"
+            for i, cut in enumerate(cuts):
+                hBkgdCutsCountDict[process][i] += int(hBkgd.GetBinContent(i+1))
+                print i, hBkgdCutsCountDict[process][i]
 
+    # all subprocesses other than WJets incl and DYJets incl:
+    else:
+        # special processing for WnJets and DYnJets:
+        if subprocess[0] == "W" and subprocess[2:] == "JetsToLNU":
+            if WIncl_totgenwt == 0: continue # missed the WIncl file
+            norm = lumi/(WIncl_totgenwt/WIncl_xsec + bkgdTotGenweight/\
+                    (WNJetsXsecs[int(subprocess[1])-1]*WJets_kfactor))
+        elif subprocess[0] == "DY" and subprocess[2:] == "Jets_M-50":
+            if DYIncl_totgenwt == 0: continue # missed the DYIncl file
+            norm = lumi/(DYIncl_totgenwt/DYIncl_xsec + bkgdTotGenweight/\
+                    (DYNJetsXsecs[int(subprocess[1])-1]*DYJets_kfactor))
+        # all subprocesses other than WJets incl and DYJets incl:
+        hBkgd.Scale(norm)
+        for i, cut in enumerate(cuts):
+            hBkgdCutsCountDict[process][i] += int(hBkgd.GetBinContent(i+1))
+            print i, hBkgdCutsCountDict[process][i]
+
+    # all subprocesses:
     bkgdFile.Close()
+
 
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal in a separate hist  ************
@@ -447,6 +525,7 @@ for fileNum, subprocessLine in enumerate(data_redirector):
 
 #--------------------------------------------------------------------------------#
 # *************** Wrap up. *******************
+print
 print int(time.time()-start_time), "secs of processing."
 
 statsHeader = "Cut_name      "

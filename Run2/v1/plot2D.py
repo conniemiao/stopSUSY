@@ -7,6 +7,7 @@
 # Implements additional cuts and then draws a 2D hist for the chosen process of
 # bkgd data, for each of the signal files, and for data (e.g. met vs. pt(l), met vs. 
 # mt(l)).
+# ** WILL NOT SUPPORT PLOTTING WJETS OR DYJETS **
 #
 # Uses the root files outputted by hadding the output from makeNtuple.py
 # Uses xsec info from bkgd_fileRedirector
@@ -78,8 +79,7 @@ plotSettings = { # [nBins,xMin,xMax]
         "m_eff":[50,0,1000,"[GeV]"], # ht + met + pt1 + pt2
         }
 
-processes = {"W-Jets":38, "Drell-Yan":46, "TTBar":30, "Diboson":41, "Single-Top":40, \
-        "TT+X":7}
+processes = {"TTBar":30, "Diboson":41, "Single-Top":40, "TT+X":7}
 thisProcess = sys.argv[5]
 assert thisProcess in processes, "invalid process %s" % thisProcess
 print "Bkgd process:", thisProcess
@@ -88,7 +88,7 @@ plotVarsXY = sys.argv[6:8] # x, y
 for plotVar in plotVarsXY:
     assert (plotVar in plotSettings), "invalid plotVar %s" % plotVar
 
-myDataDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/Run2/"
+myDataDir = "/eos/user/c/cmiao/private/myDataSusy/Run2/"
 # limit the number of files to process (other than what is commented out in the file
 # redirector)
 numBkgdFiles = 1

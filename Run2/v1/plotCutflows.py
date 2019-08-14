@@ -58,10 +58,11 @@ processes = OrderedDict([("W-Jets",38), ("Drell-Yan",46), ("TTBar",30), \
 if not displayMode:
     gROOT.SetBatch(kTRUE) # prevent displaying canvases
 
+plotsDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/v1"
+
 #--------------------------------------------------------------------------------#
 
-statsFileAdr = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-        "plots/Run2/v1/cutflow_stats/cutflow_stats_"+channelName
+statsFileAdr = plotsDir + "/cutflow_stats/cutflow_stats_"+channelName
 if experimental: statsFileAdr += "_experimental"
 statsFileAdr += ".txt"
 print "Reading from", statsFileAdr
@@ -230,8 +231,7 @@ if displayMode:
     raw_input()
 else:
     gSystem.ProcessEvents()
-    imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-            "plots/Run2/v1/cutflow/cutflow_"+channelName
+    imgName = plotsDir + "/cutflow/cutflow_"+channelName
     if experimental: imgName += "_experimental"
     imgName += ".png"
     print "Saving image", imgName
@@ -247,9 +247,12 @@ c = TCanvas("c","c",10,10,700,700)
 nocutPieVals = []
 allcutsPieVals = []
 pieColors = []
+# to make sure you don't try to plot a pie chart when all entries are 0:
+survivingEvts = False
 for process in processes:
     nocutPieVals.append(hBkgdCutsCountDict[process][0])
     allcutsPieVals.append(hBkgdCutsCountDict[process][nCuts-1])
+    if hBkgdCutsCountDict[process][nCuts-1] > 0: survivingEvts = True
     pieColors.append(processes[process])
 
 nocutPie = TPie("nocutPie", "Bkgd breakdown, no cuts ("+channelName+")", \
@@ -281,8 +284,7 @@ if displayMode:
     raw_input()
 else:
     gSystem.ProcessEvents()
-    imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-            "plots/Run2/v1/cutflow/pie_nocut_"+channelName
+    imgName = plotsDir + "/cutflow/pie_nocut_"+channelName
     if experimental: imgName += "_experimental"
     imgName += ".png"
     print "Saving image", imgName
@@ -290,20 +292,20 @@ else:
     img.FromPad(c)
     img.WriteImage(imgName)
 
-c.cd()
-allcutsPie.Draw("nol sc")
-c.Update()
-if displayMode:
-    print "Done with all cuts pie. Press enter to finish."
-    raw_input()
-else:
-    gSystem.ProcessEvents()
-    imgName = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-            "plots/Run2/v1/cutflow/pie_"+lastcut+"_"+channelName
-    if experimental: imgName += "_experimental"
-    imgName += ".png"
-    print "Saving image", imgName
-    img = TImage.Create()
-    img.FromPad(c)
-    img.WriteImage(imgName)
-    print "Done."
+if survivingEvts:
+    c.cd()
+    allcutsPie.Draw("nol sc")
+    c.Update()
+    if displayMode:
+        print "Done with all cuts pie. Press enter to finish."
+        raw_input()
+    else:
+        gSystem.ProcessEvents()
+        imgName = plotsDir + "/cutflow/pie_"+lastcut+"_"+channelName
+        if experimental: imgName += "_experimental"
+        imgName += ".png"
+        print "Saving image", imgName
+        img = TImage.Create()
+        img.FromPad(c)
+        img.WriteImage(imgName)
+        print "Done."

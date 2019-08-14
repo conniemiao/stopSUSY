@@ -217,18 +217,16 @@ for subprocessLine in bkgdSubprocessesListFile:
     bkgdTotGenweight = hBkgdGenweights.GetSumOfWeights() # tot for this subprocess
     if subprocess[:4] != "WJet" and subprocess != "DYJetsToLL_M-50":
         hBkgdPlotVarDict = hBkgdSubprocessesPlotVarDict[subprocess]
-
     if subprocess == "WJetsToLNu":
         WxGenweightsArr = []
         for i in range(1,5):
             WxGenweightsArr.append(bkgdFile.Get("W"+str(i)+"genWeights")\
                     .GetSumOfWeights())
-    if subprocess == "DYJetsToLL_M-50":
+    elif subprocess == "DYJetsToLL_M-50":
         DYxGenweightsArr = []
         for i in range(1,5):
             DYxGenweightsArr.append(bkgdFile.Get("DY"+str(i)+"genWeights").\
                     GetSumOfWeights())
-
 
     nMax = nentries
     if testMode: nMax = 10000
