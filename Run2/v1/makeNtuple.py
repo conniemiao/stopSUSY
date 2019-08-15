@@ -327,9 +327,7 @@ try: inFile = TFile.Open("root://cms-xrd-global.cern.ch//"+ntupleFileName, "READ
 except: exit()
 
 try: inTree = inFile.Get("Events")
-except:
-    sys.stderr.write("WARNING: unable to get tree from "+ntupleFileName+", skipping\n")
-    continue
+except: exit()
 nentries = inTree.GetEntries()
 print "nentries =", nentries
 

@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 
 # NOTE: NEEDS 4 CMD LINE ARGS with values:
-# testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut
+# testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut,
+# region {any, A, B, C, D}
+# A = SS, nominal rel iso
+# B = OS, nominal rel iso (signal)
+# C = OS, inverted rel iso
+# D = SS, inverted rel iso
 #
 # Implements additional cuts and then draws 1D hist for data for each variable in
 # plotSettings for the summed bkgd data and for each of the signal files. Saves
@@ -18,13 +23,14 @@ from ROOT import TFile, TTree, TH1D, TCanvas, TImage, TLegend, TText, THStack
 from ROOT import gSystem, gStyle, gROOT, kTRUE
 from stopSelection import deltaR
 from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
+from stopSelection import isRegionA, isRegionB, isRegionC, isRegionD
 from collections import OrderedDict
 from math import sqrt, cos
 import numpy as np
 import time
 print "Beginning execution of", sys.argv
 
-assert len(sys.argv) == 5, "need 4 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut"
+assert len(sys.argv) == 6, "need 5 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut, region {A, B, C, D}"
 
 if sys.argv[1] == "test": testMode = True
 elif sys.argv[1] == "all": testMode = False
@@ -54,13 +60,16 @@ elif sys.argv[3] == "muel":
     l2Flav = "Electron"
     dataProcess = "MuonEG"
 else: assert False, "invalid channel, need {mumu, elel, muel}"
-channelName = l1Flav[:2] + l2Flav[:2]
+channel = l1Flav[:2] + l2Flav[:2]
 
 cuts = OrderedDict([("nocut",0), ("dilepton",1), ("no3rdlept",2), ("nbtag<2",3), \
         ("MET>80",4),("nJet<4",5)])
 lastcut = sys.argv[4]
 assert lastcut in cuts, "invalid last cut %s" % lastcut
 nCuts = cuts[lastcut]+1
+
+region = sys.argv[5]
+assert region == "any" or region == "A" or region == "B" or region == "C" or region == "D", "invalid region, need {any, A, B, C, D}"
 
 #--------------------------------------------------------------------------------#
 
@@ -105,7 +114,7 @@ for plotVar in plotSettings: # add an entry to the plotVar:hist dictionary
     c = TCanvas("c_"+plotVar,"Plot",10,20,1000,700)
     canvasDict.update({plotVar:c})
     legendDict.update({plotVar:TLegend(.70,.70,.90,.90)})
-    title = plotVar+" ("+channelName+", cuts to "+lastcut+")"
+    title = plotVar+" ("+channel+", cuts to "+lastcut+")"
     hBkgdStacksDict.update({plotVar:THStack(plotVar+"_bkgdStack", title)})
 nEvtsLabels = []
 
@@ -191,7 +200,7 @@ for subprocessLine in bkgdSubprocessesListFile:
     if testMode: bkgdNtupleAdr += "test_"
     else: bkgdNtupleAdr += "all_"
     # bkgdNtupleAdr += "all_"  
-    bkgdNtupleAdr += channelName+".root"
+    bkgdNtupleAdr += channel+".root"
     print "Plotting from", bkgdNtupleAdr
 
     try:
@@ -207,11 +216,11 @@ for subprocessLine in bkgdSubprocessesListFile:
         sys.stderr.write("WARNING: unable to get entries from "+bkgdNtupleAdr+\
                 ", skipping\n")
         continue
-    print("nentries={0:d}".format(nentries))
     if nentries == 0:
         sys.stderr.write("WARNING: tree in "+bkgdNtupleAdr+" has no entries!"+\
                 " Skipping\n")
         continue
+    print("nentries={0:d}".format(nentries))
 
     hBkgdGenweights = bkgdFile.Get("genWeights")
     bkgdTotGenweight = hBkgdGenweights.GetSumOfWeights() # tot for this subprocess
@@ -250,17 +259,27 @@ for subprocessLine in bkgdSubprocessesListFile:
             else: l2Flav = "Electron"
         l1Index = event.lep1_index
         l2Index = event.lep2_index
-    
-        if nCuts > cuts["dilepton"]: # currently just tighter relIso cuts
-            if list(getattr(event, l1Flav+"_charge"))[l1Index] * \
-                    list(getattr(event, l2Flav+"_charge"))[l2Index] >= 0: continue
-            if findingSameFlavor:
-                if list(getattr(event, l1Flav+"_relIso"))[l1Index] >= 0.1: continue
-                if list(getattr(event, l2Flav+"_relIso"))[l2Index] >= 0.1: continue
-            else:
-                if list(getattr(event, l1Flav+"_relIso"))[l1Index] >= 0.2: continue
-                if list(getattr(event, l2Flav+"_relIso"))[l2Index] >= 0.2: continue
 
+        l1Charge = list(getattr(event, l1Flav+"_charge"))[l1Index]
+        l2Charge = list(getattr(event, l2Flav+"_charge"))[l2Index]
+        l1RelIso = list(getattr(event, l1Flav+"_relIso"))[l1Index]
+        l2RelIso = list(getattr(event, l2Flav+"_relIso"))[l2Index]
+
+        if region == "any": pass
+        elif region == "A":
+            if not isRegionA(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+                    findingSameFlavor): continue
+        elif region == "B":
+            if not isRegionB(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+                    findingSameFlavor): continue
+        elif region == "C":
+            if not isRegionC(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+                    findingSameFlavor): continue
+        elif region == "D":
+            if not isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+                    findingSameFlavor): continue
+
+        # if nCuts > cuts["dilepton"]: # not doing this; doing ABCD regions instead
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
 
         if nCuts > cuts["no3rdlept"]:
@@ -436,7 +455,7 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
     if testMode: sigNtupleAdr += "test_"
     else: sigNtupleAdr += "all_"
     # sigNtupleAdr += "all_"
-    sigNtupleAdr += channelName+".root"
+    sigNtupleAdr += channel+".root"
 
     try:
         sigFile = TFile.Open(sigNtupleAdr, "READ")
@@ -451,11 +470,11 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
         sys.stderr.write("WARNING: unable to get entries from "+sigNtupleAdr+\
                 ", skipping\n")
         continue
-    print("nentries={0:d}".format(nentries))
     if nentries == 0:
         sys.stderr.write("WARNING: tree in "+sigNtupleAdr+" has no entries!"+\
                 " Skipping\n")
         continue
+    print("nentries={0:d}".format(nentries))
 
     hSigSubprocessesPlotVarDict.update({subprocess:{}})
     hSigPlotVarDict = hSigSubprocessesPlotVarDict[subprocess]
@@ -490,15 +509,24 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
         l1Index = event.lep1_index
         l2Index = event.lep2_index
     
-        if nCuts > cuts["dilepton"]: # currently just tighter relIso cuts
-            if list(getattr(event, l1Flav+"_charge"))[l1Index] * \
-                    list(getattr(event, l2Flav+"_charge"))[l2Index] >= 0: continue
-            if findingSameFlavor:
-                if list(getattr(event, l1Flav+"_relIso"))[l1Index] >= 0.1: continue
-                if list(getattr(event, l2Flav+"_relIso"))[l2Index] >= 0.1: continue
-            else:
-                if list(getattr(event, l1Flav+"_relIso"))[l1Index] >= 0.2: continue
-                if list(getattr(event, l2Flav+"_relIso"))[l2Index] >= 0.2: continue
+        l1Charge = list(getattr(event, l1Flav+"_charge"))[l1Index]
+        l2Charge = list(getattr(event, l2Flav+"_charge"))[l2Index]
+        l1RelIso = list(getattr(event, l1Flav+"_relIso"))[l1Index]
+        l2RelIso = list(getattr(event, l2Flav+"_relIso"))[l2Index]
+
+        if region == "any": pass
+        elif region == "A":
+            if not isRegionA(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+                    findingSameFlavor): continue
+        elif region == "B":
+            if not isRegionB(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+                    findingSameFlavor): continue
+        elif region == "C":
+            if not isRegionC(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+                    findingSameFlavor): continue
+        elif region == "D":
+            if not isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+                    findingSameFlavor): continue
 
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
 
@@ -603,7 +631,7 @@ for fileNum, subprocessLine in enumerate(data_redirector):
     if testMode: dataNtupleAdr += "test_"
     else: dataNtupleAdr += "all_"
     # dataNtupleAdr += "all_"
-    dataNtupleAdr += channelName+".root"
+    dataNtupleAdr += channel+".root"
     print dataNtupleAdr
     
     try:
@@ -619,11 +647,11 @@ for fileNum, subprocessLine in enumerate(data_redirector):
         sys.stderr.write("WARNING: unable to get entries from "+dataNtupleAdr+\
                 ", skipping\n")
         continue
-    print("nentries={0:d}".format(nentries))
     if nentries == 0:
         sys.stderr.write("WARNING: tree in "+dataNtupleAdr+" has no entries!"+\
                 " Skipping\n")
         continue
+    print("nentries={0:d}".format(nentries))
     
     for plotVar in plotSettings:
         nBins = plotSettings[plotVar][0]
@@ -649,15 +677,24 @@ for fileNum, subprocessLine in enumerate(data_redirector):
         l1Index = event.lep1_index
         l2Index = event.lep2_index
     
-        if nCuts > cuts["dilepton"]: # currently just tighter relIso cuts
-            if list(getattr(event, l1Flav+"_charge"))[l1Index] * \
-                    list(getattr(event, l2Flav+"_charge"))[l2Index] >= 0: continue
-            if findingSameFlavor:
-                if list(getattr(event, l1Flav+"_relIso"))[l1Index] >= 0.1: continue
-                if list(getattr(event, l2Flav+"_relIso"))[l2Index] >= 0.1: continue
-            else:
-                if list(getattr(event, l1Flav+"_relIso"))[l1Index] >= 0.2: continue
-                if list(getattr(event, l2Flav+"_relIso"))[l2Index] >= 0.2: continue
+        l1Charge = list(getattr(event, l1Flav+"_charge"))[l1Index]
+        l2Charge = list(getattr(event, l2Flav+"_charge"))[l2Index]
+        l1RelIso = list(getattr(event, l1Flav+"_relIso"))[l1Index]
+        l2RelIso = list(getattr(event, l2Flav+"_relIso"))[l2Index]
+
+        if region == "any": pass
+        elif region == "A":
+            if not isRegionA(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+                    findingSameFlavor): continue
+        elif region == "B":
+            if not isRegionB(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+                    findingSameFlavor): continue
+        elif region == "C":
+            if not isRegionC(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+                    findingSameFlavor): continue
+        elif region == "D":
+            if not isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+                    findingSameFlavor): continue
     
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
     
@@ -761,7 +798,7 @@ else:
     outHistFileAdr = imgDir+"plot1D_"
     if testMode: outHistFileAdr += "test_"
     else: outHistFileAdr += "all_"
-    outHistFileAdr += channelName+"_"+lastcut+".root"
+    outHistFileAdr += channel+"_"+lastcut+"_"+region+".root"
     outHistFile = TFile(outHistFileAdr, "recreate")
     for plotVar in plotSettings:
         canvasDict[plotVar].Write()

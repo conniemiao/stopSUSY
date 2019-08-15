@@ -166,3 +166,42 @@ def getBtagIndices(event, jets, strictness=1):
 
 #--------------------------------------------------------------------------------#
 
+# Returns true if an event with l1/l2Charge, l1/l2RelIso, and findingSameFlavor
+# parameters falls in region A (same sign, nominal rel iso)
+def isRegionA(l1Charge, l2Charge, l1RelIso, l2RelIso, findingSameFlavor):
+    if findingSameFlavor: maxRelIso = 0.1
+    else: maxRelIso = 0.2
+    if l1Charge*l2Charge > 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso:
+        return True
+    return False
+
+# Returns true if an event with l1/l2Charge, l1/l2RelIso, and findingSameFlavor
+# parameters falls in region B (opposite sign, nominal rel iso - signal region)
+def isRegionB(l1Charge, l2Charge, l1RelIso, l2RelIso, findingSameFlavor):
+    if findingSameFlavor: maxRelIso = 0.1
+    else: maxRelIso = 0.2
+    if l1Charge*l2Charge < 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso:
+        return True
+    return False
+
+# Returns true if an event with l1/l2Charge, l1/l2RelIso, and findingSameFlavor
+# parameters falls in region C (opposite sign, inverted rel iso)
+def isRegionC(l1Charge, l2Charge, l1RelIso, l2RelIso, findingSameFlavor):
+    if findingSameFlavor: maxRelIso = 0.1
+    else: maxRelIso = 0.2
+    if l1Charge*l2Charge < 0 and l1RelIso > maxRelIso and l2RelIso > maxRelIso \
+            and l1RelIso < 2*maxRelIso and l2RelIso < 2*maxRelIso:
+        return True
+    return False
+
+# Returns true if an event with l1/l2Charge, l1/l2RelIso, and findingSameFlavor
+# parameters falls in region D (same sign, inverted rel iso)
+def isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, findingSameFlavor):
+    if findingSameFlavor: maxRelIso = 0.1
+    else: maxRelIso = 0.2
+    if l1Charge*l2Charge > 0 and l1RelIso > maxRelIso and l2RelIso > maxRelIso \
+            and l1RelIso < 2*maxRelIso and l2RelIso < 2*maxRelIso:
+        return True
+    return False
+
+#--------------------------------------------------------------------------------#

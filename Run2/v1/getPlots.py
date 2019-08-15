@@ -1,5 +1,6 @@
 # NOTE: NEEDS 4 CMD LINE ARGS with values:
-# testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut
+# testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut,
+# region {A/B/C/D}
 #
 # Retreives the plots drawn by plot1D.py and either displays them all or saves them
 # all to .png files.
@@ -13,7 +14,7 @@ from ROOT import gSystem, TFile, TCanvas, TImage
 from collections import OrderedDict
 print "Beginning execution of", sys.argv
 
-assert len(sys.argv) == 5, "need 4 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut"
+assert len(sys.argv) == 6, "need 5 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut, region {A, B, C, D}"
 
 if sys.argv[1] == "test": testMode = True
 elif sys.argv[1] == "all": testMode = False
@@ -41,7 +42,7 @@ imgDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
 histFileAdr = imgDir+"plot1D_"
 if testMode: histFileAdr += "test_"
 else: histFileAdr += "all_"
-histFileAdr += channel+"_"+lastcut+".root"
+histFileAdr += channel+"_"+lastcut+"_"+region+".root"
 histFile = TFile.Open(histFileAdr)
 
 plotVars = {"lep1_pt", "lep1_eta", "lep1_phi", "lep1_relIso", "lep1_mt", 

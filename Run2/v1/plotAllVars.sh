@@ -4,17 +4,18 @@
 
 testMode=$1
 if [[ "$testMode" == "test" ]]; then 
-    declare -a channels=("elel")
-    declare -a bkgdProcesses=("Diboson")
-    declare -a cuts=("nocut")
-    declare -a plotVars2D=("lep1_pt" "MET_pt""Jet_ht" "mt_tot")
+    channels=("elel")
+    bkgdProcesses=("Diboson")
+    cuts=("nocut")
+    plotVars2D=("lep1_pt" "MET_pt""Jet_ht" "mt_tot")
+    regions=("B" "C" "D")
 elif [[ "$testMode" == "all" ]]; then
-    declare -a channels=("mumu" "muel" "elel")
-    declare -a bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" \
-        "Single-Top")
-    declare -a cuts=("nocut" "njets<4")
-    declare -a plotVars2D=("lep1_pt" "lep2_pt" "lep1_mt" "lep2_mt" "MET_pt" "lep1_eta" \
+    channels=("mumu" "muel" "elel")
+    bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top")
+    cuts=("nocut" "njets<4")
+    plotVars2D=("lep1_pt" "lep2_pt" "lep1_mt" "lep2_mt" "MET_pt" "lep1_eta" \
         "lep2_eta" "Jet_ht" "mt_tot" "mt_sum" "m_eff")
+    regions=("A" "B" "C" "D")
 else
     echo "need {test, all} as 1st arg to makeAllNtuples.sh"
     exit 1
@@ -37,10 +38,16 @@ do
     echo "Normal 1d plots:"
     for cut in "${cuts[@]}"
     do
-        bash createCondorsubPlotting.sh plot1D.py $testMode $displayMode "$channel" \
-            "$cut"
-        # condor_submit condorsub_plotting
-        ./plot1D.py $testMode $displayMode "$channel" "$cut"
+        for region in "${regions[@]}"
+        do
+            bash createCondorsubPlotting.sh plot1D.py $testMode $displayMode \
+                "$channel" "$cut" "$region"
+            if [[ "$testMode" == "all" ]]; then 
+                condor_submit condorsub_plotting
+            else
+                ./plot1D.py $testMode $displayMode "$channel" "$cut" "$region"
+            fi
+        done
     done
 
     #--------------------------------------------------------------------------------#
@@ -49,8 +56,11 @@ do
     echo
     echo "Generate cutflow stats:"
 #     bash createCondorsubPlotting.sh generateCutflows.py $testMode "$channel"
-#     # condor_submit condorsub_plotting
-#     ./generateCutflows.py $testMode "$channel"
+#     if [[ "$testMode" == "all" ]]; then 
+#         condor_submit condorsub_plotting
+#     else
+#         ./generateCutflows.py $testMode "$channel"
+#     fi
 
     #--------------------------------------------------------------------------------#
 
@@ -69,9 +79,12 @@ do
 #                 fi
 #                 bash createCondorsubPlotting.sh plot2D.py $testMode $displayMode \
 #                     "$channel" "$cut" "$process" "$plotVarX" "$plotVarY"
-#                 # condor_submit condorsub_plotting
-#                 ./plot2D.py $testMode $displayMode "$channel" "$cut" "$process" \
-#                     "$plotVarX" "$plotVarY"
+#                 if [[ "$testMode" == "all" ]]; then 
+#                     condor_submit condorsub_plotting
+#                 else
+#                     ./plot2D.py $testMode $displayMode "$channel" "$cut" "$process" \
+#                         "$plotVarX" "$plotVarY"
+#                 fi
 # 
 #             done
 #         done
@@ -91,7 +104,10 @@ echo "Get 1d plots, cutflows, and pie charts:"
 #     # channel {mumu, elel, muel}, lastcut
 #     for cut in "${cuts[@]}"
 #     do
-#         python getPlots.py $testMode $displayMode "$channel" "$cut"
+#         for region in "${regions[@]}"
+#         do
+#             python getPlots.py $testMode $displayMode "$channel" "$cut" "$region"
+#         done
 #     done
 # 
 #     # Args to plotCutflows.py: testMode {test, all}, displayMode {show, save}, 

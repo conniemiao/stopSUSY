@@ -11,11 +11,11 @@
 
 testMode=$1
 if [[ "$testMode" == "test" ]]; then 
-    declare -a channels=("elel")
-    declare -a bkgdProcesses=("TTBar" "W-Jets")
+    channels=("elel")
+    bkgdProcesses=("TTBar" "W-Jets")
 elif [[ "$testMode" == "all" ]]; then
-    declare -a channels=("mumu" "muel" "elel")
-    declare -a bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top")
+    channels=("mumu" "muel" "elel")
+    bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top")
 else
     echo "need {test, all} as arg to makeAllNtuples.sh"
     exit 1

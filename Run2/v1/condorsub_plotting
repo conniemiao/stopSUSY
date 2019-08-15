@@ -1,5 +1,5 @@
 executable  = plot1D.py
-arguments   = test show elel nocut
+arguments   = test show elel nocut D
 
 universe    = vanilla
 output      = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/plot1D.$(ClusterId).out
