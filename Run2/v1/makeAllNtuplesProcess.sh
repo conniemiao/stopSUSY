@@ -60,12 +60,14 @@ do
     if [[ "$process" != "$expectedSubfolder" ]]; then
         continue
     fi
-    echo Submitting $subprocess ntuples from $process
 
     bash createCondorsubNtuplingSubprocess.sh $testMode $inputType $channel \
         $subprocess $process
     if [[ "$testMode" == "all" ]]; then 
+        echo Submitting $subprocess ntuples from $process
         condor_submit condorsub_makeNtuple
+    else
+        echo Running on $subprocess ntuples from $process
     fi
 
     let "datasetNum++"

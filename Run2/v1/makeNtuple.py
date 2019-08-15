@@ -313,12 +313,12 @@ if not isData:
 if not isData:
     if subprocess == "WJetsToLNu":
         hWxGenweightsArr = []
-        for i in range(1,5):
+        for i in range(5):
             hWxGenweightsArr.append(TH1D("W"+str(i)+"genWeights",\
                     "W"+str(i)+"genWeights",1,-0.5,0.5))
     elif subprocess == "DYJetsToLL_M-50":
         hDYxGenweightsArr = []
-        for i in range(1,5):
+        for i in range(5):
             hDYxGenweightsArr.append(TH1D("DY"+str(i)+"genWeights",\
                     "DY"+str(i)+"genWeights",1,-0.5,0.5))
     hGenweights = TH1D("genWeights","genWeights",1,-0.5,0.5)
@@ -350,10 +350,10 @@ for count, event in enumerate(inTree):
         if isMadgraph:
             if event.genWeight < 0: continue
         npartons = ord(event.LHE_Njets)
-        if subprocess == "WJetsToLNu" and npartons > 0 and npartons <= 4:
-            hWxGenweightsArr[npartons-1].Fill(0, event.genWeight)
-        if subprocess == "DYJetsToLL_M-50" and npartons > 0 and npartons <= 4:
-            hDYxGenweightsArr[npartons-1].Fill(0, event.genWeight)
+        if subprocess == "WJetsToLNu" and npartons <= 4:
+            hWxGenweightsArr[npartons].Fill(0, event.genWeight)
+        if subprocess == "DYJetsToLL_M-50" and npartons <= 4:
+            hDYxGenweightsArr[npartons].Fill(0, event.genWeight)
         hGenweights.Fill(0, event.genWeight)
 
         # if hGenweights.GetSumOfWeights() >= hGenweights.GetEntries(): 

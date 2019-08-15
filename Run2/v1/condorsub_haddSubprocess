@@ -1,5 +1,5 @@
 executable  = haddSubprocess.sh
-arguments   = test bkgd elel TTJets_SingleLeptFromTbar TTBar
+arguments   = test bkgd elel W1JetsToLNu W-Jets
 
 universe    = vanilla
 initialdir  = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1
