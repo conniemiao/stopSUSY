@@ -332,7 +332,7 @@ nentries = inTree.GetEntries()
 print "nentries =", nentries
 
 nMax = nentries
-if testMode: nMax = 500 
+if testMode: nMax = 1000 
 
 # ************ BEGIN LOOPING OVER EVENTS **********
 if not isData:

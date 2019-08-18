@@ -12,7 +12,7 @@
 testMode=$1
 if [[ "$testMode" == "test" ]]; then 
     channels=("elel")
-    bkgdProcesses=("Diboson")
+    bkgdProcesses=("W-Jets")
 elif [[ "$testMode" == "all" ]]; then
     channels=("mumu" "muel" "elel")
     bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top")

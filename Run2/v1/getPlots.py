@@ -1,4 +1,4 @@
-# NOTE: NEEDS 4 CMD LINE ARGS with values:
+# NOTE: NEEDS 5 CMD LINE ARGS with values:
 # testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut,
 # region {A/B/C/D}
 #
@@ -10,7 +10,7 @@
 
 print "Importing modules."
 import sys
-from ROOT import gSystem, TFile, TCanvas, TImage
+from ROOT import gROOT, gSystem, TFile, TCanvas, TImage
 from collections import OrderedDict
 print "Beginning execution of", sys.argv
 
@@ -36,6 +36,9 @@ cuts = OrderedDict([("nocut",0), ("dilepton",1), ("no3rdlept",2), ("nbtag<2",3),
 lastcut = sys.argv[4]
 assert lastcut in cuts, "invalid last cut %s" % lastcut
 
+region = sys.argv[5]
+assert region == "any" or region == "A" or region == "B" or region == "C" or region == "D", "invalid region, need {any, A, B, C, D}"
+
 # assemble hist file adr
 imgDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
         "plots/Run2/v1/plot1D/"
@@ -58,6 +61,7 @@ if displayMode:
     print "Done. Press enter to finish (plots not saved)."
     raw_input()
 else:
+    gROOT.SetBatch(kTRUE) # prevent displaying canvases
     for plotVar in plotVars:
         gSystem.ProcessEvents()
         c = histFile.Get("c_"+plotVar)

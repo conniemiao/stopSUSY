@@ -8,7 +8,7 @@ if [[ "$testMode" == "test" ]]; then
     bkgdProcesses=("Diboson")
     cuts=("nocut")
     plotVars2D=("lep1_pt" "MET_pt""Jet_ht" "mt_tot")
-    regions=("B" "C" "D")
+    regions=("any")
 elif [[ "$testMode" == "all" ]]; then
     channels=("mumu" "muel" "elel")
     bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top")
@@ -17,13 +17,13 @@ elif [[ "$testMode" == "all" ]]; then
         "lep2_eta" "Jet_ht" "mt_tot" "mt_sum" "m_eff")
     regions=("A" "B" "C" "D")
 else
-    echo "need {test, all} as 1st arg to makeAllNtuples.sh"
+    echo "need {test, all} as 1st arg to plotAllVars.sh"
     exit 1
 fi
 
 displayMode=$2
 if [ "$displayMode" != "show" ] && [ "$displayMode" != "save" ]; then 
-    echo "need {show, save} as 2nd arg to makeAllNtuples.sh"
+    echo "need {show, save} as 2nd arg to plotAllVars.sh"
     exit 1
 fi
 
@@ -47,6 +47,7 @@ do
             else
                 ./plot1D.py $testMode $displayMode "$channel" "$cut" "$region"
             fi
+            echo
         done
     done
 

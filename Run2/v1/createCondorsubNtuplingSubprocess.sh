@@ -24,7 +24,7 @@ output      = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLog
 error       = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtuple.\$(ClusterId).\$(ProcId).err
 log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/makeNtuple.\$(ClusterId).\$(ProcId).log
 
-+JobFlavour = "tomorrow"
++MaxRuntime = 129600
 
 x509userproxy = /afs/cern.ch/user/c/cmiao/x509up_u112655
 

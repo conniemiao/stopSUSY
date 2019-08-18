@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# NOTE: NEEDS 4 CMD LINE ARGS with values:
+# NOTE: NEEDS 5 CMD LINE ARGS with values:
 # testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut,
 # region {any, A, B, C, D}
 # A = SS, nominal rel iso
@@ -39,6 +39,8 @@ else: assert False, "invalid test mode, need {test, all}"
 if sys.argv[2] == "show": displayMode = True
 elif sys.argv[2] == "save": displayMode = False
 else: assert False, "invalid display mode, need {show, save}"
+if not displayMode:
+    gROOT.SetBatch(kTRUE) # prevent displaying canvases
 
 # selecting for either mu-mu or el-el (as opposed to mu-el or el-mu)
 if sys.argv[3] == "mumu":
@@ -118,9 +120,6 @@ for plotVar in plotSettings: # add an entry to the plotVar:hist dictionary
     hBkgdStacksDict.update({plotVar:THStack(plotVar+"_bkgdStack", title)})
 nEvtsLabels = []
 
-if not displayMode:
-    gROOT.SetBatch(kTRUE) # prevent displaying canvases
-
 myDataDir = "/eos/user/c/cmiao/private/myDataSusy/Run2/"
 # limit the number of files to process (other than what is commented out in the file
 # redirector)
@@ -163,8 +162,8 @@ with open("bkgd_fileRedirector") as bkgdSubprocessesListFile:
                     xMin = plotSettings[plotVar][1]
                     xMax = plotSettings[plotVar][2]
                     binwidth = (xMax - xMin)/nBins
-                    hBkgd = TH1D(name+"_bkgd", name+"_bkgd", nBins, \
-                            xMin, xMax)
+                    hBkgd = TH1D("bkgd_"+name+"_"+plotVar, "bkgd_"+name+"_"+plotVar, \
+                            nBins, xMin, xMax)
                     hBkgd.SetDirectory(0) # necessary to keep hist from closing
                     hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
                     hBkgdSubprocessesPlotVarDict[name].update({plotVar:hBkgd})
@@ -175,8 +174,8 @@ with open("bkgd_fileRedirector") as bkgdSubprocessesListFile:
                 xMin = plotSettings[plotVar][1]
                 xMax = plotSettings[plotVar][2]
                 binwidth = (xMax - xMin)/nBins
-                hBkgd = TH1D(subprocess+"_bkgd", subprocess+"_bkgd", nBins, xMin, \
-                        xMax)
+                hBkgd = TH1D("bkgd_"+subprocess+"_"+plotVar, \
+                        "bkgd_"+subprocess+"_"+plotVar, nBins, xMin, xMax)
                 hBkgd.SetDirectory(0) # necessary to keep hist from closing
                 hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
                 hBkgdSubprocessesPlotVarDict[subprocess].update({plotVar:hBkgd})
@@ -296,7 +295,7 @@ for subprocessLine in bkgdSubprocessesListFile:
 
         # ********** Filling. ***********
         nPartons = event.LHE_Njets
-        if nPartons < 1 or nPartons > 4: continue
+        if nPartons > 4: continue
 
         if event.nJet > 0:
             Jet_pt_arr = np.reshape(event.Jet_pt, 20)
@@ -488,8 +487,8 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
         nBins = plotSettings[plotVar][0]
         xMin = plotSettings[plotVar][1]
         xMax = plotSettings[plotVar][2]
-        hSig = TH1D("sig_" + subprocess, "sig_" + \
-                subprocess[10:27], nBins, xMin, xMax)
+        hSig = TH1D("sig_"+subprocess[10:27]+"_"+plotVar, \
+                "sig_"+subprocess[10:27]+"_"+plotVar, nBins, xMin, xMax)
         hSig.SetDirectory(0)
         hSig.SetDefaultSumw2() # automatically sum w^2 while filling
         hSigPlotVarDict.update({plotVar:hSig})
@@ -534,6 +533,7 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
             if not isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, \
                     findingSameFlavor): continue
 
+        # if nCuts > cuts["dilepton"]: # not doing this; doing ABCD regions instead
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
 
         if nCuts > cuts["no3rdlept"]:
@@ -663,7 +663,7 @@ for fileNum, subprocessLine in enumerate(data_redirector):
         nBins = plotSettings[plotVar][0]
         xMin = plotSettings[plotVar][1]
         xMax = plotSettings[plotVar][2]
-        hData = TH1D("data", "data", nBins, xMin, xMax)
+        hData = TH1D("data_"+plotVar, "data_"+plotVar, nBins, xMin, xMax)
         hData.SetDirectory(0)
         hData.SetDefaultSumw2() # automatically sum w^2 while filling
         hDataPlotVarDict.update({plotVar:hData})
@@ -702,6 +702,7 @@ for fileNum, subprocessLine in enumerate(data_redirector):
             if not isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, \
                     findingSameFlavor): continue
     
+        # if nCuts > cuts["dilepton"]: # not doing this; doing ABCD regions instead
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
     
         if nCuts > cuts["no3rdlept"]:
@@ -781,6 +782,7 @@ for plotVar in plotSettings:
 
 #--------------------------------------------------------------------------------#
 # *************** Wrap up. *******************
+print
 print int(time.time()-start_time), "secs of processing."
 print "Drawing."
 
@@ -799,15 +801,19 @@ if displayMode:
 else:
     gSystem.ProcessEvents()
     imgDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-            "plots/Run2/v1/plot1D/"
+            "plots/Run2/v1/plot1D"
     if not os.path.exists(imgDir): os.makedirs(imgDir) 
-    outHistFileAdr = imgDir+"plot1D_"
+    outHistFileAdr = imgDir+"/plot1D_"
     if testMode: outHistFileAdr += "test_"
     else: outHistFileAdr += "all_"
     outHistFileAdr += channel+"_"+lastcut+"_"+region+".root"
     outHistFile = TFile(outHistFileAdr, "recreate")
     for plotVar in plotSettings:
         canvasDict[plotVar].Write()
+        for subprocess in hBkgdSubprocessesPlotVarDict:
+                hBkgdSubprocessesPlotVarDict[subprocess][plotVar].Write()
+        hDataPlotVarDict[plotVar].Write()
+    hData.Write()
     outHistFile.Close()
     print "Saved hists in", outHistFileAdr
     print "Done."
