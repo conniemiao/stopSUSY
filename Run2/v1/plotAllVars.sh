@@ -33,19 +33,19 @@ for channel in "${channels[@]}"
 do
     #--------------------------------------------------------------------------------#
 
-    # Args to plot1D.py: testMode {test, all}, displayMode {show, save}, channel 
-    # {mumu, elel, muel}, lastcut
-    echo "Normal 1d plots:"
+    # Args to plot1D_qcdMC.py: testMode {test, all}, displayMode {show, save}, channel
+    # {mumu, elel, muel}, lastcut, region {A,B,C,D}
+    echo "Normal 1d plots (QCD MC):"
     for cut in "${cuts[@]}"
     do
         for region in "${regions[@]}"
         do
-            bash createCondorsubPlotting.sh plot1D.py $testMode $displayMode \
+            bash createCondorsubPlotting.sh plot1D_qcdMC.py $testMode $displayMode \
                 "$channel" "$cut" "$region"
             if [[ "$testMode" == "all" ]]; then 
                 condor_submit condorsub_plotting
             else
-                ./plot1D.py $testMode $displayMode "$channel" "$cut" "$region"
+                ./plot1D_qcdMC.py $testMode $displayMode "$channel" "$cut" "$region"
             fi
             echo
         done

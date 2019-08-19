@@ -2,7 +2,7 @@
 # testing mode
 #
 # By calling haddAllNtuplesProcess.sh, creates a condorsub file for each data, bkgd, 
-# and sig process and for each dilepton channel and submits the condorsub file to 
+# and sig subprocess and for each dilepton channel and submits the condorsub file to 
 # condor.
 #
 # Args to haddSubprocess.sh:
@@ -14,8 +14,10 @@ if [[ "$testMode" == "test" ]]; then
     channels=("elel")
     bkgdProcesses=("TTBar" "W-Jets")
 elif [[ "$testMode" == "all" ]]; then
-    channels=("mumu" "muel" "elel")
-    bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top")
+    # channels=("mumu" "muel" "elel")
+    channels=("elel")
+    # bkgdProcesses=("W-Jets" "Drell-Yan" "Diboson" "Single-Top" "TTBar" "TT+X" "QCD")
+    bkgdProcesses=("W-Jets" "Drell-Yan" "Diboson" "Single-Top" "TTBar" "TT+X")
 else
     echo "need {test, all} as arg to makeAllNtuples.sh"
     exit 1

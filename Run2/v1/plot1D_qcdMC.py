@@ -7,15 +7,15 @@
 # B = OS, nominal rel iso (signal)
 # C = OS, inverted rel iso
 # D = SS, inverted rel iso
+# Possible lastcuts: listed in cuts below.
 #
 # Implements additional cuts and then draws 1D hist for data for each variable in
 # plotSettings for the summed bkgd data and for each of the signal files. Saves
-# them in a histogram root file.
+# them in a histogram root file. Uses MC for QCD.
 #
 # Uses the root files outputted by hadding the output from makeNtuple.py
-# Uses xsec info from bkgd_fileRedirector
-# Uses xsec info from sig_fileRedirector
-# Possible lastcuts: listed in cuts below.
+# Uses bkgd_fileRedirector
+# Uses sig_fileRedirector
 
 print "Importing modules."
 import sys, os
@@ -106,16 +106,23 @@ plotSettings = { # [nBins,xMin,xMax,units]
         }
 
 # bkgd process name : color for plotting
-processes = OrderedDict([("W-Jets",38), ("Drell-Yan",46), ("TTBar",30), \
-        ("Diboson",41), ("Single-Top",40), ("TT+X",7)])
+colorWJets = 38 # dark blue
+colorDY = 46 # red
+colorTTBar = 835 # teal 
+colorSingleTop = 832  
+colorTTX = 831 
+colorDiboson = 806 #orange
+colorQCD = 868 # light blue
+processes = OrderedDict([("W-Jets",colorWJets), ("Drell-Yan",colorDY), \
+        ("TTBar",colorTTBar), ("Single-Top",colorSingleTop), ("TT+X",colorTTX), \
+        ("Diboson",colorDiboson), ("QCD", colorQCD)])
 
 canvasDict = {}
 legendDict = {}
 hBkgdStacksDict = {} # maps plotVar to the stack of background
 for plotVar in plotSettings: # add an entry to the plotVar:hist dictionary
-    c = TCanvas("c_"+plotVar,"Plot",10,20,1000,700)
-    canvasDict.update({plotVar:c})
-    legendDict.update({plotVar:TLegend(.70,.70,.90,.90)})
+    canvasDict.update({plotVar:TCanvas("c_"+plotVar,"c_"+plotVar,10,20,1000,700)})
+    legendDict.update({plotVar:TLegend(.4,.7,.90,.90)})
     title = plotVar+" ("+channel+", cuts to "+lastcut+")"
     hBkgdStacksDict.update({plotVar:THStack(plotVar+"_bkgdStack", title)})
 nEvtsLabels = []
@@ -142,15 +149,17 @@ print "----------- Plotting from background. -----------"
 hBkgdSubprocessesPlotVarDict = {}
 WNJetsXsecs = [47297.3] # first entry: W0Jets xsec
 DYNJetsXsecs = [4263.5]  # first entry: DY0Jets xsec
-with open("bkgd_fileRedirector") as bkgdSubprocessesListFile:
-    for subprocessLine in bkgdSubprocessesListFile:
+with open("bkgd_fileRedirector") as bkgd_redirector:
+    for subprocessLine in bkgd_redirector:
         subprocessLine = subprocessLine.rstrip('\n').split(" ")
         subprocess = subprocessLine[0]
         if subprocess[0] == "#": continue
 
+        process = subprocessLine[1]
+
         if subprocess[0] == "W" and subprocess[2:] == "JetsToLNu":
             WNJetsXsecs.append(float(subprocessLine[2]))
-        if subprocess[0] == "DY" and subprocess[2:] == "JetsToLL_M-50":
+        elif subprocess[:2] == "DY" and subprocess[3:] == "JetsToLL_M-50":
             DYNJetsXsecs.append(float(subprocessLine[2]))
 
         if subprocess == "WJetsToLNu" or subprocess == "DYJetsToLL_M-50":
@@ -181,12 +190,14 @@ with open("bkgd_fileRedirector") as bkgdSubprocessesListFile:
                 hBkgdSubprocessesPlotVarDict[subprocess].update({plotVar:hBkgd})
 
 # ********** Looping over each subprocess. ***********
+start_time = time.time()
+
 prevProcess = "" # to determine when you got to the next process
 processNum = 0
-bkgdSubprocessesListFile = open("bkgd_fileRedirector")
+bkgd_redirector = open("bkgd_fileRedirector")
 WIncl_totgenwt = 0
 DYIncl_totgenwt = 0
-for subprocessLine in bkgdSubprocessesListFile:
+for subprocessLine in bkgd_redirector:
     subprocessLine = subprocessLine.rstrip('\n').split(" ")
     subprocess = subprocessLine[0]
     if subprocess[0] == "#": continue
@@ -196,9 +207,9 @@ for subprocessLine in bkgdSubprocessesListFile:
 
     # assemble the bkgdNtupleAdr
     bkgdNtupleAdr = myDataDir+"bkgd/"+process+"/"+subprocess+"/"+subprocess+"_"
-    if testMode: bkgdNtupleAdr += "test_"
-    else: bkgdNtupleAdr += "all_"
-    # bkgdNtupleAdr += "all_"  
+    # if testMode: bkgdNtupleAdr += "test_"
+    # else: bkgdNtupleAdr += "all_"
+    bkgdNtupleAdr += "all_"  
     bkgdNtupleAdr += channel+".root"
     print "Plotting from", bkgdNtupleAdr
 
@@ -237,12 +248,11 @@ for subprocessLine in bkgdSubprocessesListFile:
                     GetSumOfWeights())
 
     nMax = nentries
-    if testMode: nMax = 10000
+    if testMode: nMax = 1000
     
     # ********** Looping over events. ***********
     for count, event in enumerate(tBkgd):
         if count > nMax : break
-        if count == 0: start_time = time.time()
         if count % 100000 == 0: print "count =", count
         genwt = event.genWeight
         puwt = event.puWeight
@@ -432,7 +442,7 @@ for plotVar in plotSettings:
     hBkgdStack.SetMaximum(10**12)
 
 #--------------------------------------------------------------------------------#
-# *************** Filling each signal in a separate hist  ************
+# *************** Filling each signal in a separate hist ***************
 print
 print "----------- Plotting from signal. -----------"
 
@@ -457,9 +467,9 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
     
     # assemble the sigNtupleAdr
     sigNtupleAdr = myDataDir+"sig/"+process+"/"+subprocess+"/"+subprocess+"_"
-    if testMode: sigNtupleAdr += "test_"
-    else: sigNtupleAdr += "all_"
-    # sigNtupleAdr += "all_"
+    # if testMode: sigNtupleAdr += "test_"
+    # else: sigNtupleAdr += "all_"
+    sigNtupleAdr += "all_"
     sigNtupleAdr += channel+".root"
 
     try:
@@ -496,8 +506,11 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
     hSigGenweights = sigFile.Get("genWeights")
     sigTotGenweight = hSigGenweights.GetSumOfWeights()
 
+    nMax = nentries
+    if testMode: nMax = 1000
     # ********** Looping over events. ***********
     for count, event in enumerate(tSig):
+        if count > nMax : break
         if count % 100000 == 0: print "count =", count
         genwt = event.genWeight
         puwt = event.puWeight
@@ -634,9 +647,9 @@ for fileNum, subprocessLine in enumerate(data_redirector):
 
     # assemble the dataNtupleAdr
     dataNtupleAdr = myDataDir+"data/"+process+"/"+subprocess+"/"+subprocess+"_"
-    if testMode: dataNtupleAdr += "test_"
-    else: dataNtupleAdr += "all_"
-    # dataNtupleAdr += "all_"
+    # if testMode: dataNtupleAdr += "test_"
+    # else: dataNtupleAdr += "all_"
+    dataNtupleAdr += "all_"
     dataNtupleAdr += channel+".root"
     print dataNtupleAdr
     
@@ -668,8 +681,11 @@ for fileNum, subprocessLine in enumerate(data_redirector):
         hData.SetDefaultSumw2() # automatically sum w^2 while filling
         hDataPlotVarDict.update({plotVar:hData})
     
+    nMax = nentries
+    if testMode: nMax = 1000
     # ********** Looping over events. ***********
     for count, event in enumerate(tData):
+        if count > nMax : break
         if count % 100000 == 0: print "count =", count
     
         # ********** Additional cuts. ***********
@@ -790,7 +806,8 @@ for plotVar in plotSettings:
     c = canvasDict[plotVar]
     c.cd()
     legend = legendDict[plotVar]
-    legend.SetTextSize(0.02)
+    legend.SetTextSize(0.017)
+    legend.SetNColumns(2)
     legend.Draw("same")
     c.SetLogy()
     c.Update()
@@ -803,7 +820,7 @@ else:
     imgDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
             "plots/Run2/v1/plot1D"
     if not os.path.exists(imgDir): os.makedirs(imgDir) 
-    outHistFileAdr = imgDir+"/plot1D_"
+    outHistFileAdr = imgDir+"/QCDMC_plot1D_"
     if testMode: outHistFileAdr += "test_"
     else: outHistFileAdr += "all_"
     outHistFileAdr += channel+"_"+lastcut+"_"+region+".root"
@@ -811,9 +828,10 @@ else:
     for plotVar in plotSettings:
         canvasDict[plotVar].Write()
         for subprocess in hBkgdSubprocessesPlotVarDict:
-                hBkgdSubprocessesPlotVarDict[subprocess][plotVar].Write()
+            hBkgdSubprocessesPlotVarDict[subprocess][plotVar].Write()
+        for subprocess in hSigSubprocessesPlotVarDict:
+            hSigSubprocessesPlotVarDict[subprocess][plotVar].Write()
         hDataPlotVarDict[plotVar].Write()
-    hData.Write()
     outHistFile.Close()
     print "Saved hists in", outHistFileAdr
     print "Done."

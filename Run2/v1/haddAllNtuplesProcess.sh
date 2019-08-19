@@ -25,7 +25,7 @@ fi
 
 redirectorFileAdr=$inputType"_fileRedirector"
 
-# the subfolder arg is not necessary for data or sig, but just put it there to make
+# the process arg is not necessary for data or sig, but just put it there to make
 # the code simpler
 if [[ "$inputType" == "data" ]]; then
     if [[ "$channel" == "mumu" ]]; then
@@ -43,23 +43,23 @@ fi
 
 # start submitting files
 datasetNum=0
-while read -r datasetName subfolder xsec
+while read -r subprocess process xsec
 do
-    if [[ $datasetNum+1 > $numDatasets ]]; then
+    if [[ $((datasetNum + 1)) -gt $numDatasets ]]; then
         break 
     fi
-    if [[ "$datasetName" =~ \#.* ]]; then 
+    if [[ "$subprocess" =~ \#.* ]]; then 
         continue
     fi
-    if [[ "$subfolder" != "$expectedSubfolder" ]]; then
+    if [[ "$process" != "$expectedSubfolder" ]]; then
         continue
     fi
 
-    bash createCondorsubHadd.sh $testMode $inputType $channel $datasetName $subfolder
+    bash createCondorsubHadd.sh $testMode $inputType $channel $subprocess $process
     if [[ "$testMode" == "all" ]]; then 
         condor_submit condorsub_haddSubprocess
     else
-        ./haddSubprocess.sh $testMode $inputType $channel $datasetName $subfolder
+        ./haddSubprocess.sh $testMode $inputType $channel $subprocess $process
     fi
 
     let "datasetNum++"

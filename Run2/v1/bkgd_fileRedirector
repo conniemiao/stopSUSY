@@ -15,14 +15,14 @@ WWZ Diboson 0.1651
 WZG Diboson 0.04123
 WZZ Diboson 0.05565
 ZZZ Diboson 0.01398
+TTJets_DiLept TTBar 56.86
+TTJets_SingleLeptFromTbar TTBar 114.0
+TTJets_SingleLeptFromT TTBar 114.0
 ST_s-channel Single-Top 3.36
 ST_tW_antitop Single-Top 35.85
 ST_tW_top Single-Top 35.85
 ST_t-channel_top Single-Top 44.33
 ST_t-channel_antitop Single-Top 26.38
-TTJets_DiLept TTBar 56.86
-TTJets_SingleLeptFromTbar TTBar 114.0
-TTJets_SingleLeptFromT TTBar 114.0
 TGJets_leptonic TT+X 2.967
 TTGamma_Dilept TT+X 0.6326
 TTGamma_SingleLeptFromT TT+X 0.7659

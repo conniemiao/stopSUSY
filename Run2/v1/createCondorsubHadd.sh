@@ -21,7 +21,7 @@ output      = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLog
 error       = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/haddSubprocess.\$(ClusterId).err
 log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/haddSubprocess.\$(ClusterId).log
 
-+MaxRuntime = 100000
++MaxRuntime = 1140
 
 queue
 EOF
