@@ -30,7 +30,7 @@ import numpy as np
 import time
 print "Beginning execution of", sys.argv
 
-assert len(sys.argv) == 6, "need 5 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut, region {A, B, C, D}"
+assert len(sys.argv) == 6, "need 5 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut, region {A, B, C, D, any}"
 
 if sys.argv[1] == "test": testMode = True
 elif sys.argv[1] == "all": testMode = False
@@ -122,7 +122,7 @@ legendDict = {}
 hBkgdStacksDict = {} # maps plotVar to the stack of background
 for plotVar in plotSettings: # add an entry to the plotVar:hist dictionary
     canvasDict.update({plotVar:TCanvas("c_"+plotVar,"c_"+plotVar,10,20,1000,700)})
-    legendDict.update({plotVar:TLegend(.4,.7,.90,.90)})
+    legendDict.update({plotVar:TLegend(.45,.75,.90,.90)})
     title = plotVar+" ("+channel+", cuts to "+lastcut+")"
     hBkgdStacksDict.update({plotVar:THStack(plotVar+"_bkgdStack", title)})
 nEvtsLabels = []
@@ -171,8 +171,7 @@ with open("bkgd_fileRedirector") as bkgd_redirector:
                     xMin = plotSettings[plotVar][1]
                     xMax = plotSettings[plotVar][2]
                     binwidth = (xMax - xMin)/nBins
-                    hBkgd = TH1D("bkgd_"+name+"_"+plotVar, "bkgd_"+name+"_"+plotVar, \
-                            nBins, xMin, xMax)
+                    hBkgd = TH1D("bkgd_"+name+"_"+plotVar, name, nBins, xMin, xMax)
                     hBkgd.SetDirectory(0) # necessary to keep hist from closing
                     hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
                     hBkgdSubprocessesPlotVarDict[name].update({plotVar:hBkgd})
@@ -184,7 +183,7 @@ with open("bkgd_fileRedirector") as bkgd_redirector:
                 xMax = plotSettings[plotVar][2]
                 binwidth = (xMax - xMin)/nBins
                 hBkgd = TH1D("bkgd_"+subprocess+"_"+plotVar, \
-                        "bkgd_"+subprocess+"_"+plotVar, nBins, xMin, xMax)
+                        subprocess, nBins, xMin, xMax)
                 hBkgd.SetDirectory(0) # necessary to keep hist from closing
                 hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
                 hBkgdSubprocessesPlotVarDict[subprocess].update({plotVar:hBkgd})
@@ -207,9 +206,9 @@ for subprocessLine in bkgd_redirector:
 
     # assemble the bkgdNtupleAdr
     bkgdNtupleAdr = myDataDir+"bkgd/"+process+"/"+subprocess+"/"+subprocess+"_"
-    # if testMode: bkgdNtupleAdr += "test_"
-    # else: bkgdNtupleAdr += "all_"
-    bkgdNtupleAdr += "all_"  
+    if testMode: bkgdNtupleAdr += "test_"
+    else: bkgdNtupleAdr += "all_"
+    # bkgdNtupleAdr += "all_"  
     bkgdNtupleAdr += channel+".root"
     print "Plotting from", bkgdNtupleAdr
 
@@ -383,7 +382,7 @@ for subprocessLine in bkgd_redirector:
                 hBkgdStacksDict[plotVar].Add(hBkgd)
                 if i == 0:
                     legend = legendDict[plotVar]
-                    legend.AddEntry(hBkgd, process+"_bkgd")
+                    legend.AddEntry(hBkgd, process)
     elif subprocess == "DYJetsToLL_M-50":
         DYIncl_totgenwt = bkgdTotGenweight # will be used later for DYxJets
         DYIncl_xsec = xsec
@@ -402,7 +401,7 @@ for subprocessLine in bkgd_redirector:
                 hBkgdStacksDict[plotVar].Add(hBkgd)
                 if i == 0:
                     legend = legendDict[plotVar]
-                    legend.AddEntry(hBkgd, process+"_bkgd")
+                    legend.AddEntry(hBkgd, process)
 
     # all subprocesses other than WJets incl and DYJets incl:
     else:
@@ -425,7 +424,7 @@ for subprocessLine in bkgd_redirector:
             hBkgdStacksDict[plotVar].Add(hBkgd)
             if newProcess:
                 legend = legendDict[plotVar]
-                legend.AddEntry(hBkgd, process+"_bkgd")
+                legend.AddEntry(hBkgd, process)
 
     # all subprocesses:
     bkgdFile.Close()
@@ -498,7 +497,7 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
         xMin = plotSettings[plotVar][1]
         xMax = plotSettings[plotVar][2]
         hSig = TH1D("sig_"+subprocess[10:27]+"_"+plotVar, \
-                "sig_"+subprocess[10:27]+"_"+plotVar, nBins, xMin, xMax)
+                subprocess[10:27], nBins, xMin, xMax)
         hSig.SetDirectory(0)
         hSig.SetDefaultSumw2() # automatically sum w^2 while filling
         hSigPlotVarDict.update({plotVar:hSig})
@@ -676,7 +675,7 @@ for fileNum, subprocessLine in enumerate(data_redirector):
         nBins = plotSettings[plotVar][0]
         xMin = plotSettings[plotVar][1]
         xMax = plotSettings[plotVar][2]
-        hData = TH1D("data_"+plotVar, "data_"+plotVar, nBins, xMin, xMax)
+        hData = TH1D("data_"+plotVar, "data", nBins, xMin, xMax)
         hData.SetDirectory(0)
         hData.SetDefaultSumw2() # automatically sum w^2 while filling
         hDataPlotVarDict.update({plotVar:hData})
@@ -807,7 +806,7 @@ for plotVar in plotSettings:
     c.cd()
     legend = legendDict[plotVar]
     legend.SetTextSize(0.017)
-    legend.SetNColumns(2)
+    legend.SetNColumns(3)
     legend.Draw("same")
     c.SetLogy()
     c.Update()

@@ -27,6 +27,7 @@ from ROOT import gSystem, gStyle
 import numpy as np
 from math import sqrt, cos
 from array import array
+from collections import OrderedDict
 import time
 from stopSelection import deltaR,  getBtagIndices, findValidJets
 from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
@@ -84,8 +85,16 @@ subprocess = sys.argv[5]
 if inputType == "bkgd":
     assert len(sys.argv) == 7, "need a process arg for bkgd"
     process = sys.argv[6]
-    processes = {"W-Jets":38, "Drell-Yan":46, "TTBar":30, "Diboson":41, \
-            "Single-Top":40, "TT+X":7}
+    colorWJets = 38 # dark blue
+    colorDY = 46 # red
+    colorTTBar = 835 # teal 
+    colorSingleTop = 832  
+    colorTTX = 831 
+    colorDiboson = 806 #orange
+    colorQCD = 868 # light blue
+    processes = OrderedDict([("W-Jets",colorWJets), ("Drell-Yan",colorDY), 
+        ("TTBar",colorTTBar), ("Single-Top",colorSingleTop), ("TT+X",colorTTX), \
+        ("Diboson",colorDiboson), ("QCD", colorQCD)])
     assert process in processes, "invalid process %s" % process
 elif inputType == "sig": process = "Stop-Pair"
 

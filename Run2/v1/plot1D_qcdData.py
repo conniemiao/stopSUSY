@@ -74,7 +74,7 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "m_eff_div_sqrt_MET":[100,0,100,""]
         }
 
-# bkgd process name : color for plotting
+# color for plotting : bkgd process name 
 colorWJets = 38 # dark blue
 colorDY = 46 # red
 colorTTBar = 835 # teal 
@@ -101,19 +101,19 @@ print histFileAdr
 # B = OS, nominal rel iso (signal)
 # C = OS, inverted rel iso
 # D = SS, inverted rel iso
-try: histFileA = TFile.Open(histFileAdr+"_A.root")
+try: histFileA = TFile.Open(histFileAdr+"_A.root", "READ")
 except:
     sys.stderr.write("WARNING: couldn't open region A hists file")
     exit()
-try: histFileB = TFile.Open(histFileAdr+"_B.root")
+try: histFileB = TFile.Open(histFileAdr+"_B.root", "READ")
 except:
     sys.stderr.write("WARNING: couldn't open region B (signal) hists file")
     exit()
-try: histFileC = TFile.Open(histFileAdr+"_C.root")
+try: histFileC = TFile.Open(histFileAdr+"_C.root", "READ")
 except:
     sys.stderr.write("WARNING: couldn't open region C hists file")
     exit()
-try: histFileD = TFile.Open(histFileAdr+"_D.root")
+try: histFileD = TFile.Open(histFileAdr+"_D.root", "READ")
 except:
     sys.stderr.write("WARNING: couldn't open region D hists file")
     exit()
@@ -145,20 +145,20 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     nBins = plotSettings[plotVar][0]
     xMin = plotSettings[plotVar][1]
     xMax = plotSettings[plotVar][2]
-    hMCPlotVarDictA.update({plotVar:TH1D("MC_"+plotVar+"_A", "MC_"+plotVar+"_A", \
+    hMCPlotVarDictA.update({plotVar:TH1D("MC_"+plotVar+"_A", "MC_A", \
             nBins, xMin, xMax)})
-    hMCPlotVarDictC.update({plotVar:TH1D("MC_"+plotVar+"_C", "MC_"+plotVar+"_C", \
+    hMCPlotVarDictC.update({plotVar:TH1D("MC_"+plotVar+"_C", "MC_C", \
             nBins, xMin, xMax)})
-    hMCPlotVarDictD.update({plotVar:TH1D("MC_"+plotVar+"_D", "MC_"+plotVar+"_D", \
+    hMCPlotVarDictD.update({plotVar:TH1D("MC_"+plotVar+"_D", "MC_D", \
             nBins, xMin, xMax)})
     hDataPlotVarDictA.update({plotVar:TH1D("data_"+plotVar+"_A", \
-            "data_"+plotVar+"_A", nBins, xMin, xMax)})
+            "data_A", nBins, xMin, xMax)})
     hDataPlotVarDictC.update({plotVar:TH1D("data_"+plotVar+"_C", \
-            "data_"+plotVar+"_C", nBins, xMin, xMax)})
+            "data_C", nBins, xMin, xMax)})
     hDataPlotVarDictD.update({plotVar:TH1D("data_"+plotVar+"_D", \
-            "data_"+plotVar+"_D", nBins, xMin, xMax)})
+            "data_D", nBins, xMin, xMax)})
     hQCDPlotVarDict.update({plotVar:TH1D("bkgd_qcdData_"+plotVar, \
-            "bkgd_qcdData_"+plotVar, nBins, xMin, xMax)})
+            "qcdData", nBins, xMin, xMax)})
 
 # hBkgdSubprocessesPlotVarDict maps each bkgd subprocess to another dictionary,
 # which maps each plotVar to a hist.
@@ -177,9 +177,18 @@ with open("bkgd_fileRedirector") as bkgd_redirector:
         if subprocess == "WJetsToLNu" or subprocess == "DYJetsToLL_M-50":
             for i in range(5):
                 name = subprocess+"_"+str(i)+"Parton"
+                
+                # make sure this process was actually run in plot1D_qcdMC
+                histname = "bkgd_"+name+"_m_eff"
+                if not histFileB.GetListOfKeys().Contains(histname): continue
+
                 bkgdSubprocesses.append(name)
                 hBkgdSubprocessesPlotVarDict.update({name:{}})
         else: 
+            # make sure this process was actually run in plot1D_qcdMC
+            histname = "bkgd_"+histname+"_m_eff"
+            if not histFileB.GetListOfKeys().Contains(histname): continue
+
             bkgdSubprocesses.append(subprocess)
             hBkgdSubprocessesPlotVarDict.update({subprocess:{}})
 
@@ -192,6 +201,11 @@ with open("sig_fileRedirector") as sig_redirector:
         subprocessLine = subprocessLine.rstrip('\n').split(" ")
         subprocess = subprocessLine[0]
         if subprocess[0] == "#": continue
+
+        # make sure this process was actually run in plot1D_qcdMC
+        histname = "sig_"+subprocess[10:27]+"_m_eff"
+        if not histFileB.GetListOfKeys().Contains(histname): continue
+
         sigSubprocesses.append(subprocess)
         hSigSubprocessesPlotVarDict.update({subprocess:{}})
 
@@ -236,12 +250,13 @@ for plotVarNum, plotVar in enumerate(plotSettings):
         hMC_D.Add(hBkgd_D)
 
         # for final plotting:
-        hBkgd_B = histFileB.Get("bkgd_"+subprocess+"_"+plotVar)
+        histname = "bkgd_"+subprocess+"_"+plotVar
+        hBkgd_B = histFileB.Get(histname)
         hBkgd_B.SetDirectory(0)
         hBkgdSubprocessesPlotVarDict[subprocess].update({plotVar:hBkgd_B})
         hBkgdStack.Add(hBkgd_B) 
-        # colors/styles already determined from plot1D
-        hBkgdColor = hBkgd_B.GetFillColor()
+        hBkgdColor = hBkgd_B.GetFillColor() # colors/styles determined in plot1D_qcdMC
+        if hBkgdColor == 0: continue # probably file not looped on in plot1D_qcdMC
         if hBkgdColor != prevBkgdColor:
             legend.AddEntry(hBkgd_B, processes[hBkgdColor])
         prevBkgdColor = hBkgdColor
@@ -284,20 +299,25 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     hBkgdStack.SetMaximum(10**12)
 
     for subprocess in sigSubprocesses:
-        hSig = histFileB.Get("sig_"+subprocess[10:27]+"_"+plotVar)
+        histname = "sig_"+subprocess[10:27]+"_"+plotVar
+        hSig = histFileB.Get(histname)
         hSig.SetDirectory(0)
         hSigSubprocessesPlotVarDict[subprocess].update({plotVar:hSig})
         legend.AddEntry(hSig, hSig.GetTitle())
         hSig.Draw("hist same") # same pad
 
-    hData = histFileB.Get("data_"+plotVar)
+    histname = "data_"+plotVar
+    if not histFileB.GetListOfKeys().Contains(histname):
+        assert False, "Something's wrong, you have no data hist in your hists file!"
+    hData = histFileB.Get(histname)
+    if hData.GetLineColor() == 0: continue # something went wrong in plot1D_qcdMC
     hData.SetDirectory(0)
     hDataPlotVarDict.update({plotVar:hData})
     legend.AddEntry(hData, hData.GetTitle())
     hData.Draw("* hist same") # same pad
 
     legend.SetTextSize(0.017)
-    legend.SetNColumns(2)
+    legend.SetNColumns(3)
     legend.Draw("same")
     c.SetLogy()
     c.Update()

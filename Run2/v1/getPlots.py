@@ -1,6 +1,6 @@
-# NOTE: NEEDS 5 CMD LINE ARGS with values:
+# NOTE: NEEDS 6 CMD LINE ARGS with values:
 # testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut,
-# region {A/B/C/D}
+# qcdType {qcdMC, qcdData}, region (only needed for qcdType=qcdMC) {A, B, C, D, any}
 #
 # Retreives the plots drawn by plot1D.py and either displays them all or saves them
 # all to .png files.
@@ -10,11 +10,12 @@
 
 print "Importing modules."
 import sys
-from ROOT import gROOT, gSystem, TFile, TCanvas, TImage
+from ROOT import TFile, TCanvas, TImage
+from ROOT import gSystem, gStyle, gROOT, kTRUE
 from collections import OrderedDict
 print "Beginning execution of", sys.argv
 
-assert len(sys.argv) == 6, "need 5 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut, region {A, B, C, D}"
+assert len(sys.argv) >= 6, "need at least 5 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut, qcdType {qcdMC, qcdData}, region (only needed for qcdType=qcdMC) {A, B, C, D, any}"
 
 if sys.argv[1] == "test": testMode = True
 elif sys.argv[1] == "all": testMode = False
@@ -36,17 +37,27 @@ cuts = OrderedDict([("nocut",0), ("dilepton",1), ("no3rdlept",2), ("nbtag<2",3),
 lastcut = sys.argv[4]
 assert lastcut in cuts, "invalid last cut %s" % lastcut
 
-region = sys.argv[5]
-assert region == "any" or region == "A" or region == "B" or region == "C" or region == "D", "invalid region, need {any, A, B, C, D}"
+qcdType = sys.argv[5]
+assert qcdType == "qcdMC" or qcdType == "qcdData", \
+        "invalid qcd type, need {qcdMC, qcdData}"
 
+if qcdType == "qcdMC":
+    region = sys.argv[6]
+    assert region == "any" or region == "A" or region == "B" or region == "C" \
+            or region == "D" or region == "any", \
+            "invalid region, need {any, A, B, C, D, any}"
+ 
 # assemble hist file adr
-imgDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-        "plots/Run2/v1/plot1D/"
-histFileAdr = imgDir+"plot1D_"
+imgDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/v1/plot1D"
+if qcdType == "qcdMC": histFileAdr = imgDir+"/QCDMC_plot1D_"
+else: histFileAdr = imgDir+"/QCDData_plot1D_" 
 if testMode: histFileAdr += "test_"
 else: histFileAdr += "all_"
-histFileAdr += channel+"_"+lastcut+"_"+region+".root"
-histFile = TFile.Open(histFileAdr)
+histFileAdr += channel+"_"+lastcut
+if qcdType == "qcdMC": histFileAdr += "_"+region
+histFileAdr += ".root"
+print "Retrieving plots from", histFileAdr
+histFile = TFile.Open(histFileAdr, "READ")
 
 plotVars = {"lep1_pt", "lep1_eta", "lep1_phi", "lep1_relIso", "lep1_mt", 
 "lep2_pt", "lep2_eta", "lep2_phi", "lep2_relIso", "lep2_mt", "nJet", "Jet_pt", 
@@ -64,9 +75,12 @@ else:
     gROOT.SetBatch(kTRUE) # prevent displaying canvases
     for plotVar in plotVars:
         gSystem.ProcessEvents()
+        if not histFile.GetListOfKeys().Contains("c_"+plotVar): continue
         c = histFile.Get("c_"+plotVar)
         c.Draw()
-        imgName = imgDir+plotVar+"_"+channel+"_"+lastcut+".png"
+        imgName = imgDir+"/"+plotVar+"_"+channel+"_"+lastcut
+        if qcdType == "qcdMC": imgName += "_qcdMC_"+region+".png"
+        else: imgName += "_qcdData.png"
         img = TImage.Create()
         img.FromPad(c)
         img.WriteImage(imgName)

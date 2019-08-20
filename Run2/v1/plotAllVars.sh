@@ -8,7 +8,7 @@ if [[ "$testMode" == "test" ]]; then
     bkgdProcesses=("Diboson")
     cuts=("nocut")
     plotVars2D=("lep1_pt" "MET_pt""Jet_ht" "mt_tot")
-    regions=("any")
+    regions=("A")
 elif [[ "$testMode" == "all" ]]; then
     channels=("mumu" "muel" "elel")
     bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top")
@@ -32,38 +32,53 @@ fi
 for channel in "${channels[@]}"
 do
     #--------------------------------------------------------------------------------#
+    # SECTION 1A
 
     # Args to plot1D_qcdMC.py: testMode {test, all}, displayMode {show, save}, channel
     # {mumu, elel, muel}, lastcut, region {A,B,C,D}
     echo "Normal 1d plots (QCD MC):"
-    for cut in "${cuts[@]}"
-    do
-        for region in "${regions[@]}"
-        do
-            bash createCondorsubPlotting.sh plot1D_qcdMC.py $testMode $displayMode \
-                "$channel" "$cut" "$region"
-            if [[ "$testMode" == "all" ]]; then 
-                condor_submit condorsub_plotting
-            else
-                ./plot1D_qcdMC.py $testMode $displayMode "$channel" "$cut" "$region"
-            fi
-            echo
-        done
-    done
+#     for cut in "${cuts[@]}"
+#     do
+#         for region in "${regions[@]}"
+#         do
+#             bash createCondorsubPlotting.sh plot1D_qcdMC.py $testMode $displayMode \
+#                 $channel $cut $region
+#             if [[ "$testMode" == "all" ]]; then 
+#                 condor_submit condorsub_plotting
+#             else
+#                 ./plot1D_qcdMC.py $testMode $displayMode $channel $cut $region
+#             fi
+#             echo
+#         done
+#     done
 
     #--------------------------------------------------------------------------------#
+    # SECTION 1B
+
+    # Args to plot1D_qcdData.py: testMode {test, all}, displayMode {show, save}, 
+    # channel {mumu, elel, muel}, lastcut
+    echo "Normal 1d plots (QCD MC):"
+#     for cut in "${cuts[@]}"
+#     do
+#         ./plot1D_qcdData.py $testMode $displayMode $channel $cut
+#         echo
+#     done
+
+    #--------------------------------------------------------------------------------#
+    # SECTION 2
 
     # Args to generateCutflows.py: testMode {test, all}, channel {mumu, elel, muel}
     echo
     echo "Generate cutflow stats:"
-#     bash createCondorsubPlotting.sh generateCutflows.py $testMode "$channel"
+#     bash createCondorsubPlotting.sh generateCutflows.py $testMode $channel
 #     if [[ "$testMode" == "all" ]]; then 
 #         condor_submit condorsub_plotting
 #     else
-#         ./generateCutflows.py $testMode "$channel"
+#         ./generateCutflows.py $testMode $channel
 #     fi
 
     #--------------------------------------------------------------------------------#
+    # SECTION 3
 
     # Args to plot2D.py: testMode {test, all}, displayMode {show, save}, 
     # channel {mumu, elel, muel}, lastcut, process, plotVarX, plotVarY
@@ -79,12 +94,12 @@ do
 #                     continue
 #                 fi
 #                 bash createCondorsubPlotting.sh plot2D.py $testMode $displayMode \
-#                     "$channel" "$cut" "$process" "$plotVarX" "$plotVarY"
+#                     $channel $cut $process $plotVarX $plotVarY
 #                 if [[ "$testMode" == "all" ]]; then 
 #                     condor_submit condorsub_plotting
 #                 else
-#                     ./plot2D.py $testMode $displayMode "$channel" "$cut" "$process" \
-#                         "$plotVarX" "$plotVarY"
+#                     ./plot2D.py $testMode $displayMode $channel $cut $process \
+#                         $plotVarX $plotVarY
 #                 fi
 # 
 #             done
@@ -98,22 +113,45 @@ done
 #--------------------------------------------------------------------------------#
 
 echo
-echo "Get 1d plots, cutflows, and pie charts:"
-# for channel in "${channels[@]}"
-# do
-#     # Args to getPlots.py: testMode {test, all}, displayMode {show, save}, 
-#     # channel {mumu, elel, muel}, lastcut
+for channel in "${channels[@]}"
+do
+    #--------------------------------------------------------------------------------#
+    # SECTION 4A
+
+    # Args to getPlots.py: testMode {test, all}, displayMode {show, save}, 
+    # channel {mumu, elel, muel}, lastcut
+    echo
+    echo "Get 1d plots from qcd MC:"
 #     for cut in "${cuts[@]}"
 #     do
 #         for region in "${regions[@]}"
 #         do
-#             python getPlots.py $testMode $displayMode "$channel" "$cut" "$region"
+#             python getPlots.py $testMode $displayMode $channel $cut qcdMC $region
 #         done
 #     done
-# 
-#     # Args to plotCutflows.py: testMode {test, all}, displayMode {show, save}, 
-#     # channel {mumu, elel, muel}
-#     python plotCutflows.py $testMode $displayMode "$channel"
-# done
+
+    #--------------------------------------------------------------------------------#
+    # SECTION 4B
+
+    # Args to getPlots.py: testMode {test, all}, displayMode {show, save}, 
+    # channel {mumu, elel, muel}, lastcut
+    echo
+    echo "Get 1d plots from qcd data:"
+#     for cut in "${cuts[@]}"
+#     do
+#         python getPlots.py $testMode $displayMode $channel $cut qcdData
+#     done
+
+    #--------------------------------------------------------------------------------#
+    # SECTION 5
+
+    # Args to plotCutflows.py: testMode {test, all}, displayMode {show, save}, 
+    # channel {mumu, elel, muel}
+    echo
+    echo "Get cutflows and piecharts:"
+#     python plotCutflows.py $testMode $displayMode $channel
+
+    #--------------------------------------------------------------------------------#
+done
 
 #--------------------------------------------------------------------------------#
