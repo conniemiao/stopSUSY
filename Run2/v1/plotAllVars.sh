@@ -10,7 +10,8 @@ if [[ "$testMode" == "test" ]]; then
     plotVars2D=("lep1_pt" "MET_pt""Jet_ht" "mt_tot")
     regions=("A")
 elif [[ "$testMode" == "all" ]]; then
-    channels=("mumu" "muel" "elel")
+    # channels=("mumu" "muel" "elel")
+    channels=("mumu")
     bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top")
     cuts=("nocut" "njets<4")
     plotVars2D=("lep1_pt" "lep2_pt" "lep1_mt" "lep2_mt" "MET_pt" "lep1_eta" \
@@ -36,28 +37,28 @@ do
 
     # Args to plot1D_qcdMC.py: testMode {test, all}, displayMode {show, save}, channel
     # {mumu, elel, muel}, lastcut, region {A,B,C,D}
-    echo "Normal 1d plots (QCD MC):"
-#     for cut in "${cuts[@]}"
-#     do
-#         for region in "${regions[@]}"
-#         do
-#             bash createCondorsubPlotting.sh plot1D_qcdMC.py $testMode $displayMode \
-#                 $channel $cut $region
-#             if [[ "$testMode" == "all" ]]; then 
-#                 condor_submit condorsub_plotting
-#             else
-#                 ./plot1D_qcdMC.py $testMode $displayMode $channel $cut $region
-#             fi
-#             echo
-#         done
-#     done
+    echo "------------------ Normal 1d plots (QCD MC) ------------------"
+    for cut in "${cuts[@]}"
+    do
+        for region in "${regions[@]}"
+        do
+            bash createCondorsubPlotting.sh plot1D_qcdMC.py $testMode $displayMode \
+                $channel $cut $region
+            if [[ "$testMode" == "all" ]]; then 
+                condor_submit condorsub_plotting
+            else
+                ./plot1D_qcdMC.py $testMode $displayMode $channel $cut $region
+            fi
+            echo
+        done
+    done
 
     #--------------------------------------------------------------------------------#
     # SECTION 1B
 
     # Args to plot1D_qcdData.py: testMode {test, all}, displayMode {show, save}, 
     # channel {mumu, elel, muel}, lastcut
-    echo "Normal 1d plots (QCD MC):"
+    echo "------------------ Normal 1d plots (QCD MC) ------------------"
 #     for cut in "${cuts[@]}"
 #     do
 #         ./plot1D_qcdData.py $testMode $displayMode $channel $cut
@@ -69,7 +70,7 @@ do
 
     # Args to generateCutflows.py: testMode {test, all}, channel {mumu, elel, muel}
     echo
-    echo "Generate cutflow stats:"
+    echo "------------------ Generate cutflow stats ------------------"
 #     bash createCondorsubPlotting.sh generateCutflows.py $testMode $channel
 #     if [[ "$testMode" == "all" ]]; then 
 #         condor_submit condorsub_plotting
@@ -83,7 +84,7 @@ do
     # Args to plot2D.py: testMode {test, all}, displayMode {show, save}, 
     # channel {mumu, elel, muel}, lastcut, process, plotVarX, plotVarY
     echo
-    echo "2d plots:"
+    echo "------------------ 2d plots ------------------"
 #     for process in "${bkgdProcesses[@]}"
 #     do
 #         for plotVarX in "${plotVars2D[@]}"
@@ -121,7 +122,7 @@ do
     # Args to getPlots.py: testMode {test, all}, displayMode {show, save}, 
     # channel {mumu, elel, muel}, lastcut
     echo
-    echo "Get 1d plots from qcd MC:"
+    echo "------------------ Get 1d plots from qcd MC ------------------"
 #     for cut in "${cuts[@]}"
 #     do
 #         for region in "${regions[@]}"
@@ -136,7 +137,7 @@ do
     # Args to getPlots.py: testMode {test, all}, displayMode {show, save}, 
     # channel {mumu, elel, muel}, lastcut
     echo
-    echo "Get 1d plots from qcd data:"
+    echo "------------------ Get 1d plots from qcd data ------------------"
 #     for cut in "${cuts[@]}"
 #     do
 #         python getPlots.py $testMode $displayMode $channel $cut qcdData
@@ -148,7 +149,7 @@ do
     # Args to plotCutflows.py: testMode {test, all}, displayMode {show, save}, 
     # channel {mumu, elel, muel}
     echo
-    echo "Get cutflows and piecharts:"
+    echo "------------------ Get cutflows and piecharts ------------------"
 #     python plotCutflows.py $testMode $displayMode $channel
 
     #--------------------------------------------------------------------------------#

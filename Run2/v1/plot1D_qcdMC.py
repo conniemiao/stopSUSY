@@ -16,6 +16,7 @@
 # Uses the root files outputted by hadding the output from makeNtuple.py
 # Uses bkgd_fileRedirector
 # Uses sig_fileRedirector
+# Uses data_fileRedirector
 
 print "Importing modules."
 import sys, os

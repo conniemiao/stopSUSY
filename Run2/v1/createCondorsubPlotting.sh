@@ -14,7 +14,7 @@ log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLog
 
 +MaxRuntime = 100000
 
-transfer_input_files = stopSelection.py, sig_fileRedirector, bkgd_fileRedirector
+transfer_input_files = stopSelection.py, sig_fileRedirector, bkgd_fileRedirector, data_fileRedirector
 
 queue
 EOF
