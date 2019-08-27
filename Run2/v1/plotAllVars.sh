@@ -10,10 +10,10 @@ if [[ "$testMode" == "test" ]]; then
     plotVars2D=("lep1_pt" "MET_pt""Jet_ht" "mt_tot")
     regions=("A")
 elif [[ "$testMode" == "all" ]]; then
-    # channels=("mumu" "muel" "elel")
-    channels=("mumu")
-    bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top")
-    cuts=("nocut" "njets<4")
+    channels=("mumu" "muel" "elel")
+    # channels=("muel")
+    bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top" "QCD")
+    cuts=("nocut" "nJet<4")
     plotVars2D=("lep1_pt" "lep2_pt" "lep1_mt" "lep2_mt" "MET_pt" "lep1_eta" \
         "lep2_eta" "Jet_ht" "mt_tot" "mt_sum" "m_eff")
     regions=("A" "B" "C" "D")
@@ -58,9 +58,10 @@ do
 
     # Args to plot1D_qcdData.py: testMode {test, all}, displayMode {show, save}, 
     # channel {mumu, elel, muel}, lastcut
-    echo "------------------ Normal 1d plots (QCD MC) ------------------"
+    echo "------------------ Normal 1d plots (QCD Data) ------------------"
 #     for cut in "${cuts[@]}"
 #     do
+#         # faster to just run locally than to submit to condor
 #         ./plot1D_qcdData.py $testMode $displayMode $channel $cut
 #         echo
 #     done

@@ -101,9 +101,9 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
         "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
         "m_eff":[100,0,1000,"[GeV]"], # ht + MET + pt1 + pt2
-        "Jet_ht_div_sqrt_MET":[100,0,100,""],
-        "mt_tot_div_sqrt_MET":[100,0,100,""],
-        "m_eff_div_sqrt_MET":[100,0,100,""]
+        "Jet_ht_div_sqrt_MET":[100,0,200,""],
+        "mt_tot_div_sqrt_MET":[100,0,200,""],
+        "m_eff_div_sqrt_MET":[100,0,200,""]
         }
 
 # bkgd process name : color for plotting
@@ -207,9 +207,9 @@ for subprocessLine in bkgd_redirector:
 
     # assemble the bkgdNtupleAdr
     bkgdNtupleAdr = myDataDir+"bkgd/"+process+"/"+subprocess+"/"+subprocess+"_"
-    if testMode: bkgdNtupleAdr += "test_"
-    else: bkgdNtupleAdr += "all_"
-    # bkgdNtupleAdr += "all_"  
+    # if testMode: bkgdNtupleAdr += "test_"
+    # else: bkgdNtupleAdr += "all_"
+    bkgdNtupleAdr += "all_"  
     bkgdNtupleAdr += channel+".root"
     print "Plotting from", bkgdNtupleAdr
 
@@ -249,7 +249,7 @@ for subprocessLine in bkgd_redirector:
 
     nMax = nentries
     if testMode: nMax = 1000
-    
+
     # ********** Looping over events. ***********
     for count, event in enumerate(tBkgd):
         if count > nMax : break
@@ -324,12 +324,11 @@ for subprocessLine in bkgd_redirector:
             binwidth = (xMax - xMin)/nBins
 
             # Figure out what value to plot.
-
             # flag to divide by sqrt MET before plotting
             div_sqrt_MET = False
             if "div_sqrt_MET" in plotVar: 
                 div_sqrt_MET = True
-                plotVar = plotVar[:-13]
+                plotVar = plotVar[:-len("_div_sqrt_MET")]
 
             # plotting a jet related var
             if "Jet" in plotVar and plotVar != "nJet":
@@ -508,6 +507,7 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
 
     nMax = nentries
     if testMode: nMax = 1000
+
     # ********** Looping over events. ***********
     for count, event in enumerate(tSig):
         if count > nMax : break
@@ -638,6 +638,15 @@ data_redirector = open("data_fileRedirector")
 # hDataPlotVarDict maps each plotVar to a hist (which contains all the data from the
 # process)
 hDataPlotVarDict = {}
+for plotVar in plotSettings:
+    nBins = plotSettings[plotVar][0]
+    xMin = plotSettings[plotVar][1]
+    xMax = plotSettings[plotVar][2]
+    hData = TH1D("data_"+plotVar, "data", nBins, xMin, xMax)
+    hData.SetDirectory(0)
+    hData.SetDefaultSumw2() # automatically sum w^2 while filling
+    hDataPlotVarDict.update({plotVar:hData})
+
 for fileNum, subprocessLine in enumerate(data_redirector):
     subprocessLine = subprocessLine.rstrip('\n').split(" ")
     subprocess = subprocessLine[0]
@@ -672,17 +681,9 @@ for fileNum, subprocessLine in enumerate(data_redirector):
         continue
     print("nentries={0:d}".format(nentries))
     
-    for plotVar in plotSettings:
-        nBins = plotSettings[plotVar][0]
-        xMin = plotSettings[plotVar][1]
-        xMax = plotSettings[plotVar][2]
-        hData = TH1D("data_"+plotVar, "data", nBins, xMin, xMax)
-        hData.SetDirectory(0)
-        hData.SetDefaultSumw2() # automatically sum w^2 while filling
-        hDataPlotVarDict.update({plotVar:hData})
-    
     nMax = nentries
     if testMode: nMax = 1000
+
     # ********** Looping over events. ***********
     for count, event in enumerate(tData):
         if count > nMax : break
@@ -794,7 +795,6 @@ for plotVar in plotSettings:
     legend = legendDict[plotVar]
     legend.AddEntry(hData, hData.GetTitle())
     hData.Draw("* hist same") # same pad
-
 
 #--------------------------------------------------------------------------------#
 # *************** Wrap up. *******************

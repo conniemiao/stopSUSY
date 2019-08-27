@@ -69,9 +69,9 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
         "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
         "m_eff":[100,0,1000,"[GeV]"], # ht + MET + pt1 + pt2
-        "Jet_ht_div_sqrt_MET":[100,0,100,""],
-        "mt_tot_div_sqrt_MET":[100,0,100,""],
-        "m_eff_div_sqrt_MET":[100,0,100,""]
+        "Jet_ht_div_sqrt_MET":[100,0,200,""],
+        "mt_tot_div_sqrt_MET":[100,0,200,""],
+        "m_eff_div_sqrt_MET":[100,0,200,""]
         }
 
 # color for plotting : bkgd process name 
@@ -118,11 +118,11 @@ except:
     sys.stderr.write("WARNING: couldn't open region D hists file")
     exit()
 
-# the hMCPlotVarDicts map a plotVar to the total (non QCD) MC hist for that plotVar,
-# for 1 region
-hMCPlotVarDictA = {}
-hMCPlotVarDictC = {}
-hMCPlotVarDictD = {}
+# the hBkgdMCPlotVarDicts map a plotVar to the total (non QCD) MC hist for that 
+# plotVar, for 1 region
+hBkgdMCPlotVarDictA = {}
+hBkgdMCPlotVarDictC = {}
+hBkgdMCPlotVarDictD = {}
 # the hDataPlotVarDicts map a plotVar to the data hist for that plotVar, for 1 region
 hDataPlotVarDictA = {}
 hDataPlotVarDictC = {}
@@ -145,11 +145,14 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     nBins = plotSettings[plotVar][0]
     xMin = plotSettings[plotVar][1]
     xMax = plotSettings[plotVar][2]
-    hMCPlotVarDictA.update({plotVar:TH1D("MC_"+plotVar+"_A", "MC_A", \
+    
+    # need to initialize these as new histograms because want to add everything
+    # into 1 hist
+    hBkgdMCPlotVarDictA.update({plotVar:TH1D("MC_"+plotVar+"_A", "MC_A", \
             nBins, xMin, xMax)})
-    hMCPlotVarDictC.update({plotVar:TH1D("MC_"+plotVar+"_C", "MC_C", \
+    hBkgdMCPlotVarDictC.update({plotVar:TH1D("MC_"+plotVar+"_C", "MC_C", \
             nBins, xMin, xMax)})
-    hMCPlotVarDictD.update({plotVar:TH1D("MC_"+plotVar+"_D", "MC_D", \
+    hBkgdMCPlotVarDictD.update({plotVar:TH1D("MC_"+plotVar+"_D", "MC_D", \
             nBins, xMin, xMax)})
     hDataPlotVarDictA.update({plotVar:TH1D("data_"+plotVar+"_A", \
             "data_A", nBins, xMin, xMax)})
@@ -186,7 +189,7 @@ with open("bkgd_fileRedirector") as bkgd_redirector:
                 hBkgdSubprocessesPlotVarDict.update({name:{}})
         else: 
             # make sure this process was actually run in plot1D_qcdMC
-            histname = "bkgd_"+histname+"_m_eff"
+            histname = "bkgd_"+subprocess+"_m_eff"
             if not histFileB.GetListOfKeys().Contains(histname): continue
 
             bkgdSubprocesses.append(subprocess)
@@ -209,9 +212,8 @@ with open("sig_fileRedirector") as sig_redirector:
         sigSubprocesses.append(subprocess)
         hSigSubprocessesPlotVarDict.update({subprocess:{}})
 
-# hDataPlotVarDict maps each plotVar to a hist (which contains all the data from the
-# process)
-hDataPlotVarDict = {}
+# hDataPlotVarDictB maps each plotVar to its region B (signal) data hist
+hDataPlotVarDictB = {}
 #--------------------------------------------------------------------------------#
 print
 print "----------- Calculating QCD. -----------"
@@ -220,9 +222,9 @@ prevBkgdColor = -1
 for plotVarNum, plotVar in enumerate(plotSettings):
     if testMode:
         if plotVarNum >= 2: break
-    hMC_A = hMCPlotVarDictA[plotVar]
-    hMC_C = hMCPlotVarDictC[plotVar]
-    hMC_D = hMCPlotVarDictD[plotVar]
+    hBkgdMC_A = hBkgdMCPlotVarDictA[plotVar]
+    hBkgdMC_C = hBkgdMCPlotVarDictC[plotVar]
+    hBkgdMC_D = hBkgdMCPlotVarDictD[plotVar]
     hData_A = hDataPlotVarDictA[plotVar]
     hData_C = hDataPlotVarDictC[plotVar]
     hData_D = hDataPlotVarDictD[plotVar]
@@ -237,19 +239,19 @@ for plotVarNum, plotVar in enumerate(plotSettings):
         hBkgd_A = histFileA.Get("bkgd_"+subprocess+"_"+plotVar)
         if hBkgd_A.GetSumOfWeights() <= 0: hBkgd_A.Scale(0)
         elif plotVarNum == 0: print "Adding", subprocess, "region A"
-        hMC_A.Add(hBkgd_A)
+        hBkgdMC_A.Add(hBkgd_A)
 
         hBkgd_C = histFileC.Get("bkgd_"+subprocess+"_"+plotVar)
         if hBkgd_C.GetSumOfWeights() <= 0: hBkgd_C.Scale(0)
         elif plotVarNum == 0: print "Adding", subprocess, "region C"
-        hMC_C.Add(hBkgd_C)
+        hBkgdMC_C.Add(hBkgd_C)
 
         hBkgd_D = histFileD.Get("bkgd_"+subprocess+"_"+plotVar)
         if hBkgd_D.GetSumOfWeights() <= 0: hBkgd_D.Scale(0)
         elif plotVarNum == 0: print "Adding", subprocess, "region D"
-        hMC_D.Add(hBkgd_D)
+        hBkgdMC_D.Add(hBkgd_D)
 
-        # for final plotting:
+        # for final plotting (using plots from MC_B):
         histname = "bkgd_"+subprocess+"_"+plotVar
         hBkgd_B = histFileB.Get(histname)
         hBkgd_B.SetDirectory(0)
@@ -267,18 +269,23 @@ for plotVarNum, plotVar in enumerate(plotSettings):
 
     # ********** hQCD calculation. ***********
     hQCD = hQCDPlotVarDict[plotVar]
-    hQCD.Add(hData_C, hMC_C, 1, -1) # hQCD = hDataC - hMC_C
+    hQCD.Add(hData_C, hBkgdMC_C, 1, -1) # hQCD = hDataC - hBkgdMC_C
     if plotVarNum == 0 and hQCD.GetSumOfWeights() < 0:
-        sys.stderr.write("WARNING: hData_C - hMC_C < 0!\n")
+        sys.stderr.write("WARNING: Sum of weights hData_C - hBkgdMC_C = "+\
+                str(hDiffC.GetSumOfWeights())+" (< 0)!\n")
+
     hDiffD = hData_D.Clone()
-    hDiffD.Add(hMC_D, -1) # hDiffD = hData_D - hMC_D
+    hDiffD.Add(hBkgdMC_D, -1) # hDiffD = hData_D - hBkgdMC_D
     if plotVarNum == 0 and hDiffD.GetSumOfWeights() < 0:
-        sys.stderr.write("WARNING: hData_D - hMC_D < 0!\n")
+        sys.stderr.write("WARNING: Sum of weights hData_D - hBkgdMC_D = "+\
+                str(hDiffD.GetSumOfWeights())+" (< 0)!\n")
     hQCD.Divide(hDiffD) # hQCD = hQCD/hDiffD
+
     hDiffA = hData_A.Clone()
+    hDiffA.Add(hBkgdMC_A, -1) # hDiffA = hData_A - hBkgdMC_A
     if plotVarNum == 0 and hDiffA.GetSumOfWeights() < 0:
-        sys.stderr.write("WARNING: hData_A - hMC_A < 0!\n")
-    hDiffA.Add(hMC_A, -1) # hDiffA = hData_A - hMC_A
+        sys.stderr.write("WARNING: Sum of weights hData_A - hBkgdMC_A = "+\
+                str(hDiffA.GetSumOfWeights())+" (< 0)!\n")
     hQCD.Multiply(hDiffA) # hQCD = hQCD * hDiffA
 
     hQCD.SetFillColor(colorQCD)
@@ -312,7 +319,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     hData = histFileB.Get(histname)
     if hData.GetLineColor() == 0: continue # something went wrong in plot1D_qcdMC
     hData.SetDirectory(0)
-    hDataPlotVarDict.update({plotVar:hData})
+    hDataPlotVarDictB.update({plotVar:hData})
     legend.AddEntry(hData, hData.GetTitle())
     hData.Draw("* hist same") # same pad
 
@@ -350,7 +357,7 @@ else:
         hQCDPlotVarDict[plotVar].Write()
         for subprocess in hSigSubprocessesPlotVarDict:
             hSigSubprocessesPlotVarDict[subprocess][plotVar].Write()
-        hDataPlotVarDict[plotVar].Write()
+        hDataPlotVarDictB[plotVar].Write()
     outHistFile.Close()
     print "Saved hists in", outHistFileAdr
     print "Done."
