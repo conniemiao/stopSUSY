@@ -6,14 +6,14 @@ testMode=$1
 if [[ "$testMode" == "test" ]]; then 
     channels=("elel")
     bkgdProcesses=("Diboson")
-    cuts=("nocut")
+    cuts=("baseline")
     plotVars2D=("lep1_pt" "MET_pt""Jet_ht" "mt_tot")
     regions=("A")
 elif [[ "$testMode" == "all" ]]; then
     channels=("mumu" "muel" "elel")
     # channels=("muel")
     bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top" "QCD")
-    cuts=("nocut" "nJet<4")
+    cuts=("baseline" "nJet<4")
     plotVars2D=("lep1_pt" "lep2_pt" "lep1_mt" "lep2_mt" "MET_pt" "lep1_eta" \
         "lep2_eta" "Jet_ht" "mt_tot" "mt_sum" "m_eff")
     regions=("A" "B" "C" "D")
@@ -32,6 +32,8 @@ fi
 
 for channel in "${channels[@]}"
 do
+    echo "------------------------------- $channel -------------------------------"
+
     #--------------------------------------------------------------------------------#
     # SECTION 1A
 

@@ -12,7 +12,7 @@ output      = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLog
 error       = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/${1%.py}.\$(ClusterId).err
 log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/${1%.py}.\$(ClusterId).log
 
-+MaxRuntime = 100000
++MaxRuntime = 129500
 
 transfer_input_files = stopSelection.py, sig_fileRedirector, bkgd_fileRedirector, data_fileRedirector
 

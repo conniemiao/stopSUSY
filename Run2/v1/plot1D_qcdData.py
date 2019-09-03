@@ -39,7 +39,7 @@ elif channel == "muel": channel = "MuEl"
 elif channel == "elel": channel = "ElEl"
 else: assert False, "invalid channel, need {mumu, elel, muel}"
 
-cuts = OrderedDict([("nocut",0), ("dilepton",1), ("no3rdlept",2), ("nbtag<2",3), \
+cuts = OrderedDict([("baseline",0), ("dilepton",1), ("no3rdlept",2), ("nbtag<2",3), \
         ("MET>80",4),("nJet<4",5)])
 lastcut = sys.argv[4]
 assert lastcut in cuts, "invalid last cut %s" % lastcut
@@ -139,7 +139,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
         if plotVarNum >= 2: break
     canvasDict.update({plotVar:TCanvas("c_"+plotVar,"c_"+plotVar,10,20,1000,700)})
     legendDict.update({plotVar:TLegend(.45,.75,.90,.90)})
-    title = plotVar+" ("+channel+", cuts to "+lastcut+")"
+    title = plotVar+" ("+channel+", cuts to "+lastcut+", region B)"
     hBkgdStacksDict.update({plotVar:THStack(plotVar+"_bkgdStack", title)})
 
     nBins = plotSettings[plotVar][0]
