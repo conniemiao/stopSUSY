@@ -11,7 +11,8 @@
 #
 # Implements additional cuts and then draws 1D hist for data for each variable in
 # plotSettings for the summed bkgd data and for each of the signal files. Saves
-# them in a histogram root file. Uses MC for QCD.
+# them in a histogram root file. Also saves both a .txt and a .hdf (pandas dataframe)
+# version of the cutflow if lastcut is nJet<4. Uses MC for QCD.
 #
 # Uses the root files outputted by hadding the output from makeNtuple.py
 # Uses bkgd_fileRedirector
@@ -28,6 +29,7 @@ from stopSelection import isRegionA, isRegionB, isRegionC, isRegionD
 from collections import OrderedDict
 from math import sqrt, cos
 import numpy as np
+import pandas as pd
 import time
 print "Beginning execution of", sys.argv
 
@@ -65,8 +67,10 @@ elif sys.argv[3] == "muel":
 else: assert False, "invalid channel, need {mumu, elel, muel}"
 channel = l1Flav[:2] + l2Flav[:2]
 
-cuts = OrderedDict([("baseline",0), ("dilepton",1), ("no3rdlept",2), ("nbtag<2",3), \
-        ("MET>80",4),("nJet<4",5)])
+# cuts = OrderedDict([("baseline",0), ("dilepton",1), ("no3rdlept",2), ("nbtag<2",3), \
+#         ("MET>80",4),("nJet<4",5)])
+cuts = OrderedDict([("baseline",0), ("no3rdlept",1), ("nbtag<2",2), ("MET>80",3), \
+        ("nJet<4",4)])
 lastcut = sys.argv[4]
 assert lastcut in cuts, "invalid last cut %s" % lastcut
 nCuts = cuts[lastcut]+1
@@ -126,7 +130,8 @@ for plotVar in plotSettings: # add an entry to the plotVar:hist dictionary
     legendDict.update({plotVar:TLegend(.45,.75,.90,.90)})
     title = plotVar+" ("+channel+", cuts to "+lastcut+", region "+region+")"
     hBkgdStacksDict.update({plotVar:THStack(plotVar+"_bkgdStack", title)})
-nEvtsLabels = []
+title = "cutflow ("+channel+", region "+region+")"
+hBkgdCutflowStack = THStack("cutflow_bkgdStack", title)
 
 myDataDir = "/eos/user/c/cmiao/private/myDataSusy/Run2/"
 # limit the number of files to process (other than what is commented out in the file
@@ -141,10 +146,16 @@ DYJets_kfactor = 1.1637
 gStyle.SetOptStat(0) # don't show any stats
 
 #--------------------------------------------------------------------------------#
-# *************** Filling bkgd data summed together  ************
+# *************** Filling bkgd mc summed together  ************
 print
 print "----------- Plotting from background. -----------"
 
+# hBkgdCutflowDict maps every subprocess to an hBkgdCutflow which contains the cutflow
+# from all the ntuples for that subprocess.
+hBkgdCutflowDict = {}
+# hBkgdCutsCountDict maps every process to an array of size nCuts that keeps track
+# of the num evts remaining after each cut for that process
+hBkgdCutsCountDict = {}
 # hBkgdSubprocessesPlotVarDict maps each bkgd subprocess to another dictionary,
 # which maps each plotVar to a hist.
 hBkgdSubprocessesPlotVarDict = {}
@@ -165,6 +176,9 @@ with open("bkgd_fileRedirector") as bkgd_redirector:
 
         if subprocess != "WJetsToLNu" and subprocess != "DYJetsToLL_M-50":
             hBkgdSubprocessesPlotVarDict.update({subprocess:{}})
+            hBkgdCutflow = TH1D("cutflow_"+subprocess+"_bkgd", subprocess, nCuts, 0, \
+                    nCuts)
+            hBkgdCutflowDict.update({subprocess:hBkgdCutflow})
 
 # deal with W/DYJets special cases:
 subprocess = "WJetsToLNu"
@@ -172,23 +186,37 @@ WJetsIncl_only = False # default: running on both WJets incl and WnJets
 if len(WNJetsXsecs) != 5:
     WJetsIncl_only = True # only running on WJets inclusive
     hBkgdSubprocessesPlotVarDict.update({subprocess:{}})
+    hBkgdCutflow = TH1D("cutflow_"+subprocess+"_bkgd", subprocess, nCuts, 0, nCuts)
+    hBkgdCutflowDict.update({subprocess:hBkgdCutflow})
 else:
     for i in range(5):
         name = subprocess+"_"+str(i)+"Parton"
         hBkgdSubprocessesPlotVarDict.update({name:{}})
+        hBkgdCutflow = TH1D("cutflow_"+name+"_bkgd", name, nCuts, 0, nCuts)
+        hBkgdCutflowDict.update({name:hBkgdCutflow})
 subprocess = "DYJetsToLL_M-50"
 DYJetsIncl_only = False # default: running on both DYJets incl and DYnJets 
 if len(DYNJetsXsecs) != 5:
     DYJetsIncl_only = True # only running on DYJets inclusive
     hBkgdSubprocessesPlotVarDict.update({subprocess:{}})
+    hBkgdCutflow = TH1D("cutflow_"+subprocess+"_bkgd", subprocess, nCuts, 0, nCuts)
+    hBkgdCutflowDict.update({subprocess:hBkgdCutflow})
 else:
     for i in range(5):
         name = subprocess+"_"+str(i)+"Parton"
         hBkgdSubprocessesPlotVarDict.update({name:{}})
+        hBkgdCutflow = TH1D("cutflow_"+name+"_bkgd", name, nCuts, 0, nCuts)
+        hBkgdCutflowDict.update({name:hBkgdCutflow})
 
-# make the histgorams for all the subprocesses
-for name in hBkgdSubprocessesPlotVarDict:
-    print name
+# make/update the histgorams for all the subprocesses
+for name in hBkgdSubprocessesPlotVarDict: # same as names in hBkgdCutflowDict
+    hBkgdCutflow = hBkgdCutflowDict[name]
+    for i, cut in enumerate(cuts, start=1):
+        if i>nCuts: break
+        hBkgdCutflow.GetXaxis().SetBinLabel(i, cut)
+    hBkgdCutflow.SetDirectory(0) # necessary to keep hist from closing
+    hBkgdCutflow.SetDefaultSumw2() # automatically sum w^2 while filling
+
     for plotVar in plotSettings:
         nBins = plotSettings[plotVar][0]
         xMin = plotSettings[plotVar][1]
@@ -207,6 +235,9 @@ processNum = 0
 bkgd_redirector = open("bkgd_fileRedirector")
 WIncl_totgenwt = 0
 DYIncl_totgenwt = 0
+for process in processes:
+    hBkgdCutsCountDict.update({process:[0]*nCuts})
+
 for subprocessLine in bkgd_redirector:
     subprocessLine = subprocessLine.rstrip('\n').split(" ")
     subprocess = subprocessLine[0]
@@ -244,12 +275,6 @@ for subprocessLine in bkgd_redirector:
 
     hBkgdGenweights = bkgdFile.Get("genWeights")
     bkgdTotGenweight = hBkgdGenweights.GetSumOfWeights() # tot for this subprocess
-    # don't define this if this subprocess is W/DY incl and we're including W/DYnJets,
-    # because then need to separate it out into the partons:
-    if (subprocess[:4] != "WJet" or WJetsIncl_only) and \
-            (subprocess != "DYJetsToLL_M-50" or DYJetsIncl_only):
-        hBkgdPlotVarDict = hBkgdSubprocessesPlotVarDict[subprocess]
-
     if subprocess == "WJetsToLNu":
         WxGenweightsArr = []
         for i in range(5):
@@ -261,6 +286,13 @@ for subprocessLine in bkgd_redirector:
             DYxGenweightsArr.append(bkgdFile.Get("DY"+str(i)+"genWeights").\
                     GetSumOfWeights())
 
+    # don't define this if this subprocess is W/DY incl and we're including W/DYnJets,
+    # because then need to separate it out into the partons:
+    if (subprocess[:4] != "WJet" or WJetsIncl_only) and \
+            (subprocess != "DYJetsToLL_M-50" or DYJetsIncl_only):
+        hBkgdPlotVarDict = hBkgdSubprocessesPlotVarDict[subprocess]
+        hBkgdCutflow = hBkgdCutflowDict[subprocess] 
+
     nMax = nentries
     if testMode: nMax = 1000
 
@@ -271,6 +303,14 @@ for subprocessLine in bkgd_redirector:
         genwt = event.genWeight
         puwt = event.puWeight
         evtwt = genwt*puwt
+
+        nPartons = event.LHE_Njets
+
+        if (not WJetsIncl_only and subprocess[:4] == "WJet") or \
+                (not DYJetsIncl_only and subprocess == "DYJetsToLL_M-50"):
+            nPartons = event.LHE_Njets
+            hBkgdCutflow = hBkgdCutflowDict[subprocess+"_"+str(nPartons)+"Parton"]
+        else: pass # already defined above
     
         # ********** Additional cuts. ***********
 
@@ -301,26 +341,28 @@ for subprocessLine in bkgd_redirector:
         elif region == "D":
             if not isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, \
                     findingSameFlavor): continue
+        hBkgdCutflow.Fill(cuts["baseline"], evtwt)
 
         # if nCuts > cuts["dilepton"]: # not doing this; doing ABCD regions instead
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
 
         if nCuts > cuts["no3rdlept"]:
             if event.found3rdLept: continue
+            hBkgdCutflow.Fill(cuts["no3rdlept"], evtwt)
 
         if nCuts > cuts["nbtag<2"]:
             if event.nbtag > 1: continue
+            hBkgdCutflow.Fill(cuts["nbtag<2"], evtwt)
 
         if nCuts > cuts["MET>80"]:
             if event.MET_pt < 80: continue
+            hBkgdCutflow.Fill(cuts["MET>80"], evtwt)
         
         if nCuts > cuts["nJet<4"]:
             if event.nJet >= 4: continue
+            hBkgdCutflow.Fill(cuts["nJet<4"], evtwt)
 
-        # ********** Filling. ***********
-        nPartons = event.LHE_Njets
-        if nPartons > 4: continue
-
+        # ********** Filling plotVars. ***********
         if event.nJet > 0:
             Jet_pt_arr = np.reshape(event.Jet_pt, 20)
             jMaxPt = 0
@@ -398,6 +440,12 @@ for subprocessLine in bkgd_redirector:
                 if i == 0:
                     legend = legendDict[plotVar]
                     legend.AddEntry(hBkgd, process)
+            hBkgdCutflow = hBkgdCutflowDict[subprocess+"_"+str(i)+"Parton"]
+            hBkgdCutflow.Scale(norm)
+            print subprocess+"_"+str(i)+"Parton"
+            for i, cut in enumerate(cuts):
+                if i >= nCuts: break
+                hBkgdCutsCountDict[process][i] += int(hBkgdCutflow.GetBinContent(i+1))
     elif not DYJetsIncl_only and subprocess == "DYJetsToLL_M-50":
         DYIncl_totgenwt = bkgdTotGenweight # will be used later for DYxJets
         DYIncl_xsec = xsec
@@ -417,6 +465,12 @@ for subprocessLine in bkgd_redirector:
                 if i == 0:
                     legend = legendDict[plotVar]
                     legend.AddEntry(hBkgd, process)
+            hBkgdCutflow = hBkgdCutflowDict[subprocess+"_"+str(i)+"Parton"]
+            hBkgdCutflow.Scale(norm)
+            print subprocess+"_"+str(i)+"Parton"
+            for i, cut in enumerate(cuts):
+                if i >= nCuts: break
+                hBkgdCutsCountDict[process][i] += int(hBkgdCutflow.GetBinContent(i+1))
 
     # if running only on W/DYJets incl, then all subprocesses; otherwise all
     # subprocesses other than WJets incl and DYJets incl
@@ -442,6 +496,10 @@ for subprocessLine in bkgd_redirector:
             if newProcess:
                 legend = legendDict[plotVar]
                 legend.AddEntry(hBkgd, process)
+        hBkgdCutflow.Scale(norm)
+        for i, cut in enumerate(cuts):
+            if i >= nCuts: break
+            hBkgdCutsCountDict[process][i] += int(hBkgdCutflow.GetBinContent(i+1))
 
     # all subprocesses:
     bkgdFile.Close()
@@ -463,6 +521,12 @@ print
 print "----------- Plotting from signal. -----------"
 
 sig_redirector = open("sig_fileRedirector")
+
+# hSigCutflowDict maps the subprocess to its cutflow hist
+hSigCutflowDict = {} 
+# hSigCutsCountDict maps the subprocess (signal type) to an array containing num 
+# evts remaining after cut i
+hSigCutsCountDict = {}
 
 coloropts = [2,4,3,6,7,9,28,46] # some good colors for lines
 markeropts = [1,20,21,22,23] # some good marker styles for lines
@@ -519,6 +583,16 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
         hSig.SetDefaultSumw2() # automatically sum w^2 while filling
         hSigPlotVarDict.update({plotVar:hSig})
 
+    hSigCutflow = TH1D("sig_" + subprocess, "sig_" + subprocess[10:27], nCuts, 0, \
+            nCuts)
+    hSigCutflow.SetDirectory(0)
+    hSigCutflow.SetDefaultSumw2() # automatically sum w^2 while filling
+    hSigCutflowDict.update({subprocess:hSigCutflow})
+    hSigCutsCountDict.update({subprocess:[0]*nCuts})
+    for i, cut in enumerate(cuts, start=1):
+        if i>nCuts: break
+        hSigCutflow.GetXaxis().SetBinLabel(i, cut)
+
     hSigGenweights = sigFile.Get("genWeights")
     sigTotGenweight = hSigGenweights.GetSumOfWeights()
 
@@ -562,21 +636,26 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
         elif region == "D":
             if not isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, \
                     findingSameFlavor): continue
+        hSigCutflow.Fill(cuts["baseline"], evtwt)
 
         # if nCuts > cuts["dilepton"]: # not doing this; doing ABCD regions instead
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
 
         if nCuts > cuts["no3rdlept"]:
             if event.found3rdLept: continue
+            hSigCutflow.Fill(cuts["no3rdlept"], evtwt)
 
         if nCuts > cuts["nbtag<2"]:
             if event.nbtag > 1: continue
+            hSigCutflow.Fill(cuts["nbtag<2"], evtwt)
 
         if nCuts > cuts["MET>80"]:
             if event.MET_pt < 80: continue
+            hSigCutflow.Fill(cuts["MET>80"], evtwt)
         
         if nCuts > cuts["nJet<4"]:
             if event.nJet >= 4: continue
+            hSigCutflow.Fill(cuts["nJet<4"], evtwt)
 
         # ********** Filling. ***********
         if event.nJet > 0:
@@ -644,6 +723,12 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
         legend = legendDict[plotVar]
         legend.AddEntry(hSig, hSig.GetTitle())
         hSig.Draw("hist same") # same pad
+
+    hSigCutflow.Scale(norm)
+    for i, cut in enumerate(cuts):
+        if i >= nCuts: break
+        hSigCutsCountDict[subprocess][i] = int(hSigCutflow.GetBinContent(i+1))
+
     sigFile.Close()
 
 #--------------------------------------------------------------------------------#
@@ -663,6 +748,11 @@ for plotVar in plotSettings:
     hData.SetDirectory(0)
     hData.SetDefaultSumw2() # automatically sum w^2 while filling
     hDataPlotVarDict.update({plotVar:hData})
+
+hDataCutflow = TH1D("data", "data", nCuts, 0, nCuts)
+hDataCutflow.SetDirectory(0)
+hDataCutflow.SetDefaultSumw2() # automatically sum w^2 while filling
+hDataCutCountArr = [0]*nCuts
 
 for fileNum, subprocessLine in enumerate(data_redirector):
     subprocessLine = subprocessLine.rstrip('\n').split(" ")
@@ -735,44 +825,49 @@ for fileNum, subprocessLine in enumerate(data_redirector):
         elif region == "D":
             if not isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, \
                     findingSameFlavor): continue
-    
+        hDataCutflow.Fill(cuts["baseline"], evtwt)
+
         # if nCuts > cuts["dilepton"]: # not doing this; doing ABCD regions instead
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
-    
+
         if nCuts > cuts["no3rdlept"]:
             if event.found3rdLept: continue
-    
+            hDataCutflow.Fill(cuts["no3rdlept"], evtwt)
+
         if nCuts > cuts["nbtag<2"]:
             if event.nbtag > 1: continue
-    
+            hDataCutflow.Fill(cuts["nbtag<2"], evtwt)
+
         if nCuts > cuts["MET>80"]:
             if event.MET_pt < 80: continue
-        
+            hDataCutflow.Fill(cuts["MET>80"], evtwt)
+
         if nCuts > cuts["nJet<4"]:
             if event.nJet >= 4: continue
-    
+            hDataCutflow.Fill(cuts["nJet<4"], evtwt)
+
         # ********** Filling. ***********
         if event.nJet > 0:
             Jet_pt_arr = np.reshape(event.Jet_pt, 20)
             jMaxPt = 0
             for j in range(event.nJet):
                 if Jet_pt_arr[j] > Jet_pt_arr[jMaxPt]: jMaxPt = j
-    
+
         for plotVar in plotSettings:
             hData = hDataPlotVarDict[plotVar]
             nBins = plotSettings[plotVar][0]
             xMin = plotSettings[plotVar][1]
             xMax = plotSettings[plotVar][2]
             binwidth = (xMax - xMin)/nBins
-    
+
             # Figure out what value to plot.
-    
+
             # flag to divide by sqrt MET before plotting
             div_sqrt_MET = False
             if "div_sqrt_MET" in plotVar: 
                 div_sqrt_MET = True
                 plotVar = plotVar[:-13]
-    
+
             # plotting a jet related var
             if "Jet" in plotVar and plotVar != "nJet":
                 if event.nJet == 0: continue # to the next plotVar
@@ -787,20 +882,25 @@ for fileNum, subprocessLine in enumerate(data_redirector):
                 val = list(getattr(event, l2Flav+plotVar[4:]))[l2Index]
             # everything else
             else: val = getattr(event, plotVar)
-    
+ 
             # extra processing for these vars
             if div_sqrt_MET:
                 val /= sqrt(event.MET_pt)
-    
+
             # Fill.
             if val <= xMax: hData.Fill(val, 1)
             else: hData.Fill(xMax - binwidth/2, 1) # overflow 
+
+    for i, cut in enumerate(cuts):
+        if i >= nCuts: break
+        hDataCutCountArr[i] += int(hDataCutflow.GetBinContent(i+1))
+
     dataFile.Close()
-    
+
 # ********** Drawing. ***********
 hcolor = 1 # black
 hmarkerstyle = 3 # asterisk (to match with the *H draw option)
-    
+
 for plotVar in plotSettings:
     c = canvasDict[plotVar]
     c.cd()
@@ -829,7 +929,31 @@ for plotVar in plotSettings:
     c.SetLogy()
     c.Update()
 
+# making cutflow pandas dataframe
+statsStack = {}
+thisCuts = list(cuts)[:nCuts]
+statsStack.update({"Cut_name":thisCuts})
+statsNamesList = []
+for process in processes:
+    statsStack.update({process:hBkgdCutsCountDict[process]})
+    statsNamesList.append(process)
+for subprocess in hSigCutflowDict:
+    sigName = hSigCutflowDict[subprocess].GetTitle()[4:]
+    statsStack.update({sigName:hSigCutsCountDict[subprocess]})
+    statsNamesList.append(sigName)
+statsStack.update({"data":hDataCutCountArr})
+statsNamesList.append("data")
+statsDF = pd.DataFrame(statsStack)
+statsDF.set_index('Cut_name', inplace = True) # keep the Cut_name as first column
+statsDF = statsDF[statsNamesList] # reorder columns
+statsDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
+        "plots/Run2/v1/cutflow_stats"
+if not os.path.exists(statsDir): os.makedirs(statsDir)
+statsFileName = statsDir+"/cutflow_stats_"+channel+"_"+region
+# if experimental: statsFileName += "_experimental"
+
 if displayMode:
+    print statsDF
     print "Done. Press enter to finish (plots not saved)."
     raw_input()
 else:
@@ -851,5 +975,16 @@ else:
         hDataPlotVarDict[plotVar].Write()
     outHistFile.Close()
     print "Saved hists in", outHistFileAdr
+
+    if lastcut == "nJet<4": # don't save the cutflow unless made all cuts
+        statsFile = open(statsFileName+".txt", "w")
+        statsFile.write(statsDF.to_string()+"\n")
+        statsFile.close()
+        print "Saved file", statsFileName+".txt"
+        
+        statsDF.to_hdf(statsFileName+".hdf", key="statsDF")
+        print "Saved file", statsFileName+".hdf"
+    else: print statsDF
+
     print "Done."
 

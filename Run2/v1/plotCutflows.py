@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 # NOTE: NEEDS 2 CMD LINE ARGS with values:
-# testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}
+# testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel},
+# region {A,B,C,D}
 #
 # Draws the cutflow for some channel and a piechart from both no cuts and
 # after all cuts showing the breakdown of the bkgd.
@@ -13,11 +14,12 @@ from ROOT import TFile, TH1D, TCanvas, TImage, TLegend, TText, THStack, TPie
 from ROOT import gSystem, gStyle, gROOT, kTRUE
 from collections import OrderedDict
 import numpy as np
+import pandas as pd
 import time
 from array import array
 print "Beginning execution of", sys.argv
 
-assert len(sys.argv) == 4, "needs 3 command line args: testMode{0,1}, displayMode {show, save}, channel {mumu, elel, muel}"
+assert len(sys.argv) == 5, "needs 4 command line args: testMode{0,1}, displayMode {show, save}, channel {mumu, elel, muel}, region {A,B,C,D}"
 
 if sys.argv[1] == "test": testMode = True
 elif sys.argv[1] == "all": testMode = False
@@ -47,9 +49,10 @@ elif sys.argv[3] == "muel":
     l2Flav = "Electron"
     dataProcess = "MuonEG"
 else: assert False, "invalid channel, need {mumu, elel, muel}"
-channelName = l1Flav[:2] + l2Flav[:2]
+channel = l1Flav[:2] + l2Flav[:2]
 
-experimental = False # just for now I guess
+region = sys.argv[4]
+assert region == "any" or region == "A" or region == "B" or region == "C" or region == "D", "invalid region, need {any, A, B, C, D}"
 
 # bkgd process name : color for plotting
 processes = OrderedDict([("W-Jets",38), ("Drell-Yan",46), ("TTBar",30), \
@@ -62,51 +65,44 @@ plotsDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/
 
 #--------------------------------------------------------------------------------#
 
-statsFileAdr = plotsDir + "/cutflow_stats/cutflow_stats_"+channelName
-if experimental: statsFileAdr += "_experimental"
-statsFileAdr += ".txt"
+statsDir = plotsDir + "/cutflow_stats"
+statsFileAdr = statsDir+"/cutflow_stats_"+channel+"_"+region+".hdf"
 print "Reading from", statsFileAdr
-statsFile = open(statsFileAdr)
-header = statsFile.readline()
-header = header.rstrip('\n').split()
-header.remove("#")
-numStatsCols = len(header)
-statsFile.close()
+statsDF = pd.read_hdf(statsFileAdr, "statsDF")
 
-cuts = np.genfromtxt(statsFileAdr, dtype='str', delimiter='   ', usecols=0)
+cuts = list(statsDF.index.values) # cuts names
 nCuts = len(cuts)
 hBkgdCutsCountDict = {} # maps process to arr of cutflow counts for that process
 hBkgdDict = {} # maps process to an hBkgd for that process
 hSigCutsCountDict = {} # maps sig name to arr of cutflow counts for that sig 
 hSigDict = {} # maps sig name to an hSig for that sig 
-for col in range(1, numStatsCols):
-    cutflowArr = np.genfromtxt(statsFileAdr, dtype='int', usecols=col)
-    dataName = header[col]
-    if dataName[:2] == "C1": 
-        hSigCutsCountDict.update({dataName:cutflowArr})
-        hSig = TH1D("sig_" + dataName, "sig_" + dataName, nCuts, 0, nCuts)
+for inputProcess in statsDF.columns:
+    cutflowArr = statsDF.loc[:,inputProcess] # get the column for inputProcess
+    if inputProcess[:4] == "Stop": 
+        hSigCutsCountDict.update({inputProcess:cutflowArr})
+        hSig = TH1D("sig_" + inputProcess, inputProcess, nCuts, 0, nCuts)
         hSig.SetDirectory(0) # necessary to keep hist from closing
         hSig.SetDefaultSumw2() # automatically sum w^2 while filling
-        hSigDict.update({dataName:hSig})
-    elif dataName == "data":
+        hSigDict.update({inputProcess:hSig})
+    elif inputProcess == "data":
         hDataCutsCountArr = cutflowArr
         hData = TH1D("data", "data", nCuts, 0, nCuts)
         hData.SetDirectory(0)
         hData.SetDefaultSumw2() # automatically sum w^2 while filling
     else: 
-        hBkgdCutsCountDict.update({dataName:cutflowArr})
-        hBkgd = TH1D("bkgd_"+dataName, "bkgd_"+dataName, nCuts, 0, nCuts)
+        hBkgdCutsCountDict.update({inputProcess:cutflowArr})
+        hBkgd = TH1D("bkgd_"+inputProcess, inputProcess, nCuts, 0, nCuts)
         hBkgd.SetDirectory(0)
         hBkgd.SetDefaultSumw2() # automatically sum w^2 while filling
-        hBkgdDict.update({dataName:hBkgd})
+        hBkgdDict.update({inputProcess:hBkgd})
 for process in processes:
     if process not in hBkgdDict: processes.pop(process)
     # doing it this way so can still stack in the desired order (by using the 
     # ordered dict)
 
-c = TCanvas("c","c",10,20,1000,700)
-legend = TLegend(.70,.70,.90,.90)
-title = "cutflow ("+channelName+")"
+c = TCanvas("c_cutflow","c_cutflow",10,20,1000,700)
+legend = TLegend(.45,.75,.90,.90)
+title = "cutflow ("+channel+")"
 hBkgdStack = THStack("cutflow_bkgdStack", title)
 nEvtsLabels = []
 gStyle.SetOptStat(0) # don't show any stats
@@ -231,8 +227,7 @@ if displayMode:
     raw_input()
 else:
     gSystem.ProcessEvents()
-    imgName = plotsDir + "/cutflow/cutflow_"+channelName
-    if experimental: imgName += "_experimental"
+    imgName = plotsDir + "/cutflow/cutflow_"+channel
     imgName += ".png"
     print "Saving image", imgName
     img = TImage.Create()
@@ -242,29 +237,29 @@ else:
 #--------------------------------------------------------------------------------#
 # *************** Draw pie charts ************
 c.SetLogy(0) # unset logy
-c = TCanvas("c","c",10,10,700,700)
+c = TCanvas("c_pie","c_pie",10,10,700,700)
 
-nocutPieVals = []
+baselinePieVals = []
 allcutsPieVals = []
 pieColors = []
 # to make sure you don't try to plot a pie chart when all entries are 0:
 survivingEvts = False
 for process in processes:
-    nocutPieVals.append(hBkgdCutsCountDict[process][0])
+    baselinePieVals.append(hBkgdCutsCountDict[process][0])
     allcutsPieVals.append(hBkgdCutsCountDict[process][nCuts-1])
     if hBkgdCutsCountDict[process][nCuts-1] > 0: survivingEvts = True
     pieColors.append(processes[process])
 
-nocutPie = TPie("nocutPie", "Bkgd breakdown, no cuts ("+channelName+")", \
-        len(nocutPieVals), array('f',nocutPieVals))
-nocutPie.SetLabelFormat("#splitline{%txt}{%val (%perc)}")
-nocutPie.SetFillColors(array('i',pieColors))
-nocutPie.SetValueFormat("%.0f")
-nocutPie.SetTextSize(0.02)
-nocutPie.SetRadius(0.3)
+baselinePie = TPie("baselinePie", "Bkgd breakdown, no cuts ("+channel+")", \
+        len(baselinePieVals), array('f',baselinePieVals))
+baselinePie.SetLabelFormat("#splitline{%txt}{%val (%perc)}")
+baselinePie.SetFillColors(array('i',pieColors))
+baselinePie.SetValueFormat("%.0f")
+baselinePie.SetTextSize(0.02)
+baselinePie.SetRadius(0.3)
 
 lastcut = cuts[nCuts-1]
-allcutsPie = TPie("allcutsPie", "Bkgd breakdown, "+lastcut+"("+channelName+")", \
+allcutsPie = TPie("allcutsPie", "Bkgd breakdown, "+lastcut+"("+channel+")", \
         len(allcutsPieVals), array('f',allcutsPieVals))
 allcutsPie.SetLabelFormat("#splitline{%txt}{%val (%perc)}")
 allcutsPie.SetFillColors(array('i',pieColors))
@@ -273,19 +268,18 @@ allcutsPie.SetTextSize(0.02)
 allcutsPie.SetRadius(0.3)
 
 for i, process in enumerate(processes):
-    nocutPie.SetEntryLabel(i, process)
+    baselinePie.SetEntryLabel(i, process)
     allcutsPie.SetEntryLabel(i, process)
 
 c.cd()
-nocutPie.Draw("nol sc")
+baselinePie.Draw("nol sc")
 c.Update()
 if displayMode:
-    print "Done with nocut pie. Press enter to continue."
+    print "Done with baseline pie. Press enter to continue."
     raw_input()
 else:
     gSystem.ProcessEvents()
-    imgName = plotsDir + "/cutflow/pie_nocut_"+channelName
-    if experimental: imgName += "_experimental"
+    imgName = plotsDir + "/cutflow/pie_baseline_"+channel
     imgName += ".png"
     print "Saving image", imgName
     img = TImage.Create()
@@ -301,8 +295,7 @@ if survivingEvts:
         raw_input()
     else:
         gSystem.ProcessEvents()
-        imgName = plotsDir + "/cutflow/pie_"+lastcut+"_"+channelName
-        if experimental: imgName += "_experimental"
+        imgName = plotsDir + "/cutflow/pie_"+lastcut+"_"+channel
         imgName += ".png"
         print "Saving image", imgName
         img = TImage.Create()

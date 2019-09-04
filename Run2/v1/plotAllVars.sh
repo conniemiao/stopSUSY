@@ -74,12 +74,15 @@ do
     # Args to generateCutflows.py: testMode {test, all}, channel {mumu, elel, muel}
     echo
     echo "------------------ Generate cutflow stats ------------------"
-#     bash createCondorsubPlotting.sh generateCutflows.py $testMode $channel
-#     if [[ "$testMode" == "all" ]]; then 
-#         condor_submit condorsub_plotting
-#     else
-#         ./generateCutflows.py $testMode $channel
-#     fi
+#     for region in "${regions[@]}"
+#     do
+#         bash createCondorsubPlotting.sh generateCutflows.py $testMode $channel $region
+#         if [[ "$testMode" == "all" ]]; then 
+#             condor_submit condorsub_plotting
+#         else
+#             ./generateCutflows.py $testMode $channel $region
+#         fi
+#     done
 
     #--------------------------------------------------------------------------------#
     # SECTION 3
@@ -153,7 +156,10 @@ do
     # channel {mumu, elel, muel}
     echo
     echo "------------------ Get cutflows and piecharts ------------------"
-#     python plotCutflows.py $testMode $displayMode $channel
+#     for region in "${regions[@]}"
+#     do
+#         python plotCutflows.py $testMode $displayMode $channel $region
+#     done
 
     #--------------------------------------------------------------------------------#
 done
