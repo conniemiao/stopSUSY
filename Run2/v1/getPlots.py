@@ -15,6 +15,9 @@ from ROOT import gSystem, gStyle, gROOT, kTRUE
 from collections import OrderedDict
 print "Beginning execution of", sys.argv
 
+# location where the root file with all the plots was saved
+imgDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/v1/plot1D"
+
 assert len(sys.argv) >= 6, "need at least 5 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut, qcdType {qcdMC, qcdData}, region (only needed for qcdType=qcdMC) {A, B, C, D, any}"
 
 if sys.argv[1] == "test": testMode = True
@@ -48,7 +51,6 @@ if qcdType == "qcdMC":
             "invalid region, need {any, A, B, C, D, any}"
  
 # assemble hist file adr
-imgDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/v1/plot1D"
 if qcdType == "qcdMC": histFileAdr = imgDir+"/QCDMC_plot1D_"
 else: histFileAdr = imgDir+"/QCDData_plot1D_" 
 if testMode: histFileAdr += "test_"

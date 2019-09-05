@@ -10,16 +10,21 @@
 # Creates a condorsub file for haddSubprocess.sh with $1-5 as the arguments to 
 # haddSubprocess.sh
 
+# location of the github repo (base directory)
+baseDir="/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY"
+# location where condor logs will be placed
+condorLogDir="/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs"
+
 # cat > testcondorsub <<EOF
 cat > condorsub_haddSubprocess <<EOF
 executable  = haddSubprocess.sh
 arguments   = $1 $2 $3 $4 $5
 
 universe    = vanilla
-initialdir  = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1
-output      = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/haddSubprocess.\$(ClusterId).out
-error       = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/haddSubprocess.\$(ClusterId).err
-log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/haddSubprocess.\$(ClusterId).log
+initialdir  = $baseDir/Run2/v1
+output      = $condorLogDir/haddSubprocess.\$(ClusterId).out
+error       = $condorLogDir/haddSubprocess.\$(ClusterId).err
+log         = $condorLogDir/haddSubprocess.\$(ClusterId).log
 
 +MaxRuntime = 1140
 

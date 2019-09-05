@@ -11,14 +11,13 @@
 # Subprocess: name of the dataset for data and sig, or name of the subprocess for bkgd
 #
 # Loops over events in the specified ntuple and outputs another ntuple located in 
-# /eos/user/c/cmiao/private/myDataSusy/Run2/{input}/{process}/{subprocess}/
+# {myDataDir}/{input}/{process}/{subprocess}/
 # which contains the Events tree with all events that have survived loose dilepton 
 # selection cuts.
 #
 # Uses Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt (indirectly) 
 # for data json checking, and Data_Pileup_2016_271036-284044_80bins.root and 
-# MC_Moriond17_PU25ns_V1.root for puWeight calculation (all located in 
-# /afs/cern.ch/work/c/cmiao/private/myDataSusy/Run2/)
+# MC_Moriond17_PU25ns_V1.root for puWeight calculation
 
 print "Importing modules."
 import sys, os
@@ -33,6 +32,13 @@ from stopSelection import deltaR,  getBtagIndices, findValidJets
 from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
 from jsonChecker import jsonChecker
 print "Beginning execution of", sys.argv
+
+# location of the files (must be in same directory) MC_Moriond17_PU25ns_V1.root, 
+# Data_Pileup_2016_271036-284044_80bins.root, 
+# Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt
+myReferenceDataDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/Run2"
+# location where the output ntuple will be placed
+myDataDir = "/eos/user/c/cmiao/private/myDataSusy/Run2"
 
 assert (len(sys.argv) == 6 or len(sys.argv) == 7), "need 5 or 6 command line args: testMode {test, all}, input type {data, bkgd, sig}, channel {mumu, elel, muel}, ntuple, subprocess, process (only required for bkgd)"
 
@@ -97,9 +103,6 @@ if inputType == "bkgd":
         ("Diboson",colorDiboson), ("QCD", colorQCD)])
     assert process in processes, "invalid process %s" % process
 elif inputType == "sig": process = "Stop-Pair"
-
-myReferenceDataDir = "/afs/cern.ch/work/c/cmiao/private/myDataSusy/Run2/"
-myDataDir = "/eos/user/c/cmiao/private/myDataSusy/Run2/"
 
 if not isData:
     dataPileupRoot = TFile.Open(myReferenceDataDir+"Data_Pileup_2016_271036-284044_80bins.root", "READ")
@@ -215,10 +218,10 @@ if not isData:
 # ********************** Filling events **********************
 print "Storing variables from background."
 
-if isData: jc = jsonChecker()
+if isData: jc = jsonChecker(filein=myReferenceDataDir+"/Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt")
 
 # SET UP THE OUTPUT TREE
-outDir = myDataDir+inputType+"/"+process+"/"+subprocess+"/"
+outDir = myDataDir+"/"+inputType+"/"+process+"/"+subprocess+"/"
 if not os.path.exists(outDir): os.makedirs(outDir) 
 outName = outDir+"stopCut_"
 if testMode: outName += "test_"

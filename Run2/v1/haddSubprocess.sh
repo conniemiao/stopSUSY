@@ -12,6 +12,9 @@
 # For a particular subprocess, hadds together all the output root files from
 # makeNtuple.py.
 
+# location where ntuples were created (should be same 'myDataDir' from makeNtuple.py)
+myDataDir="/eos/user/c/cmiao/private/myDataSusy/Run2"
+
 testMode=$1
 inputType=$2
 channel=$3
@@ -26,7 +29,6 @@ fi
 subprocess=$4
 process=$5
 
-myDataDir="/eos/user/c/cmiao/private/myDataSusy/Run2"
 inDir=$myDataDir/$inputType/$process/$subprocess
 outDir=$myDataDir/$inputType/$process/$subprocess
 if [ ! -d "$outDir" ]; then

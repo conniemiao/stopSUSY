@@ -33,6 +33,13 @@ import pandas as pd
 import time
 print "Beginning execution of", sys.argv
 
+# location of input ntuples
+myDataDir = "/eos/user/c/cmiao/private/myDataSusy/Run2"
+# location where cutflow stats will be saved
+statsDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/v1/cutflow_stats"
+# location where the root file with all the control plots will be saved
+imgDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/v1/plot1D"
+
 assert len(sys.argv) == 6, "need 5 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut, region {A, B, C, D, any}"
 
 if sys.argv[1] == "test": testMode = True
@@ -133,7 +140,6 @@ for plotVar in plotSettings: # add an entry to the plotVar:hist dictionary
 title = "cutflow ("+channel+", region "+region+")"
 hBkgdCutflowStack = THStack("cutflow_bkgdStack", title)
 
-myDataDir = "/eos/user/c/cmiao/private/myDataSusy/Run2/"
 # limit the number of files to process (other than what is commented out in the file
 # redirector)
 numBkgdFiles = float("inf")  # note: must loop over all files to have correct xsec
@@ -247,7 +253,7 @@ for subprocessLine in bkgd_redirector:
     xsec = float(subprocessLine[2])
 
     # assemble the bkgdNtupleAdr
-    bkgdNtupleAdr = myDataDir+"bkgd/"+process+"/"+subprocess+"/"+subprocess+"_"
+    bkgdNtupleAdr = myDataDir+"/bkgd/"+process+"/"+subprocess+"/"+subprocess+"_"
     # if testMode: bkgdNtupleAdr += "test_"
     # else: bkgdNtupleAdr += "all_"
     bkgdNtupleAdr += "all_"  
@@ -546,7 +552,7 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
     print subprocess 
     
     # assemble the sigNtupleAdr
-    sigNtupleAdr = myDataDir+"sig/"+process+"/"+subprocess+"/"+subprocess+"_"
+    sigNtupleAdr = myDataDir+"/sig/"+process+"/"+subprocess+"/"+subprocess+"_"
     # if testMode: sigNtupleAdr += "test_"
     # else: sigNtupleAdr += "all_"
     sigNtupleAdr += "all_"
@@ -762,7 +768,7 @@ for fileNum, subprocessLine in enumerate(data_redirector):
     if process != dataProcess: continue
 
     # assemble the dataNtupleAdr
-    dataNtupleAdr = myDataDir+"data/"+process+"/"+subprocess+"/"+subprocess+"_"
+    dataNtupleAdr = myDataDir+"/data/"+process+"/"+subprocess+"/"+subprocess+"_"
     # if testMode: dataNtupleAdr += "test_"
     # else: dataNtupleAdr += "all_"
     dataNtupleAdr += "all_"
@@ -946,8 +952,6 @@ statsNamesList.append("data")
 statsDF = pd.DataFrame(statsStack)
 statsDF.set_index('Cut_name', inplace = True) # keep the Cut_name as first column
 statsDF = statsDF[statsNamesList] # reorder columns
-statsDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-        "plots/Run2/v1/cutflow_stats"
 if not os.path.exists(statsDir): os.makedirs(statsDir)
 statsFileName = statsDir+"/cutflow_stats_"+channel+"_"+region
 # if experimental: statsFileName += "_experimental"
@@ -958,8 +962,6 @@ if displayMode:
     raw_input()
 else:
     gSystem.ProcessEvents()
-    imgDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-            "plots/Run2/v1/plot1D"
     if not os.path.exists(imgDir): os.makedirs(imgDir) 
     outHistFileAdr = imgDir+"/QCDMC_plot1D_"
     if testMode: outHistFileAdr += "test_"

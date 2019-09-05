@@ -20,6 +20,10 @@ from ROOT import gSystem, gStyle, gROOT, kTRUE
 from collections import OrderedDict
 print "Beginning execution of", sys.argv
 
+# location where the root file with all the qcdMC plots will be taken from, and also
+# where the new qcdData control plots will be saved
+imgDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/v1/plot1D"
+
 assert len(sys.argv) == 5, "need 4 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut"
 
 if sys.argv[1] == "test": testMode = True
@@ -87,8 +91,6 @@ processes = OrderedDict([(colorWJets,"W-Jets"), (colorDY,"Drell-Yan"), \
         (colorDiboson,"Diboson"), (colorQCD, "QCD")])
 
 # assemble hist file adr
-imgDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/"+\
-        "plots/Run2/v1/plot1D"
 histFileAdr = imgDir+"/QCDMC_plot1D_"
 if testMode: histFileAdr += "test_"
 else: histFileAdr += "all_"

@@ -71,22 +71,6 @@ do
     #--------------------------------------------------------------------------------#
     # SECTION 2
 
-    # Args to generateCutflows.py: testMode {test, all}, channel {mumu, elel, muel}
-    echo
-    echo "------------------ Generate cutflow stats ------------------"
-#     for region in "${regions[@]}"
-#     do
-#         bash createCondorsubPlotting.sh generateCutflows.py $testMode $channel $region
-#         if [[ "$testMode" == "all" ]]; then 
-#             condor_submit condorsub_plotting
-#         else
-#             ./generateCutflows.py $testMode $channel $region
-#         fi
-#     done
-
-    #--------------------------------------------------------------------------------#
-    # SECTION 3
-
     # Args to plot2D.py: testMode {test, all}, displayMode {show, save}, 
     # channel {mumu, elel, muel}, lastcut, process, plotVarX, plotVarY
     echo
@@ -115,6 +99,7 @@ do
 
     #--------------------------------------------------------------------------------#
 
+    echo
 done
 
 #--------------------------------------------------------------------------------#
@@ -122,8 +107,11 @@ done
 echo
 for channel in "${channels[@]}"
 do
+    B
+    echo "------------------------------- $channel -------------------------------"
+
     #--------------------------------------------------------------------------------#
-    # SECTION 4A
+    # SECTION 3A
 
     # Args to getPlots.py: testMode {test, all}, displayMode {show, save}, 
     # channel {mumu, elel, muel}, lastcut
@@ -138,7 +126,7 @@ do
 #     done
 
     #--------------------------------------------------------------------------------#
-    # SECTION 4B
+    # SECTION 3B
 
     # Args to getPlots.py: testMode {test, all}, displayMode {show, save}, 
     # channel {mumu, elel, muel}, lastcut
@@ -150,7 +138,7 @@ do
 #     done
 
     #--------------------------------------------------------------------------------#
-    # SECTION 5
+    # SECTION 4
 
     # Args to plotCutflows.py: testMode {test, all}, displayMode {show, save}, 
     # channel {mumu, elel, muel}
@@ -162,6 +150,8 @@ do
 #     done
 
     #--------------------------------------------------------------------------------#
+
+    echo
 done
 
 #--------------------------------------------------------------------------------#

@@ -36,13 +36,13 @@ do
         echo
     done
 
-    # # Sig
-    # echo --- sig ---
-    # bash haddAllNtuplesProcess.sh $testMode sig "$channel"
-    # echo
+    # Sig
+    echo --- sig ---
+    bash haddAllNtuplesProcess.sh $testMode sig "$channel"
+    echo
 
-    # # Data 
-    # echo --- data ---
-    # bash haddAllNtuplesProcess.sh $testMode data "$channel"
+    # Data 
+    echo --- data ---
+    bash haddAllNtuplesProcess.sh $testMode data "$channel"
     
 done
