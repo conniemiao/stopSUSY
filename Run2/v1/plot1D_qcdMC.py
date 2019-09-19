@@ -165,8 +165,8 @@ hBkgdCutsCountDict = {}
 # hBkgdSubprocessesPlotVarDict maps each bkgd subprocess to another dictionary,
 # which maps each plotVar to a hist.
 hBkgdSubprocessesPlotVarDict = {}
-WNJetsXsecs = [47297.3] # first entry: W0Jets xsec
-DYNJetsXsecs = [4263.5]  # first entry: DY0Jets xsec
+WNJetsXsecs = [47297.3] # first entry: W0Jets xsec (not in file redirector)
+DYNJetsXsecs = [4263.5]  # first entry: DY0Jets xsec (not in file redirector)
 with open("bkgd_fileRedirector") as bkgd_redirector:
     for subprocessLine in bkgd_redirector:
         subprocessLine = subprocessLine.rstrip('\n').split(" ")
@@ -316,6 +316,8 @@ for subprocessLine in bkgd_redirector:
                 (not DYJetsIncl_only and subprocess == "DYJetsToLL_M-50"):
             nPartons = event.LHE_Njets
             hBkgdCutflow = hBkgdCutflowDict[subprocess+"_"+str(nPartons)+"Parton"]
+            hBkgdPlotVarDict = hBkgdSubprocessesPlotVarDict[subprocess+"_"+\
+                    str(nPartons)+"Parton"][plotVar]
         else: pass # already defined above
     
         # ********** Additional cuts. ***********
@@ -376,11 +378,7 @@ for subprocessLine in bkgd_redirector:
                 if Jet_pt_arr[j] > Jet_pt_arr[jMaxPt]: jMaxPt = j
 
         for plotVar in plotSettings:
-            if (not WJetsIncl_only and subprocess[:4] == "WJet") or \
-                    (not DYJetsIncl_only and subprocess == "DYJetsToLL_M-50"):
-                hBkgd = hBkgdSubprocessesPlotVarDict[subprocess+"_"+\
-                        str(nPartons)+"Parton"][plotVar]
-            else: hBkgd = hBkgdPlotVarDict[plotVar]
+            hBkgd = hBkgdPlotVarDict[plotVar]
             nBins = plotSettings[plotVar][0]
             xMin = plotSettings[plotVar][1]
             xMax = plotSettings[plotVar][2]
@@ -479,10 +477,11 @@ for subprocessLine in bkgd_redirector:
                 hBkgdCutsCountDict[process][i] += int(hBkgdCutflow.GetBinContent(i+1))
 
     # if running only on W/DYJets incl, then all subprocesses; otherwise all
-    # subprocesses other than WJets incl and DYJets incl
+    # subprocesses other than WJets incl and DYJets incl:
     else:
-        # special processing for WnJets and DYnJets:
-        if subprocess[0] == "W" and subprocess[2:] == "JetsToLNU":
+        # special processing for WnJets and DYnJets (will never happen if running
+        # on only W/DYJets incl):
+        if subprocess[0] == "W" and subprocess[2:] == "JetsToLNu":
             if WIncl_totgenwt > 0: # if not, then missed WIncl; use the default norm
                 norm = lumi/(WIncl_totgenwt/WIncl_xsec + bkgdTotGenweight/\
                         (WNJetsXsecs[int(subprocess[1])-1]*WJets_kfactor))
@@ -491,7 +490,7 @@ for subprocessLine in bkgd_redirector:
                 norm = lumi/(DYIncl_totgenwt/DYIncl_xsec + bkgdTotGenweight/\
                         (DYNJetsXsecs[int(subprocess[1])-1]*DYJets_kfactor))
         # if running only on W/DYJets incl, then all subprocesses; otherwise all
-        # subprocesses other than WJets incl and DYJets incl
+        # subprocesses other than WJets incl and DYJets incl:
         for plotVar in plotSettings:
             hBkgd = hBkgdPlotVarDict[plotVar]
             # hBkgd.Sumw2() # already summed while filling

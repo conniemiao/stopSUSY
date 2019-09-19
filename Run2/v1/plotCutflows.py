@@ -221,13 +221,13 @@ hData.Draw("* hist same") # same pad
 print "Drawing cutflow."
 
 legend.SetTextSize(0.02)
+legend.SetNColumns(3)
 legend.Draw("same")
 c.SetLogy()
 c.Update()
 
 if displayMode:
-    print "Done with cutflow. Press enter to continue."
-    raw_input()
+    print "Done with cutflow."
 else:
     gSystem.ProcessEvents()
     imgName = cutflowPlotsDir+"/cutflow_"+channel
@@ -240,7 +240,7 @@ else:
 #--------------------------------------------------------------------------------#
 # *************** Draw pie charts ************
 c.SetLogy(0) # unset logy
-c = TCanvas("c_pie","c_pie",10,10,700,700)
+c_pie = TCanvas("c_pie","c_pie",10,10,700,700)
 
 baselinePieVals = []
 allcutsPieVals = []
@@ -274,11 +274,11 @@ for i, process in enumerate(processes):
     baselinePie.SetEntryLabel(i, process)
     allcutsPie.SetEntryLabel(i, process)
 
-c.cd()
+c_pie.cd()
 baselinePie.Draw("nol sc")
-c.Update()
+c_pie.Update()
 if displayMode:
-    print "Done with baseline pie. Press enter to continue."
+    print "Done with baseline pie. Press enter to finish."
     raw_input()
 else:
     gSystem.ProcessEvents()
@@ -286,13 +286,13 @@ else:
     imgName += ".png"
     print "Saving image", imgName
     img = TImage.Create()
-    img.FromPad(c)
+    img.FromPad(c_pie)
     img.WriteImage(imgName)
 
 if survivingEvts:
-    c.cd()
+    c_pie.cd()
     allcutsPie.Draw("nol sc")
-    c.Update()
+    c_pie.Update()
     if displayMode:
         print "Done with all cuts pie. Press enter to finish."
         raw_input()
