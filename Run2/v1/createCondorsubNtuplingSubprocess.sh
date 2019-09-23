@@ -14,9 +14,6 @@ channel=$3
 subprocess=$4
 process=$5
 
-fileRedirector="$inputType"_fileRedirector
-ntupleListsDir="$inputType"NtupleLists/$process
-
 numNtuples=10000 # number of ntuples to loop on for each dataset
 if [[ "$testMode" == "test" ]]; then 
     numNtuples=2 
@@ -35,7 +32,7 @@ log         = $condorLogDir/makeNtuple.\$(ClusterId).\$(ProcId).log
 
 x509userproxy = $x509Adr
 
-transfer_input_files = stopSelection.py, jsonChecker.py, $fileRedirector, $ntupleListsDir
+transfer_input_files = stopSelection.py, jsonChecker.py
 
 Queue arguments from (
 EOF
@@ -47,6 +44,10 @@ while read -r ntupleFileName
 do
     if [[ $((fileNum + 1)) -gt $numNtuples ]]; then
         break 
+    fi
+
+    if [[ "$ntupleFileName" =~ \#.* ]]; then 
+        continue
     fi
 
     # appending to condor sub

@@ -35,7 +35,7 @@ elif channel == "muel": channel = "MuEl"
 elif channel == "elel": channel = "ElEl"
 else: assert False, "invalid channel, need {mumu, elel, muel}"
 
-cuts = OrderedDict([("nocut",0), ("dilepton",1), ("no3rdlept",2), ("nbtag<2",3), \
+cuts = OrderedDict([("baseline",0), ("dilepton",1), ("no3rdlept",2), ("nbtag<2",3), \
         ("MET>80",4),("nJet<4",5)])
 lastcut = sys.argv[4]
 assert lastcut in cuts, "invalid last cut %s" % lastcut

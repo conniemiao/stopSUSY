@@ -336,6 +336,8 @@ for subprocessLine in bkgd_redirector:
         l1RelIso = list(getattr(event, l1Flav+"_relIso"))[l1Index]
         l2RelIso = list(getattr(event, l2Flav+"_relIso"))[l2Index]
 
+        if not (event.PV_npvsGood and event.PV_npvs > 1): continue
+
         if region == "any": pass
         elif region == "A":
             if not isRegionA(l1Charge, l2Charge, l1RelIso, l2RelIso, \
@@ -628,6 +630,8 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
         l1RelIso = list(getattr(event, l1Flav+"_relIso"))[l1Index]
         l2RelIso = list(getattr(event, l2Flav+"_relIso"))[l2Index]
 
+        if not (event.PV_npvsGood and event.PV_npvs > 1): continue
+
         if region == "any": pass
         elif region == "A":
             if not isRegionA(l1Charge, l2Charge, l1RelIso, l2RelIso, \
@@ -816,6 +820,8 @@ for fileNum, subprocessLine in enumerate(data_redirector):
         l2Charge = list(getattr(event, l2Flav+"_charge"))[l2Index]
         l1RelIso = list(getattr(event, l1Flav+"_relIso"))[l1Index]
         l2RelIso = list(getattr(event, l2Flav+"_relIso"))[l2Index]
+
+        if not (event.PV_npvsGood and event.PV_npvs > 1): continue
 
         if region == "any": pass
         elif region == "A":
