@@ -105,10 +105,10 @@ if inputType == "bkgd":
 elif inputType == "sig": process = "Stop-Pair"
 
 if not isData:
-    dataPileupRoot = TFile.Open(myReferenceDataDir+"Data_Pileup_2016_271036-284044_80bins.root", "READ")
+    dataPileupRoot = TFile.Open(myReferenceDataDir+"/Data_Pileup_2016_271036-284044_80bins.root", "READ")
     dataPileupHist = dataPileupRoot.Get("pileup")
     dataPileupHist.Scale(1/dataPileupHist.Integral())
-    mcPileupRoot = TFile.Open(myReferenceDataDir+"MC_Moriond17_PU25ns_V1.root", "READ")
+    mcPileupRoot = TFile.Open(myReferenceDataDir+"/MC_Moriond17_PU25ns_V1.root", "READ")
     mcPileupHist = mcPileupRoot.Get("pileup")
     mcPileupHist.Scale(1/mcPileupHist.Integral())
 
@@ -162,6 +162,23 @@ if not isData:
     Electron_genPartFlav = np.zeros(20, dtype=np.int32)
     Electron_genPartIdx = np.zeros(20, dtype=np.int32)
 Electron_mt = np.zeros(20, dtype=np.float32)
+
+HLT_IsoMu24 = array('i',[0]) # read as bool
+HLT_Ele25_eta2p1_WPTight_Gsf = array('i',[0]) # read as bool
+HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL = array('i',[0]) # read as bool
+HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL = array('i',[0]) # read as bool
+HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ = array('i',[0]) # read as bool
+HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ = array('i',[0]) # read as bool
+nTrigObj = array('i',[0])
+TrigObj_filterBits = np.zeros(40, dtype=np.int32)
+TrigObj_pt = np.zeros(40, dtype=np.float32)
+TrigObj_eta = np.zeros(40, dtype=np.float32)
+TrigObj_phi = np.zeros(40, dtype=np.float32)
+TrigObj_id = np.zeros(40, dtype=np.int32)
+Flag_goodVertices = array('i',[0]) # read as bool
+Flag_HBHENoiseFilter = array('i',[0]) # read as bool 
+Flag_EcalDeadCellTriggerPrimitiveFilter = array('i',[0]) # read as bool
+Flag_BadPFMuonFilter = array('i',[0]) # read as bool
 
 found3rdLept = array('i',[0])
 lep1_isMu = array('i',[0]) # read as bool
@@ -275,6 +292,22 @@ if not isData:
     Events.Branch("Electron_genPartFlav", Electron_genPartFlav, "Electron_genPartFlav[20]/I")
     Events.Branch("Electron_genPartIdx", Electron_genPartIdx, "Electron_genPartIdx[20]/I")
 Events.Branch("Electron_mt", Electron_mt, "Electron_mt[20]/F")
+Events.Branch("HLT_IsoMu24", HLT_IsoMu24, "HLT_IsoMu24/I")
+Events.Branch("HLT_Ele25_eta2p1_WPTight_Gsf", HLT_Ele25_eta2p1_WPTight_Gsf, "HLT_Ele25_eta2p1_WPTight_Gsf/I")
+Events.Branch("HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL", HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL, "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL/I")
+Events.Branch("HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL", HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL, "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL/I")
+Events.Branch("HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ", HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ, "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ/I")
+Events.Branch("HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ", HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ, "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ/I")
+Events.Branch("nTrigObj", nTrigObj, "nTrigObj/I")
+Events.Branch("TrigObj_filterBits", TrigObj_filterBits, "TrigObj_filterBits[40]/I")
+Events.Branch("TrigObj_pt", TrigObj_pt, "TrigObj_pt[40]/F")
+Events.Branch("TrigObj_eta", TrigObj_eta, "TrigObj_eta[40]/F")
+Events.Branch("TrigObj_phi", TrigObj_phi, "TrigObj_phi[40]/F")
+Events.Branch("TrigObj_id", TrigObj_id, "TrigObj_id[40]/I")
+Events.Branch("Flag_goodVertices", Flag_goodVertices, "Flag_goodVertices/I")
+Events.Branch("Flag_HBHENoiseFilter", Flag_HBHENoiseFilter, "Flag_HBHENoiseFilter/I")
+Events.Branch("Flag_EcalDeadCellTriggerPrimitiveFilter", Flag_EcalDeadCellTriggerPrimitiveFilter, "Flag_EcalDeadCellTriggerPrimitiveFilter/I")
+Events.Branch("Flag_BadPFMuonFilter", Flag_BadPFMuonFilter, "Flag_BadPFMuonFilter/I")
 Events.Branch("found3rdLept", found3rdLept, "found3rdLept/I")
 Events.Branch("lep1_isMu", lep1_isMu, "lep1_isMu/I")
 Events.Branch("lep1_index", lep1_index, "lep1_index/I")
@@ -373,18 +406,18 @@ for count, event in enumerate(inTree):
         #             "sumw", hGenweights.GetSumOfWeights(), \
         #             "nentries", hGenweights.GetEntries() 
 
-    # ****** Loose selection of events with valid lep1, lep2, jets ******
+    # ****** Loose selection for valid lep1, lep2, jets (with trigger) ******
     if findingSameFlavor:
         if muPreference:
-            lepIndices = selectMuMu(event, maxOkIso=0.3)
-        else: lepIndices = selectElEl(event, maxOkIso=0.3)
+            lepIndices = selectMuMu(event, isData, maxOkIso=0.3)
+        else: lepIndices = selectElEl(event, isData, maxOkIso=0.3)
         if lepIndices is None: continue
     else:
-        lepIndices = selectMuEl(event, maxOkIso=0.3)
+        lepIndices = selectMuEl(event, isData, maxOkIso=0.3)
         l1Flav = "Muon"
         l2Flav = "Electron"
         if lepIndices is None:
-            lepIndices = selectElMu(event, maxOkIso=0.3)
+            lepIndices = selectElMu(event, isData, maxOkIso=0.3)
             if lepIndices is None: continue
             l1Flav = "Electron"
             l2Flav = "Muon"
@@ -454,6 +487,25 @@ for count, event in enumerate(inTree):
         Electron_mt[i] = sqrt(2 * Electron_pt[i] * event.MET_pt * \
                 (1 - cos(Electron_phi[i] - event.MET_phi)))
 
+    HLT_IsoMu24[0] = event.HLT_IsoMu24
+    HLT_Ele25_eta2p1_WPTight_Gsf[0] = event.HLT_Ele25_eta2p1_WPTight_Gsf
+    HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL[0] = event.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL
+    HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL[0] = event.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL
+    HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ[0] = event.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ
+    HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ[0] = event.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ
+    Flag_goodVertices[0] = event.Flag_goodVertices
+    Flag_HBHENoiseFilter[0] = event.Flag_HBHENoiseFilter
+    Flag_EcalDeadCellTriggerPrimitiveFilter[0] = event.Flag_EcalDeadCellTriggerPrimitiveFilter
+    Flag_BadPFMuonFilter[0] = event.Flag_BadPFMuonFilter
+
+    nTrigObj[0] = event.nTrigObj
+    for i in range(event.nTrigObj):
+        TrigObj_filterBits[i] = list(event.TrigObj_filterBits)[i]
+        TrigObj_pt[i] = list(event.TrigObj_pt)[i]
+        TrigObj_eta[i] = list(event.TrigObj_eta)[i]
+        TrigObj_phi[i] = list(event.TrigObj_phi)[i]
+        TrigObj_id[i] = list(event.TrigObj_id)[i]
+
     lep1_isMu[0] = int(l1Flav == "Muon")
     lep1_index[0] = l1Index
     lep2_isMu[0] = int(l2Flav == "Muon") 
@@ -462,11 +514,11 @@ for count, event in enumerate(inTree):
     # veto (3rd lepton) checks:
     found3rdLept[0] = False
     if findingSameFlavor:
-        # event should not give valid muel or elmu pair
+        # when looking for mumu/elel, event should not give valid muel or elmu pair
         if selectMuEl(event) is not None: found3rdLept[0] = True
         if selectElMu(event) is not None: found3rdLept[0] = True
     else:
-        # event should not give valid mumu or elel pair
+        # when looking for muel/elmu, event should not give valid mumu or elel pair
         if selectMuMu(event) is not None: found3rdLept[0] = True
         if selectElEl(event) is not None: found3rdLept[0] = True
 

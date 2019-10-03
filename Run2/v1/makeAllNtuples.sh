@@ -15,7 +15,7 @@ if [[ "$testMode" == "test" ]]; then
     bkgdProcesses=("QCD")
 elif [[ "$testMode" == "all" ]]; then
     # channels=("mumu" "muel" "elel")
-    channels=("elel")
+    channels=("muel")
     # bkgdProcesses=("W-Jets" "Drell-Yan" "Diboson" "Single-Top" "TTBar" "TT+X")
     bkgdProcesses=("QCD")
 else
@@ -29,16 +29,16 @@ do
     echo ------------------ "$channel" ------------------
     # Bkgd
     echo --- bkgd ---
-    #for process in "${bkgdProcesses[@]}"
-    #do
-    #    bash makeAllNtuplesProcess.sh $testMode bkgd "$channel" "$process"
-    #    echo
-    #done
+    for process in "${bkgdProcesses[@]}"
+    do
+        bash makeAllNtuplesProcess.sh $testMode bkgd "$channel" "$process"
+        echo
+    done
 
     # # Sig
     echo --- sig ---
-    # bash makeAllNtuplesProcess.sh $testMode sig "$channel"
-    # echo
+    bash makeAllNtuplesProcess.sh $testMode sig "$channel"
+    echo
 
     # # Data 
     echo --- data ---

@@ -10,9 +10,6 @@ from math import sqrt, cos
 # objects of that type (index1, index2). types allowed are "Muon", "Electron", or
 # "Jet"
 def deltaR(event, type1, index1, type2, index2):
-    assert type1=="Muon" or type1=="Electron" or type1=="Jet"
-    assert type2=="Muon" or type2=="Electron" or type2=="Jet"
-    
     eta1 = list(getattr(event, type1+"_eta"))[index1]
     eta2 = list(getattr(event, type2+"_eta"))[index2]
     phi1 = list(getattr(event, type1+"_phi"))[index1]
@@ -22,16 +19,42 @@ def deltaR(event, type1, index1, type2, index2):
     
 #--------------------------------------------------------------------------------#
 
+# The following methods all call one of the channels of __selectLepts with default
+# max eta, min pt, and max iso values.
+
+def selectMuMu(event, isData, maxL1OkEta=2.4, maxL2OkEta=2.4, l1MinOkPt=20, \
+        l2MinOkPt=-0.01, maxOkIso=1, maxOkDxy=1, maxOkDz=1):
+    return __selectLepts(event, isData, True, True, maxL1OkEta, maxL2OkEta, \
+            l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
+
+def selectElEl(event, isData, maxL1OkEta=1.6, maxL2OkEta=1.6, l1MinOkPt=20, \
+        l2MinOkPt=-0.01, maxOkIso=1, maxOkDxy=1, maxOkDz=1):
+    return __selectLepts(event, isData, True, False, maxL1OkEta, maxL2OkEta, \
+            l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
+
+def selectMuEl(event, isData, maxL1OkEta=2.4, maxL2OkEta=1.6, l1MinOkPt=12, \
+        l2MinOkPt=15, maxOkIso=1, maxOkDxy=1, maxOkDz=1):
+    return __selectLepts(event, isData, False, True, maxL1OkEta, maxL2OkEta, \
+            l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
+
+def selectElMu(event, isData, maxL1OkEta=1.6, maxL2OkEta=2.4, l1MinOkPt=25, \
+        l2MinOkPt=5, maxOkIso=1, maxOkDxy=1, maxOkDz=1):
+    return __selectLepts(event, isData, False, False, maxL1OkEta, maxL2OkEta, \
+            l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
+
+#--------------------------------------------------------------------------------#
+
 # Selects a pair of leptons from an event (general private helper method). 
 # If findingSameFlav is True: selects for pair of muons if muPreference is True, 
 # or for pair of electrons if False. 
 # If findingSameFlav is False: selects for leading mu and trailing el if
 # muPreference is True, or for leading el and trailing mu if False.
+# isData is used to determine proper trigger checks.
 # Returns an array of 2 entries where a[0] = l1Index, a[1] = l2Index, where 
 # l1 is always the leading lepton (satisfies the higher pt cut), l2 is trailing.
 # All the max/min parameters should be specified by selectMuMu/ElEl/MuEl/ElMu.
-def __selectLepts(event, findingSameFlav, muPreference, maxL1OkEta, maxL2OkEta, \
-        l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz):
+def __selectLepts(event, isData, findingSameFlav, muPreference, maxL1OkEta, \
+        maxL2OkEta, l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz):
     if findingSameFlav:
         if muPreference: # mumu
             l1Flav = "Muon"
@@ -61,9 +84,12 @@ def __selectLepts(event, findingSameFlav, muPreference, maxL1OkEta, maxL2OkEta, 
         else: # Electron 
             iso = list(getattr(event, "Electron_pfRelIso03_all"))[i1]
         absEta = abs(list(getattr(event, l1Flav+"_eta"))[i1])
+
         if pt > l1MinOkPt and iso < maxOkIso and absEta < maxL1OkEta \
                 and ((iso < minFoundIso) or (iso == minFoundIso \
-                and pt > maxFoundPt)) and absDxy < maxOkDxy and absDz < maxOkDz:
+                and pt > maxFoundPt)) and absDxy < maxOkDxy and absDz < maxOkDz \
+                and passTrigger(event, findingSameFlav, muPreference, i1, isData, \
+                l1Flav):
             minFoundIso = iso
             maxFoundPt = pt
             l1Index = i1
@@ -86,9 +112,12 @@ def __selectLepts(event, findingSameFlav, muPreference, maxL1OkEta, maxL2OkEta, 
                 and iso < maxOkIso and absDxy < maxOkDxy and absDz < maxOkDz:
             pt = list(getattr(event, l2Flav+"_pt"))[i2]
             if (iso < minFoundIso) or (iso == minFoundIso and pt > maxFoundPt):
-                minFoundIso = iso
-                maxFoundPt = pt
-                l2Index = i2
+                # only do trailing lepton trigger check for muel/elmu
+                if not findingSameFlav and passTrigger(event, findingSameFlav, \
+                        muPreference, i2, isData, l2Flav):
+                    minFoundIso = iso
+                    maxFoundPt = pt
+                    l2Index = i2
     if l2Index == -1: return None
 
     # print
@@ -103,28 +132,103 @@ def __selectLepts(event, findingSameFlav, muPreference, maxL1OkEta, maxL2OkEta, 
     return [l1Index, l2Index]
 
 #--------------------------------------------------------------------------------#
-# The following methods all call one of the channels of __selectLepts with default
-# max eta, min pt, and max iso values.
 
-def selectMuMu(event, maxL1OkEta=2.4, maxL2OkEta=2.4, l1MinOkPt=20, \
-        l2MinOkPt=-0.01, maxOkIso=1, maxOkDxy=1, maxOkDz=1):
-    return __selectLepts(event, True, True, maxL1OkEta, maxL2OkEta, \
-            l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
+# Handles redirecting the pass trigger check to the correct function. flav only
+# needed for muel/elmu, where it refers to the actual lepton
+# being checked at that point (since both mu and el need to be checked and the
+# checks are different depending on if they are leading or trailing).
+def passTrigger(event, findingSameFlav, muPreference, index, isData, flav):
+    if findingSameFlav:
+        if muPreference: return passMu_mumuTrigger(event, index) # mumu
+        else: return passEl_elelTrigger(event, index) # elel
+    else:
+        if muPreference: # leading mu, trailing el
+            if flav[0] == "M": return passMu_muelTrigger(event, index, isData)
+            else: return passEl_muelTrigger(event, index, isData)
+        else: # leading el, trailing mu
+            if flav[0] == "M": return passMu_elmuTrigger(event, index, isData)
+            else: return passEl_elmuTrigger(event, index, isData)
 
-def selectElEl(event, maxL1OkEta=1.6, maxL2OkEta=1.6, l1MinOkPt=20, \
-        l2MinOkPt=-0.01, maxOkIso=1, maxOkDxy=1, maxOkDz=1):
-    return __selectLepts(event, True, False, maxL1OkEta, maxL2OkEta, \
-            l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
+# Returns true if the muon at muIndex passes the mumu trigger check.
+def passMu_mumuTrigger(event, muIndex):
+    if not event.HLT_IsoMu24: return False
+    if list(event.Muon_pt)[muIndex] < 26: return False
+    for iObj in range(event.nTrigObj):
+        dR = deltaR(event, "Muon", muIndex, "TrigObj", iObj)
+        # filter bit 2: iso, 8: mu passed trigger
+        if event.TrigObj_filterBits[iObj] & 8 and event.TrigObj_filterBits[iObj] & 2 \
+                and dR < 0.5: return True
+    return False
 
-def selectMuEl(event, maxL1OkEta=2.4, maxL2OkEta=1.6, l1MinOkPt=12, \
-        l2MinOkPt=15, maxOkIso=1, maxOkDxy=1, maxOkDz=1):
-    return __selectLepts(event, False, True, maxL1OkEta, maxL2OkEta, \
-            l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
+# Returns true if the electron at elIndex passes the elel trigger check.
+def passEl_elelTrigger(event, elIndex):
+    if not event.HLT_Ele25_eta2p1_WPTight_Gsf: return False
+    if list(event.Electron_pt)[elIndex] < 27: return False
+    for iObj in range(event.nTrigObj):
+        dR = deltaR(event, "Electron", elIndex, "TrigObj", iObj)
+        # filter bit 2: el working point tight
+        if event.TrigObj_filterBits[iObj] & 2 and dR < 0.5: return True
+    return False
 
-def selectElMu(event, maxL1OkEta=1.6, maxL2OkEta=2.4, l1MinOkPt=25, \
-        l2MinOkPt=5, maxOkIso=1, maxOkDxy=1, maxOkDz=1):
-    return __selectLepts(event, False, False, maxL1OkEta, maxL2OkEta, \
-            l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
+# Returns true if the mu at muIndex passes the muon trigger check for leading mu,
+# trailing el. 
+def passMu_muelTrigger(event, muIndex, isData):
+    if isData and event.run >= 278820: # Run G or higher
+        if not event.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ:
+            return False
+    else:
+        if not event.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL: return False
+    if list(event.Muon_pt)[muIndex] < 25: return False
+    for iObj in range(event.nTrigObj):
+        dR = deltaR(event, "Muon", muIndex, "TrigObj", iObj)
+        # filter bit 32: HLT trigger bits for 1 mu 1 el
+        if event.TrigObj_filterBits[iObj] & 32 and dR < 0.5: return True
+    return False
+
+# Returns true if the el at elIndex passes the muon trigger check for leading mu,
+# trailing el. 
+def passEl_muelTrigger(event, elIndex, isData):
+    if isData and event.run >= 278820: # Run G or higher
+        if not event.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ:
+            return False
+    else:
+        if not event.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL: return False
+    if list(event.Electron_pt)[elIndex] < 14: return False
+    for iObj in range(event.nTrigObj):
+        dR = deltaR(event, "Electron", elIndex, "TrigObj", iObj)
+        # filter bit 32: HLT trigger bits for 1 mu 1 el
+        if event.TrigObj_filterBits[iObj] & 32 and dR < 0.5: return True
+    return False
+
+# Returns true if the mu at muIndex passes the muon trigger check for leading el,
+# trailing mu. 
+def passMu_elmuTrigger(event, muIndex, isData):
+    if isData and event.run >= 278820: # Run G or higher
+        if not event.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ:
+            return False
+    else:
+        if not event.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL: return False
+    if list(event.Muon_pt)[muIndex] < 10: return False
+    for iObj in range(event.nTrigObj):
+        dR = deltaR(event, "Muon", muIndex, "TrigObj", iObj)
+        # filter bit 32: HLT trigger bits for 1 mu 1 el
+        if event.TrigObj_filterBits[iObj] & 32 and dR < 0.5: return True
+    return False
+
+# Returns true if the el at elIndex passes the muon trigger check for leading el,
+# trailing mu. 
+def passEl_elmuTrigger(event, elIndex, isData):
+    if isData and event.run >= 278820: # Run G or higher
+        if not event.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ:
+            return False
+    else:
+        if not event.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL: return False
+    if list(event.Electron_pt)[elIndex] < 25: return False
+    for iObj in range(event.nTrigObj):
+        dR = deltaR(event, "Electron", elIndex, "TrigObj", iObj)
+        # filter bit 32: HLT trigger bits for 1 mu 1 el
+        if event.TrigObj_filterBits[iObj] & 32 and dR < 0.5: return True
+    return False
 
 #--------------------------------------------------------------------------------#
 
