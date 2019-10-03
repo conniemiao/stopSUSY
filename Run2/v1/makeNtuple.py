@@ -515,12 +515,12 @@ for count, event in enumerate(inTree):
     found3rdLept[0] = False
     if findingSameFlavor:
         # when looking for mumu/elel, event should not give valid muel or elmu pair
-        if selectMuEl(event) is not None: found3rdLept[0] = True
-        if selectElMu(event) is not None: found3rdLept[0] = True
+        if selectMuEl(event, isData) is not None: found3rdLept[0] = True
+        if selectElMu(event, isData) is not None: found3rdLept[0] = True
     else:
         # when looking for muel/elmu, event should not give valid mumu or elel pair
-        if selectMuMu(event) is not None: found3rdLept[0] = True
-        if selectElEl(event) is not None: found3rdLept[0] = True
+        if selectMuMu(event, isData) is not None: found3rdLept[0] = True
+        if selectElEl(event, isData) is not None: found3rdLept[0] = True
 
     nJet[0] = numGoodJets
     nbtag[0] = len(evt_btag_indices)
