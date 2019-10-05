@@ -28,17 +28,17 @@ for channel in "${channels[@]}"
 do
     echo ------------------ "$channel" ------------------
     # Bkgd
-    echo --- bkgd ---
-    for process in "${bkgdProcesses[@]}"
-    do
-        bash makeAllNtuplesProcess.sh $testMode bkgd "$channel" "$process"
-        echo
-    done
+    #echo --- bkgd ---
+    #for process in "${bkgdProcesses[@]}"
+    #do
+    #    bash makeAllNtuplesProcess.sh $testMode bkgd "$channel" "$process"
+    #    echo
+    #done
 
     # # Sig
-    echo --- sig ---
-    bash makeAllNtuplesProcess.sh $testMode sig "$channel"
-    echo
+    #echo --- sig ---
+    #bash makeAllNtuplesProcess.sh $testMode sig "$channel"
+    #echo
 
     # # Data 
     echo --- data ---

@@ -489,10 +489,12 @@ for count, event in enumerate(inTree):
 
     HLT_IsoMu24[0] = event.HLT_IsoMu24
     HLT_Ele25_eta2p1_WPTight_Gsf[0] = event.HLT_Ele25_eta2p1_WPTight_Gsf
-    HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL[0] = event.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL
-    HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL[0] = event.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL
-    HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ[0] = event.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ
-    HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ[0] = event.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ
+    if isData and event.run >= 278820: # Run G or higher
+        HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ[0] = event.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ
+        HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ[0] = event.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ
+    else:
+        HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL[0] = event.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL
+        HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL[0] = event.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL
     Flag_goodVertices[0] = event.Flag_goodVertices
     Flag_HBHENoiseFilter[0] = event.Flag_HBHENoiseFilter
     Flag_EcalDeadCellTriggerPrimitiveFilter[0] = event.Flag_EcalDeadCellTriggerPrimitiveFilter
