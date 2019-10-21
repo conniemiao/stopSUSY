@@ -299,11 +299,11 @@ Events.Branch("HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL", HLT_Mu8_TrkIsoVV
 Events.Branch("HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ", HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ, "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ/I")
 Events.Branch("HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ", HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ, "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ/I")
 Events.Branch("nTrigObj", nTrigObj, "nTrigObj/I")
-Events.Branch("TrigObj_filterBits", TrigObj_filterBits, "TrigObj_filterBits[40]/I")
-Events.Branch("TrigObj_pt", TrigObj_pt, "TrigObj_pt[40]/F")
-Events.Branch("TrigObj_eta", TrigObj_eta, "TrigObj_eta[40]/F")
-Events.Branch("TrigObj_phi", TrigObj_phi, "TrigObj_phi[40]/F")
-Events.Branch("TrigObj_id", TrigObj_id, "TrigObj_id[40]/I")
+Events.Branch("TrigObj_filterBits", TrigObj_filterBits, "TrigObj_filterBits[80]/I")
+Events.Branch("TrigObj_pt", TrigObj_pt, "TrigObj_pt[80]/F")
+Events.Branch("TrigObj_eta", TrigObj_eta, "TrigObj_eta[80]/F")
+Events.Branch("TrigObj_phi", TrigObj_phi, "TrigObj_phi[80]/F")
+Events.Branch("TrigObj_id", TrigObj_id, "TrigObj_id[80]/I")
 Events.Branch("Flag_goodVertices", Flag_goodVertices, "Flag_goodVertices/I")
 Events.Branch("Flag_HBHENoiseFilter", Flag_HBHENoiseFilter, "Flag_HBHENoiseFilter/I")
 Events.Branch("Flag_EcalDeadCellTriggerPrimitiveFilter", Flag_EcalDeadCellTriggerPrimitiveFilter, "Flag_EcalDeadCellTriggerPrimitiveFilter/I")
@@ -506,6 +506,9 @@ for count, event in enumerate(inTree):
 
     nTrigObj[0] = event.nTrigObj
     for i in range(event.nTrigObj):
+        if i>80: 
+            sys.stderr.write("WARNING: more than 80 trig objs, skipping rest!\n")
+            break
         TrigObj_filterBits[i] = list(event.TrigObj_filterBits)[i]
         TrigObj_pt[i] = list(event.TrigObj_pt)[i]
         TrigObj_eta[i] = list(event.TrigObj_eta)[i]
