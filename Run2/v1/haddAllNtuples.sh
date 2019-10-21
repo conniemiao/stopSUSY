@@ -15,11 +15,11 @@ if [[ "$testMode" == "test" ]]; then
     # bkgdProcesses=("TTBar" "W-Jets")
     bkgdProcesses=("QCD")
 elif [[ "$testMode" == "all" ]]; then
-    channels=("mumu" "muel" "elel")
-    # channels=("elel")
-    # bkgdProcesses=("W-Jets" "Drell-Yan" "Diboson" "Single-Top" "TTBar" "TT+X" "QCD")
+    # channels=("mumu" "muel" "elel")
+    channels=("muel" "mumu")
+    bkgdProcesses=("W-Jets" "Drell-Yan" "Diboson" "Single-Top" "TTBar" "TT+X" "QCD")
     # bkgdProcesses=("W-Jets" "Drell-Yan" "Diboson" "Single-Top" "TTBar" "TT+X")
-    bkgdProcesses=("QCD")
+    # bkgdProcesses=("QCD")
 else
     echo "need {test, all} as arg to makeAllNtuples.sh"
     exit 1

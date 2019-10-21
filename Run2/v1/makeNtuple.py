@@ -368,7 +368,10 @@ if not isData:
                     "DY"+str(i)+"genWeights",1,-0.5,0.5))
     hGenweights = TH1D("genWeights","genWeights",1,-0.5,0.5)
 
-try: inFile = TFile.Open("root://cms-xrd-global.cern.ch//"+ntupleFileName, "READ")
+try: 
+    if testMode: inFile = TFile.Open(ntupleFileName, "READ") # use test_WJets.root
+    else: 
+        inFile = TFile.Open("root://cms-xrd-global.cern.ch//"+ntupleFileName, "READ")
 except: exit()
 
 try: inTree = inFile.Get("Events")
@@ -377,7 +380,7 @@ nentries = inTree.GetEntries()
 print "nentries =", nentries
 
 nMax = nentries
-if testMode: nMax = 1000 
+if testMode: nMax = 10000 
 
 # ************ BEGIN LOOPING OVER EVENTS **********
 if not isData:
@@ -487,6 +490,11 @@ for count, event in enumerate(inTree):
         Electron_mt[i] = sqrt(2 * Electron_pt[i] * event.MET_pt * \
                 (1 - cos(Electron_phi[i] - event.MET_phi)))
 
+    Flag_goodVertices[0] = event.Flag_goodVertices
+    Flag_HBHENoiseFilter[0] = event.Flag_HBHENoiseFilter
+    Flag_EcalDeadCellTriggerPrimitiveFilter[0] = event.Flag_EcalDeadCellTriggerPrimitiveFilter
+    Flag_BadPFMuonFilter[0] = event.Flag_BadPFMuonFilter
+
     HLT_IsoMu24[0] = event.HLT_IsoMu24
     HLT_Ele25_eta2p1_WPTight_Gsf[0] = event.HLT_Ele25_eta2p1_WPTight_Gsf
     if isData and event.run >= 278820: # Run G or higher
@@ -495,10 +503,6 @@ for count, event in enumerate(inTree):
     else:
         HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL[0] = event.HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL
         HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL[0] = event.HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL
-    Flag_goodVertices[0] = event.Flag_goodVertices
-    Flag_HBHENoiseFilter[0] = event.Flag_HBHENoiseFilter
-    Flag_EcalDeadCellTriggerPrimitiveFilter[0] = event.Flag_EcalDeadCellTriggerPrimitiveFilter
-    Flag_BadPFMuonFilter[0] = event.Flag_BadPFMuonFilter
 
     nTrigObj[0] = event.nTrigObj
     for i in range(event.nTrigObj):
@@ -523,7 +527,7 @@ for count, event in enumerate(inTree):
         # when looking for muel/elmu, event should not give valid mumu or elel pair
         if selectMuMu(event, isData) is not None: found3rdLept[0] = True
         if selectElEl(event, isData) is not None: found3rdLept[0] = True
-
+    
     nJet[0] = numGoodJets
     nbtag[0] = len(evt_btag_indices)
     nbtagLoose[0] = len(evt_btagLoose_indices)

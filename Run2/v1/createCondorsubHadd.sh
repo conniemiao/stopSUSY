@@ -28,6 +28,8 @@ log         = $condorLogDir/haddSubprocess.\$(ClusterId).log
 
 +MaxRuntime = 1140
 
+transfer_input_files = checkRootFile.py
+
 queue
 EOF
 

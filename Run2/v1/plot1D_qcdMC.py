@@ -88,33 +88,34 @@ assert region == "any" or region == "A" or region == "B" or region == "C" or reg
 #--------------------------------------------------------------------------------#
 
 plotSettings = { # [nBins,xMin,xMax,units]
-        "lep1_pt":[100,0,400,"[Gev]"],
-        "lep1_eta":[100,-4,4,""],
-        "lep1_phi":[100,-4,4,""],
-        "lep1_relIso":[100,0,0.2,""],
-        "lep1_mt":[100,0,500,"[GeV]"],
-        "lep2_pt":[100,0,400,"[GeV]"],
-        "lep2_eta":[100,-4,4,""],
-        "lep2_phi":[100,-4,4,""],
-        "lep2_relIso":[100,0,0.2,""],
-        "lep2_mt":[100,0,500,"[GeV]"],
-        "nJet":[10,0,10,""],
-        "Jet_pt":[100,0,400,"[GeV]"], 
-        "Jet_eta":[100,-3,3,""],
-        "Jet_phi":[100,-4,4,""],
-        "Jet_ht":[100,0,800,"[GeV]"],
-        "nbtag":[5,0,5,""],
-        "nbtagLoose":[10,0,10,""],
-        "nbtagTight":[5,0,5,""],
-        "dR_lep1_jet":[100,0,7,""],
-        "dR_lep2_jet":[100,0,7,""],
-        "MET_pt":[100,0,500,"[GeV]"],
-        "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
-        "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
-        "m_eff":[100,0,1000,"[GeV]"], # ht + MET + pt1 + pt2
-        "Jet_ht_div_sqrt_MET":[100,0,200,""],
-        "mt_tot_div_sqrt_MET":[100,0,200,""],
-        "m_eff_div_sqrt_MET":[100,0,200,""]
+#        "lep1_pt":[100,0,400,"[Gev]"],
+#        "lep1_eta":[100,-4,4,""],
+#        "lep1_phi":[100,-4,4,""],
+#        "lep1_relIso":[100,0,0.2,""],
+#        "lep1_mt":[100,0,500,"[GeV]"],
+#        "lep2_pt":[100,0,400,"[GeV]"],
+#        "lep2_eta":[100,-4,4,""],
+#        "lep2_phi":[100,-4,4,""],
+#        "lep2_relIso":[100,0,0.2,""],
+#        "lep2_mt":[100,0,500,"[GeV]"],
+#        "nJet":[10,0,10,""],
+#        "Jet_pt":[100,0,400,"[GeV]"], 
+#        "Jet_eta":[100,-3,3,""],
+#        "Jet_phi":[100,-4,4,""],
+#        "Jet_ht":[100,0,800,"[GeV]"],
+#        "nbtag":[5,0,5,""],
+#        "nbtagLoose":[10,0,10,""],
+#        "nbtagTight":[5,0,5,""],
+#        "dR_lep1_jet":[100,0,7,""],
+#        "dR_lep2_jet":[100,0,7,""],
+        "MET_pt":[100,0,500,"[GeV]"] 
+        #,
+#        "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
+#        "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
+#        "m_eff":[100,0,1000,"[GeV]"], # ht + MET + pt1 + pt2
+#        "Jet_ht_div_sqrt_MET":[100,0,200,""],
+#        "mt_tot_div_sqrt_MET":[100,0,200,""],
+#        "m_eff_div_sqrt_MET":[100,0,200,""]
         }
 
 # bkgd process name : color for plotting
@@ -275,7 +276,7 @@ for subprocessLine in bkgd_redirector:
         continue
     if nentries == 0:
         sys.stderr.write("WARNING: tree in "+bkgdNtupleAdr+" has no entries!"+\
-                " Skipping\n")
+                " Skipping.\n")
         continue
     print("nentries={0:d}".format(nentries))
 
@@ -517,10 +518,14 @@ for plotVar in plotSettings:
     hBkgdStack = hBkgdStacksDict[plotVar]
     hBkgdStack.Draw("hist")
     unitsLabel = plotSettings[plotVar][3]
-    hBkgdStack.GetXaxis().SetTitle(plotVar+" "+unitsLabel)
-    hBkgdStack.GetYaxis().SetTitle("Number of Events, norm to 35921 /pb")
-    hBkgdStack.SetMinimum(1)
-    hBkgdStack.SetMaximum(10**12)
+    try:
+        hBkgdStack.GetXaxis().SetTitle(plotVar+" "+unitsLabel)
+        hBkgdStack.GetYaxis().SetTitle("Number of Events, norm to 35921 /pb")
+        hBkgdStack.SetMinimum(1)
+        hBkgdStack.SetMaximum(10**12)
+    except:
+        sys.stderr.write("WARNING: no hBkgds were filled!\n")
+        continue
 
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal in a separate hist ***************
@@ -574,7 +579,7 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
         continue
     if nentries == 0:
         sys.stderr.write("WARNING: tree in "+sigNtupleAdr+" has no entries!"+\
-                " Skipping\n")
+                " Skipping.\n")
         continue
     print("nentries={0:d}".format(nentries))
 
@@ -793,7 +798,7 @@ for fileNum, subprocessLine in enumerate(data_redirector):
         continue
     if nentries == 0:
         sys.stderr.write("WARNING: tree in "+dataNtupleAdr+" has no entries!"+\
-                " Skipping\n")
+                " Skipping.\n")
         continue
     print("nentries={0:d}".format(nentries))
     

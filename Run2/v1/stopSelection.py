@@ -70,55 +70,65 @@ def __selectLepts(event, isData, findingSameFlav, muPreference, maxL1OkEta, \
             l1Flav = "Electron"
             l2Flav = "Muon"
 
-    # select leading lepton
     l1Index = -1
-    minFoundIso = 1
-    maxFoundPt = 0
-    l1count = getattr(event, "n"+l1Flav)
-    for i1 in range(l1count):
-        pt = list(getattr(event, l1Flav+"_pt"))[i1]
-        absDxy = abs(list(getattr(event, l1Flav+"_dxy"))[i1])
-        absDz = abs(list(getattr(event, l1Flav+"_dz"))[i1])
-        if l1Flav[0] == "M": # Muon:
-            iso = list(getattr(event, "Muon_pfRelIso04_all"))[i1]
-        else: # Electron 
-            iso = list(getattr(event, "Electron_pfRelIso03_all"))[i1]
-        absEta = abs(list(getattr(event, l1Flav+"_eta"))[i1])
-
-        if pt > l1MinOkPt and iso < maxOkIso and absEta < maxL1OkEta \
-                and ((iso < minFoundIso) or (iso == minFoundIso \
-                and pt > maxFoundPt)) and absDxy < maxOkDxy and absDz < maxOkDz \
-                and passTrigger(event, findingSameFlav, muPreference, i1, isData, \
-                l1Flav):
-            minFoundIso = iso
-            maxFoundPt = pt
-            l1Index = i1
-    if l1Index == -1: return None
-
-    # select trailing lepton
     l2Index = -1
-    minFoundIso = 1
-    maxFoundPt = 0
-    l2count = getattr(event, "n"+l2Flav)
-    for i2 in range(l2count):
-        absDxy = abs(list(getattr(event, l2Flav+"_dxy"))[i2])
-        absDz = abs(list(getattr(event, l2Flav+"_dz"))[i2])
+    minSumIso = 1
+
+    # select leading lepton
+    l1count = getattr(event, "n"+l1Flav)
+    if findingSameFlav and l1count<2: return None
+    for i1 in range(l1count):
+        pt1 = list(getattr(event, l1Flav+"_pt"))[i1]
+        absDxy1 = abs(list(getattr(event, l1Flav+"_dxy"))[i1])
+        absDz1 = abs(list(getattr(event, l1Flav+"_dz"))[i1])
+        absEta1 = abs(list(getattr(event, l1Flav+"_eta"))[i1])
         if l1Flav[0] == "M": # Muon:
-            iso = list(getattr(event, "Muon_pfRelIso04_all"))[i1]
+            iso1 = list(getattr(event, "Muon_pfRelIso04_all"))[i1]
         else: # Electron 
-            iso = list(getattr(event, "Electron_pfRelIso03_all"))[i1]
-        absEta = abs(list(getattr(event, l2Flav+"_eta"))[i2])
-        if pt > l2MinOkPt and absEta < maxL2OkEta \
-                and iso < maxOkIso and absDxy < maxOkDxy and absDz < maxOkDz:
-            pt = list(getattr(event, l2Flav+"_pt"))[i2]
-            if (iso < minFoundIso) or (iso == minFoundIso and pt > maxFoundPt):
-                # only do trailing lepton trigger check for muel/elmu
-                if not findingSameFlav and passTrigger(event, findingSameFlav, \
-                        muPreference, i2, isData, l2Flav):
-                    minFoundIso = iso
-                    maxFoundPt = pt
-                    l2Index = i2
+            iso1 = list(getattr(event, "Electron_pfRelIso03_all"))[i1]
+
+        if not(pt1 > l1MinOkPt and iso1 < maxOkIso and absEta1 < maxL1OkEta\
+                and absDxy1 < maxOkDxy and absDz1 < maxOkDz): continue
+
+        # select trailing lepton
+        l2count = getattr(event, "n"+l2Flav)
+        if findingSameFlav: startl2Search = i1+1 # don't want l1 = l2
+        else: startl2Search = 0
+        for i2 in range(startl2Search, l2count):
+            pt2 = list(getattr(event, l2Flav+"_pt"))[i2]
+            absDxy2 = abs(list(getattr(event, l2Flav+"_dxy"))[i2])
+            absDz2 = abs(list(getattr(event, l2Flav+"_dz"))[i2])
+            absEta2 = abs(list(getattr(event, l2Flav+"_eta"))[i2])
+            if l2Flav[0] == "M": # Muon:
+                iso2 = list(getattr(event, "Muon_pfRelIso04_all"))[i2]
+            else: # Electron 
+                iso2 = list(getattr(event, "Electron_pfRelIso03_all"))[i2]
+
+            if not(pt2 > l2MinOkPt and iso2 < maxOkIso and absEta2 < maxL2OkEta \
+                    and absDxy2 < maxOkDxy and absDz2 < maxOkDz): continue
+
+            # total iso check
+            if (iso1+iso2) >= minSumIso: continue
+            minSumIso = iso1+iso2
+
+            # trigger checks
+            if not passTrigger(event, findingSameFlav, muPreference, i1, isData, \
+                    l1Flav): continue
+            # only do trailing lepton trigger check for muel/elmu
+            if not findingSameFlav:
+                if not passTrigger(event, findingSameFlav, muPreference, i2, isData, \
+                        l2Flav): continue
+
+            # don't check for opposite charge since needed for regions
+
+            # found a pair!
+            l1Index = i1
+            l2Index = i2
+
+    if l1Index == -1: return None
     if l2Index == -1: return None
+
+    # print l1Index, l2Index, "n1", l1count, "n2", l2count
 
     # print
     # print "l1 pt: " + str(list(getattr(event, l1Flav+"_pt"))[l1Index])
@@ -155,9 +165,8 @@ def passMu_mumuTrigger(event, muIndex):
     if list(event.Muon_pt)[muIndex] < 26: return False
     for iObj in range(event.nTrigObj):
         dR = deltaR(event, "Muon", muIndex, "TrigObj", iObj)
-        # filter bit 2: iso, 8: mu passed trigger
-        if event.TrigObj_filterBits[iObj] & 8 and event.TrigObj_filterBits[iObj] & 2 \
-                and dR < 0.5: return True
+        # filter bit 2: iso
+        if event.TrigObj_filterBits[iObj] & 2 and dR < 0.5: return True
     return False
 
 # Returns true if the electron at elIndex passes the elel trigger check.

@@ -44,5 +44,14 @@ fi
 
 echo Num in files: $numInFiles
 
-hadd -f -j -k $outDir/$subprocess"_"$testMode"_"$channel".root" \
+echo "Checking for zombie files."
+for file in $inDir/stopCut_$testMode*$channel".root"; do
+    [ -e "$file" ] || continue
+    python checkRootFile.py $file
+done
+echo "Done checking for zombie files."
+
+# -f: compression; -k: skip corrupt/missing files; -j: parallelize
+
+hadd -f -k $outDir/$subprocess"_"$testMode"_"$channel".root" \
     $inDir/stopCut_$testMode*$channel".root"
