@@ -1,5 +1,5 @@
 executable  = haddSubprocess.sh
-arguments   = all data mumu Run2016H-Nano1June2019-v1 DoubleMuon
+arguments   = all data muel Run2016H-Nano1June2019-v1 MuonEG
 
 universe    = vanilla
 initialdir  = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1
