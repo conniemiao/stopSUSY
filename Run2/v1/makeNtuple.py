@@ -62,20 +62,20 @@ else: assert False, "invalid type, need {data, bkgd, sig}"
 
 # selecting for either mu-mu or el-el (as opposed to mu-el or el-mu)
 if sys.argv[3] == "mumu":
-    findingSameFlavor = True
-    muPreference = True
+    findSameFlav = True
+    muPref = True
     l1Flav = "Muon"
     l2Flav = "Muon"
     if isData: process = "DoubleMuon"
 elif sys.argv[3] == "elel":
-    findingSameFlavor = True
-    muPreference = False
+    findSameFlav = True
+    muPref = False
     l1Flav = "Electron"
     l2Flav = "Electron"
     if isData: process = "DoubleEG"
 elif sys.argv[3] == "muel":
-    findingSameFlavor = False
-    muPreference = False
+    findSameFlav = False
+    muPref = False
     l1Flav = "Muon"
     l2Flav = "Electron"
     if isData: process = "MuonEG"
@@ -410,8 +410,8 @@ for count, event in enumerate(inTree):
         #             "nentries", hGenweights.GetEntries() 
 
     # ****** Loose selection for valid lep1, lep2, jets (with trigger) ******
-    if findingSameFlavor:
-        if muPreference:
+    if findSameFlav:
+        if muPref:
             lepIndices = selectMuMu(event, isData, maxOkIso=0.3)
         else: lepIndices = selectElEl(event, isData, maxOkIso=0.3)
         if lepIndices is None: continue
@@ -522,7 +522,7 @@ for count, event in enumerate(inTree):
 
     # veto (3rd lepton) checks:
     found3rdLept[0] = False
-    if findingSameFlavor:
+    if findSameFlav:
         # when looking for mumu/elel, event should not give valid muel or elmu pair
         if selectMuEl(event, isData) is not None: found3rdLept[0] = True
         if selectElMu(event, isData) is not None: found3rdLept[0] = True

@@ -45,25 +45,25 @@ def selectElMu(event, isData, maxL1OkEta=1.6, maxL2OkEta=2.4, l1MinOkPt=25, \
 #--------------------------------------------------------------------------------#
 
 # Selects a pair of leptons from an event (general private helper method). 
-# If findingSameFlav is True: selects for pair of muons if muPreference is True, 
+# If findSameFlav is True: selects for pair of muons if muPref is True, 
 # or for pair of electrons if False. 
-# If findingSameFlav is False: selects for leading mu and trailing el if
-# muPreference is True, or for leading el and trailing mu if False.
+# If findSameFlav is False: selects for leading mu and trailing el if
+# muPref is True, or for leading el and trailing mu if False.
 # isData is used to determine proper trigger checks.
 # Returns an array of 2 entries where a[0] = l1Index, a[1] = l2Index, where 
 # l1 is always the leading lepton (satisfies the higher pt cut), l2 is trailing.
 # All the max/min parameters should be specified by selectMuMu/ElEl/MuEl/ElMu.
-def __selectLepts(event, isData, findingSameFlav, muPreference, maxL1OkEta, \
+def __selectLepts(event, isData, findSameFlav, muPref, maxL1OkEta, \
         maxL2OkEta, l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz):
-    if findingSameFlav:
-        if muPreference: # mumu
+    if findSameFlav:
+        if muPref: # mumu
             l1Flav = "Muon"
             l2Flav = "Muon"
         else: # elel
             l1Flav = "Electron"
             l2Flav = "Electron"
     else:
-        if muPreference: # muel
+        if muPref: # muel
             l1Flav = "Muon"
             l2Flav = "Electron"
         else: # elmu
@@ -76,7 +76,7 @@ def __selectLepts(event, isData, findingSameFlav, muPreference, maxL1OkEta, \
 
     # select leading lepton
     l1count = getattr(event, "n"+l1Flav)
-    if findingSameFlav and l1count<2: return None
+    if findSameFlav and l1count<2: return None
     for i1 in range(l1count):
         pt1 = list(getattr(event, l1Flav+"_pt"))[i1]
         absDxy1 = abs(list(getattr(event, l1Flav+"_dxy"))[i1])
@@ -92,7 +92,7 @@ def __selectLepts(event, isData, findingSameFlav, muPreference, maxL1OkEta, \
 
         # select trailing lepton
         l2count = getattr(event, "n"+l2Flav)
-        if findingSameFlav: startl2Search = i1+1 # don't want l1 = l2
+        if findSameFlav: startl2Search = i1+1 # don't want l1 = l2
         else: startl2Search = 0
         for i2 in range(startl2Search, l2count):
             pt2 = list(getattr(event, l2Flav+"_pt"))[i2]
@@ -111,19 +111,16 @@ def __selectLepts(event, isData, findingSameFlav, muPreference, maxL1OkEta, \
             if (iso1+iso2) >= minSumIso: continue
             minSumIso = iso1+iso2
 
-            # trigger checks
-            if not passTrigger(event, findingSameFlav, muPreference, i1, isData, \
-                    l1Flav): continue
-            # only do trailing lepton trigger check for muel/elmu
-            if not findingSameFlav:
-                if not passTrigger(event, findingSameFlav, muPreference, i2, isData, \
-                        l2Flav): continue
+            # trigger checks: either leading or trailing lep passes
+            if passSingleLeptTrig(event, i1, l1Flav) or \
+                    passSingleLeptTrig(event, i2, l2Flav) or \
+                    passCrossTrig(event, findSameFlav, muPref, i1, isData, l1Flav) \
+                    or passCrossTrig(event, findSameFlav, muPref, i2, isData, l2Flav):
+                # found a pair!
+                l1Index = i1
+                l2Index = i2
 
             # don't check for opposite charge since needed for regions
-
-            # found a pair!
-            l1Index = i1
-            l2Index = i2
 
     if l1Index == -1: return None
     if l2Index == -1: return None
@@ -143,25 +140,30 @@ def __selectLepts(event, isData, findingSameFlav, muPreference, maxL1OkEta, \
 
 #--------------------------------------------------------------------------------#
 
-# Handles redirecting the pass trigger check to the correct function. flav only
+# Handles redirecting the pass single lepton trigger check to the correct function. 
+def passSingleLeptTrig(event, index, flav):
+    if flav[0] == "M": return passMuTrigger(event, index)
+    else: return passElTrigger(event, index)
+
+# Handles redirecting the pass cross trigger check to the correct function. flav only
 # needed for muel/elmu, where it refers to the actual lepton
-# being checked at that point (since both mu and el need to be checked and the
-# checks are different depending on if they are leading or trailing).
-def passTrigger(event, findingSameFlav, muPreference, index, isData, flav):
-    if findingSameFlav:
-        if muPreference: return passMu_mumuTrigger(event, index) # mumu
+# being checked at that point (since checks are different depending on if they are 
+# leading or trailing).
+def passCrossTrig(event, findSameFlav, muPref, index, isData, flav):
+    if findSameFlav:
+        if muPref: return passMu_mumuTrigger(event, index) # mumu
         else: return passEl_elelTrigger(event, index) # elel
     else:
-        if muPreference: # leading mu, trailing el
+        if muPref: # leading mu, trailing el
             if flav[0] == "M": return passMu_muelTrigger(event, index, isData)
             else: return passEl_muelTrigger(event, index, isData)
         else: # leading el, trailing mu
             if flav[0] == "M": return passMu_elmuTrigger(event, index, isData)
             else: return passEl_elmuTrigger(event, index, isData)
 
-# Returns true if the muon at muIndex passes the mumu trigger check.
-def passMu_mumuTrigger(event, muIndex):
-    if not event.HLT_IsoMu24: return False
+# Returns true if the muon at muIndex passes the single muon trigger check.
+def passMuTrigger(event, muIndex):
+    if not event.HLT_IsoMu24 and not event.HLT_IsoMu27: return False
     if list(event.Muon_pt)[muIndex] < 26: return False
     for iObj in range(event.nTrigObj):
         dR = deltaR(event, "Muon", muIndex, "TrigObj", iObj)
@@ -169,14 +171,36 @@ def passMu_mumuTrigger(event, muIndex):
         if event.TrigObj_filterBits[iObj] & 2 and dR < 0.5: return True
     return False
 
-# Returns true if the electron at elIndex passes the elel trigger check.
-def passEl_elelTrigger(event, elIndex):
-    if not event.HLT_Ele25_eta2p1_WPTight_Gsf: return False
+# Returns true if the electron at elIndex passes the single electron trigger check.
+def passElTrigger(event, elIndex):
+    if not event.HLT_Ele25_eta2p1_WPTight_Gsf and \
+            not event.HLT_Ele27_eta2p1_WPTight_Gsf: return False
     if list(event.Electron_pt)[elIndex] < 27: return False
     for iObj in range(event.nTrigObj):
         dR = deltaR(event, "Electron", elIndex, "TrigObj", iObj)
         # filter bit 2: el working point tight
         if event.TrigObj_filterBits[iObj] & 2 and dR < 0.5: return True
+    return False
+
+# Returns true if the el at elIndex passes the double electron trigger check.
+def passEl_elelTrigger(event, elIndex):
+    if not event.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ: return False
+    if list(event.Electron_pt)[elIndex] < 14: return False
+    for iObj in range(event.nTrigObj):
+        dR = deltaR(event, "Electron", elIndex, "TrigObj", iObj)
+        # filter bit 16: HLT trigger bits for 2 el
+        if event.TrigObj_filterBits[iObj] & 16 and dR < 0.5: return True
+    return False
+
+# Returns true if the mu at muIndex passes the double muon trigger check.
+def passMu_mumuTrigger(event, muIndex):
+    if not event.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ and \
+            not event.HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ: return False
+    if list(event.Muon_pt)[muIndex] < 10: return False
+    for iObj in range(event.nTrigObj):
+        dR = deltaR(event, "Muon", muIndex, "TrigObj", iObj)
+        # filter bit 16: HLT trigger bits for 2 mu 
+        if event.TrigObj_filterBits[iObj] & 16 and dR < 0.5: return True
     return False
 
 # Returns true if the mu at muIndex passes the muon trigger check for leading mu,
@@ -279,38 +303,38 @@ def getBtagIndices(event, jets, strictness=1):
 
 #--------------------------------------------------------------------------------#
 
-# Returns true if an event with l1/l2Charge, l1/l2RelIso, and findingSameFlavor
+# Returns true if an event with l1/l2Charge, l1/l2RelIso, and findSameFlav
 # parameters falls in region A (same sign, nominal rel iso)
-def isRegionA(l1Charge, l2Charge, l1RelIso, l2RelIso, findingSameFlavor):
-    if findingSameFlavor: maxRelIso = 0.1
+def isRegionA(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
+    if findSameFlav: maxRelIso = 0.1
     else: maxRelIso = 0.2
     if l1Charge*l2Charge > 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso:
         return True
     return False
 
-# Returns true if an event with l1/l2Charge, l1/l2RelIso, and findingSameFlavor
+# Returns true if an event with l1/l2Charge, l1/l2RelIso, and findSameFlav
 # parameters falls in region B (opposite sign, nominal rel iso - signal region)
-def isRegionB(l1Charge, l2Charge, l1RelIso, l2RelIso, findingSameFlavor):
-    if findingSameFlavor: maxRelIso = 0.1
+def isRegionB(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
+    if findSameFlav: maxRelIso = 0.1
     else: maxRelIso = 0.2
     if l1Charge*l2Charge < 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso:
         return True
     return False
 
-# Returns true if an event with l1/l2Charge, l1/l2RelIso, and findingSameFlavor
+# Returns true if an event with l1/l2Charge, l1/l2RelIso, and findSameFlav
 # parameters falls in region C (opposite sign, inverted rel iso)
-def isRegionC(l1Charge, l2Charge, l1RelIso, l2RelIso, findingSameFlavor):
-    if findingSameFlavor: maxRelIso = 0.1
+def isRegionC(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
+    if findSameFlav: maxRelIso = 0.1
     else: maxRelIso = 0.2
     if l1Charge*l2Charge < 0 and l1RelIso > maxRelIso and l2RelIso > maxRelIso \
             and l1RelIso < 2*maxRelIso and l2RelIso < 2*maxRelIso:
         return True
     return False
 
-# Returns true if an event with l1/l2Charge, l1/l2RelIso, and findingSameFlavor
+# Returns true if an event with l1/l2Charge, l1/l2RelIso, and findSameFlav
 # parameters falls in region D (same sign, inverted rel iso)
-def isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, findingSameFlavor):
-    if findingSameFlavor: maxRelIso = 0.1
+def isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
+    if findSameFlav: maxRelIso = 0.1
     else: maxRelIso = 0.2
     if l1Charge*l2Charge > 0 and l1RelIso > maxRelIso and l2RelIso > maxRelIso \
             and l1RelIso < 2*maxRelIso and l2RelIso < 2*maxRelIso:
