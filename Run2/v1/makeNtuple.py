@@ -170,11 +170,11 @@ HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL = array('i',[0]) # read as bool
 HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ = array('i',[0]) # read as bool
 HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ = array('i',[0]) # read as bool
 nTrigObj = array('i',[0])
-TrigObj_filterBits = np.zeros(40, dtype=np.int32)
-TrigObj_pt = np.zeros(40, dtype=np.float32)
-TrigObj_eta = np.zeros(40, dtype=np.float32)
-TrigObj_phi = np.zeros(40, dtype=np.float32)
-TrigObj_id = np.zeros(40, dtype=np.int32)
+TrigObj_filterBits = np.zeros(80, dtype=np.int32)
+TrigObj_pt = np.zeros(80, dtype=np.float32)
+TrigObj_eta = np.zeros(80, dtype=np.float32)
+TrigObj_phi = np.zeros(80, dtype=np.float32)
+TrigObj_id = np.zeros(80, dtype=np.int32)
 Flag_goodVertices = array('i',[0]) # read as bool
 Flag_HBHENoiseFilter = array('i',[0]) # read as bool 
 Flag_EcalDeadCellTriggerPrimitiveFilter = array('i',[0]) # read as bool
