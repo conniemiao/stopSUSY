@@ -19,8 +19,10 @@
 # Uses sig_fileRedirector
 # Uses data_fileRedirector
 
-print "Importing modules."
 import sys, os
+assert len(sys.argv) == 6, "need 5 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut, region {A, B, C, D, any}"
+
+print "Importing modules."
 from ROOT import TFile, TTree, TH1D, TCanvas, TImage, TLegend, TText, THStack
 from ROOT import gSystem, gStyle, gROOT, kTRUE
 from stopSelection import deltaR
@@ -40,8 +42,6 @@ statsDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/
 # location where the root file with all the control plots will be saved
 imgDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/v1/plot1D"
 
-assert len(sys.argv) == 6, "need 5 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut, region {A, B, C, D, any}"
-
 if sys.argv[1] == "test": testMode = True
 elif sys.argv[1] == "all": testMode = False
 else: assert False, "invalid test mode, need {test, all}"
@@ -55,19 +55,19 @@ if not displayMode:
 # selecting for either mu-mu or el-el (as opposed to mu-el or el-mu)
 if sys.argv[3] == "mumu":
     findingSameFlavor = True
-    muPreference = True
+    muPref = True
     l1Flav = "Muon"
     l2Flav = "Muon"
     dataProcess = "DoubleMuon"
 elif sys.argv[3] == "elel":
     findingSameFlavor = True
-    muPreference = False
+    muPref = False
     l1Flav = "Electron"
     l2Flav = "Electron"
     dataProcess = "DoubleEG"
 elif sys.argv[3] == "muel":
     findingSameFlavor = False
-    muPreference = False
+    muPref = False
     l1Flav = "Muon"
     l2Flav = "Electron"
     dataProcess = "MuonEG"
@@ -88,34 +88,41 @@ assert region == "any" or region == "A" or region == "B" or region == "C" or reg
 #--------------------------------------------------------------------------------#
 
 plotSettings = { # [nBins,xMin,xMax,units]
-        "lep1_pt":[100,0,400,"[Gev]"],
-        "lep1_eta":[100,-4,4,""],
-        "lep1_phi":[100,-4,4,""],
-        "lep1_relIso":[100,0,0.2,""],
-        "lep1_mt":[100,0,500,"[GeV]"],
-        "lep2_pt":[100,0,400,"[GeV]"],
-        "lep2_eta":[100,-4,4,""],
-        "lep2_phi":[100,-4,4,""],
-        "lep2_relIso":[100,0,0.2,""],
-        "lep2_mt":[100,0,500,"[GeV]"],
-        "nJet":[10,0,10,""],
-        "Jet_pt":[100,0,400,"[GeV]"], 
-        "Jet_eta":[100,-3,3,""],
-        "Jet_phi":[100,-4,4,""],
-        "Jet_ht":[100,0,800,"[GeV]"],
-        "nbtag":[5,0,5,""],
-        "nbtagLoose":[10,0,10,""],
-        "nbtagTight":[5,0,5,""],
-        "dR_lep1_jet":[100,0,7,""],
-        "dR_lep2_jet":[100,0,7,""],
-       "MET_pt":[100,0,500,"[GeV]"], 
-        "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
-        "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
-        "m_eff":[100,0,1000,"[GeV]"], # ht + MET + pt1 + pt2
-        "Jet_ht_div_sqrt_MET":[100,0,200,""],
-        "mt_tot_div_sqrt_MET":[100,0,200,""],
+#        "lep1_pt":[100,0,400,"[Gev]"],
+#        "lep1_eta":[100,-4,4,""],
+#        "lep1_phi":[100,-4,4,""],
+#        "lep1_relIso":[100,0,0.2,""],
+#        "lep1_mt":[100,0,500,"[GeV]"],
+#        "lep2_pt":[100,0,400,"[GeV]"],
+#        "lep2_eta":[100,-4,4,""],
+#        "lep2_phi":[100,-4,4,""],
+#        "lep2_relIso":[100,0,0.2,""],
+#        "lep2_mt":[100,0,500,"[GeV]"],
+#        "nJet":[10,0,10,""],
+#        "Jet_pt":[100,0,400,"[GeV]"], 
+#        "Jet_eta":[100,-3,3,""],
+#        "Jet_phi":[100,-4,4,""],
+#        "Jet_ht":[100,0,800,"[GeV]"],
+#        "nbtag":[5,0,5,""],
+#        "nbtagLoose":[10,0,10,""],
+#        "nbtagTight":[5,0,5,""],
+#        "dR_lep1_jet":[100,0,7,""],
+#        "dR_lep2_jet":[100,0,7,""],
+#        "MET_pt":[100,0,500,"[GeV]"], 
+#        "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
+#        "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
+#        "m_eff":[100,0,1000,"[GeV]"], # ht + MET + pt1 + pt2
+#        "Jet_ht_div_sqrt_MET":[100,0,200,""],
+#        "mt_tot_div_sqrt_MET":[100,0,200,""],
         "m_eff_div_sqrt_MET":[100,0,200,""]
         }
+
+# produced particle -> labeled particle
+# hq: heavy quarks (c,b,t) lq: light quarks (d,u,s), g: gluon
+# tau->mu,e, e->e, and mu->mu are allowed, others are fake in some way.
+fakeTypes = OrderedDict([("d/u/s->e/mu",0),("c/b/t->e/mu",1), ("g->e/mu",2), \
+        ("e->mu",3), ("tau->e/mu",4), ("e->e",5), ("mu->mu",6), ("other",7)])
+nFakeTypes = len(fakeTypes)
 
 # bkgd process name : color for plotting
 colorWJets = 38 # dark blue
@@ -123,7 +130,7 @@ colorDY = 46 # red
 colorTTBar = 835 # teal 
 colorSingleTop = 832  
 colorTTX = 831 
-colorDiboson = 806 #orange
+colorDiboson = 806 # orange
 colorQCD = 868 # light blue
 processes = OrderedDict([("W-Jets",colorWJets), ("Drell-Yan",colorDY), \
         ("TTBar",colorTTBar), ("Single-Top",colorSingleTop), ("TT+X",colorTTX), \
@@ -139,6 +146,10 @@ for plotVar in plotSettings: # add an entry to the plotVar:hist dictionary
     hBkgdStacksDict.update({plotVar:THStack(plotVar+"_bkgdStack", title)})
 title = "cutflow ("+channel+", region "+region+")"
 hBkgdCutflowStack = THStack("cutflow_bkgdStack", title)
+c_fakeSort = TCanvas("c_fakeSort","c_fakeSort",10,20,1000,700)
+legend_fakeSorting = TLegend(.45,.75,.90,.90)
+title = "fakeSorting ("+channel+", cuts to "+lastcut+", region "+region+")"
+hFakeSortingStack = THStack("fakeSorting", title)
 
 # limit the number of files to process (other than what is commented out in the file
 # redirector)
@@ -156,12 +167,15 @@ gStyle.SetOptStat(0) # don't show any stats
 print
 print "----------- Plotting from background. -----------"
 
-# hBkgdCutflowDict maps every subprocess to an hBkgdCutflow which contains the cutflow
+# hBkgdCutflowDict maps every subprocess to an hBkgdCutflow that contains the cutflow
 # from all the ntuples for that subprocess.
 hBkgdCutflowDict = {}
 # hBkgdCutsCountDict maps every process to an array of size nCuts that keeps track
 # of the num evts remaining after each cut for that process
 hBkgdCutsCountDict = {}
+# hFakeSorting maps every subprocess to an hFakeSorting that contains the histogram
+# that sorts the events into different fake processes
+hFakeSortingDict = {}
 # hBkgdSubprocessesPlotVarDict maps each bkgd subprocess to another dictionary,
 # which maps each plotVar to a hist.
 hBkgdSubprocessesPlotVarDict = {}
@@ -182,9 +196,12 @@ with open("bkgd_fileRedirector") as bkgd_redirector:
 
         if subprocess != "WJetsToLNu" and subprocess != "DYJetsToLL_M-50":
             hBkgdSubprocessesPlotVarDict.update({subprocess:{}})
-            hBkgdCutflow = TH1D("cutflow_"+subprocess+"_bkgd", subprocess, nCuts, 0, \
+            hBkgdCutflow = TH1D("cutflow_"+subprocess+"_bkgd", subprocess, nCuts, 0,\
                     nCuts)
             hBkgdCutflowDict.update({subprocess:hBkgdCutflow})
+            hFakeSorting = TH1D("fakeSorting_"+subprocess, subprocess, nFakeTypes, \
+                    0, nFakeTypes)
+            hFakeSortingDict.update({subprocess:hFakeSorting})
 
 # deal with W/DYJets special cases:
 subprocess = "WJetsToLNu"
@@ -194,12 +211,17 @@ if len(WNJetsXsecs) != 5:
     hBkgdSubprocessesPlotVarDict.update({subprocess:{}})
     hBkgdCutflow = TH1D("cutflow_"+subprocess+"_bkgd", subprocess, nCuts, 0, nCuts)
     hBkgdCutflowDict.update({subprocess:hBkgdCutflow})
+    hFakeSorting = TH1D("fakeSorting_"+subprocess, subprocess, nFakeTypes, 0, \
+            nFakeTypes)
+    hFakeSortingDict.update({subprocess:hFakeSorting})
 else:
     for i in range(5):
         name = subprocess+"_"+str(i)+"Parton"
         hBkgdSubprocessesPlotVarDict.update({name:{}})
         hBkgdCutflow = TH1D("cutflow_"+name+"_bkgd", name, nCuts, 0, nCuts)
         hBkgdCutflowDict.update({name:hBkgdCutflow})
+        hFakeSorting = TH1D("fakeSorting_"+name, name, nFakeTypes, 0, nFakeTypes)
+        hFakeSortingDict.update({name:hFakeSorting})
 subprocess = "DYJetsToLL_M-50"
 DYJetsIncl_only = False # default: running on both DYJets incl and DYnJets 
 if len(DYNJetsXsecs) != 5:
@@ -207,21 +229,34 @@ if len(DYNJetsXsecs) != 5:
     hBkgdSubprocessesPlotVarDict.update({subprocess:{}})
     hBkgdCutflow = TH1D("cutflow_"+subprocess+"_bkgd", subprocess, nCuts, 0, nCuts)
     hBkgdCutflowDict.update({subprocess:hBkgdCutflow})
+    hFakeSorting = TH1D("fakeSorting_"+subprocess, subprocess, nFakeTypes, 0, \
+            nFakeTypes)
+    hFakeSortingDict.update({subprocess:hFakeSorting})
 else:
     for i in range(5):
         name = subprocess+"_"+str(i)+"Parton"
         hBkgdSubprocessesPlotVarDict.update({name:{}})
-        hBkgdCutflow = TH1D("cutflow_"+name+"_bkgd", name, nCuts, 0, nCuts)
+        hBkgdCutflow = TH1D("cutflow_"+name+"_bkgd", "cutflow_"+name, nCuts, 0, \
+                nCuts)
         hBkgdCutflowDict.update({name:hBkgdCutflow})
+        hFakeSorting = TH1D("fakeSorting_"+name, "fakeSorting_"+name, nFakeTypes, 0,\
+                nFakeTypes)
+        hFakeSortingDict.update({name:hFakeSorting})
 
 # make/update the histgorams for all the subprocesses
 for name in hBkgdSubprocessesPlotVarDict: # same as names in hBkgdCutflowDict
     hBkgdCutflow = hBkgdCutflowDict[name]
-    for i, cut in enumerate(cuts, start=1):
-        if i>nCuts: break
-        hBkgdCutflow.GetXaxis().SetBinLabel(i, cut)
+    hFakeSorting = hFakeSortingDict[name]
+    for c, cut in enumerate(cuts, start=1):
+        if c>nCuts: break
+        hBkgdCutflow.GetXaxis().SetBinLabel(c, cut)
     hBkgdCutflow.SetDirectory(0) # necessary to keep hist from closing
     hBkgdCutflow.SetDefaultSumw2() # automatically sum w^2 while filling
+
+    for i, fakeType in enumerate(fakeTypes, start=1):
+        hFakeSorting.GetXaxis().SetBinLabel(i, fakeType)
+    hFakeSorting.SetDirectory(0)
+    hFakeSorting.SetDefaultSumw2()
 
     for plotVar in plotSettings:
         nBins = plotSettings[plotVar][0]
@@ -298,6 +333,7 @@ for subprocessLine in bkgd_redirector:
             (subprocess != "DYJetsToLL_M-50" or DYJetsIncl_only):
         hBkgdPlotVarDict = hBkgdSubprocessesPlotVarDict[subprocess]
         hBkgdCutflow = hBkgdCutflowDict[subprocess] 
+        hFakeSorting = hFakeSortingDict[subprocess]
 
     nMax = nentries
     if testMode: nMax = 1000
@@ -316,6 +352,7 @@ for subprocessLine in bkgd_redirector:
                 (not DYJetsIncl_only and subprocess == "DYJetsToLL_M-50"):
             nPartons = event.LHE_Njets
             hBkgdCutflow = hBkgdCutflowDict[subprocess+"_"+str(nPartons)+"Parton"]
+            hFakeSorting = hFakeSortingDict[subprocess+"_"+str(nPartons)+"Parton"]
             hBkgdPlotVarDict = hBkgdSubprocessesPlotVarDict[subprocess+"_"+\
                     str(nPartons)+"Parton"]
         else: pass # already defined above
@@ -371,6 +408,51 @@ for subprocessLine in bkgd_redirector:
         if nCuts > cuts["nJet<4"]:
             if event.nJet >= 4: continue
             hBkgdCutflow.Fill(cuts["nJet<4"], evtwt)
+
+        # ********** Sorting fake types. ***********
+        # fill twice for each event (once for each lepton)
+
+        if getattr(event, l1Flav+"_pdgId")[l1Index]==1 or \
+                getattr(event, l1Flav+"_pdgId")[l1Index]==2 or \
+                getattr(event, l1Flav+"_pdgId")[l1Index]==3: # d:1, u:2, s:3
+                    hFakeSorting.Fill(fakeTypes["d/u/s->e/mu"])
+        elif getattr(event, l1Flav+"_pdgId")[l1Index]==4 or \
+                getattr(event, l1Flav+"_pdgId")[l1Index]==5 or \
+                getattr(event, l1Flav+"_pdgId")[l1Index]==6: # c:4, b:5, t:6
+                    hFakeSorting.Fill(fakeTypes["c/b/t->e/mu"])
+        elif getattr(event, l1Flav+"_pdgId")[l1Index]==9 or \
+                getattr(event, l1Flav+"_pdgId")[l1Index]==21: # g:9 or 21?
+                    hFakeSorting.Fill(fakeTypes["g->e/mu"])
+        elif (l1Flav[0]=="M" and getattr(event, l1Flav+"_pdgId")[l1Index]==11):
+            hFakeSorting.Fill(fakeTypes["e->mu"]) # e:11
+        elif getattr(event, l1Flav+"_pdgId")[l1Index]==15: # tau:15
+            hFakeSorting.Fill(fakeTypes["tau->e/mu"])
+        elif (l1Flav[0]=="E" and getattr(event, l1Flav+"_pdgId")[l1Index]==11):
+            hFakeSorting.Fill(fakeTypes["e->e"])
+        elif (l1Flav[0]=="M" and getattr(event, l1Flav+"_pdgId")[l1Index]==13):
+            hFakeSorting.Fill(fakeTypes["mu->mu"]) # mu:13
+        else: hFakeSorting.Fill(fakeTypes["other"])
+
+        if getattr(event, l2Flav+"_pdgId")[l2Index]==1 or \
+                getattr(event, l2Flav+"_pdgId")[l2Index]==2 or \
+                getattr(event, l2Flav+"_pdgId")[l2Index]==3:
+                    hFakeSorting.Fill(fakeTypes["d/u/s->e/mu"])
+        elif getattr(event, l2Flav+"_pdgId")[l2Index]==4 or \
+                getattr(event, l2Flav+"_pdgId")[l2Index]==5 or \
+                getattr(event, l2Flav+"_pdgId")[l2Index]==6:
+                    hFakeSorting.Fill(fakeTypes["c/b/t->e/mu"])
+        elif getattr(event, l2Flav+"_pdgId")[l2Index]==9 or \
+                getattr(event, l2Flav+"_pdgId")[l2Index]==21:
+                    hFakeSorting.Fill(fakeTypes["g->e/mu"])
+        elif (l2Flav[0]=="M" and getattr(event, l2Flav+"_pdgId")[l2Index]==11):
+            hFakeSorting.Fill(fakeTypes["e->mu"])
+        elif getattr(event, l2Flav+"_pdgId")[l2Index]==15:
+            hFakeSorting.Fill(fakeTypes["tau->e/mu"])
+        elif (l2Flav[0]=="E" and getattr(event, l2Flav+"_pdgId")[l2Index]==11):
+            hFakeSorting.Fill(fakeTypes["e->e"])
+        elif (l2Flav[0]=="M" and getattr(event, l2Flav+"_pdgId")[l2Index]==13):
+            hFakeSorting.Fill(fakeTypes["mu->mu"])
+        else: hFakeSorting.Fill(fakeTypes["other"])
 
         # ********** Filling plotVars. ***********
         if event.nJet > 0:
@@ -446,12 +528,20 @@ for subprocessLine in bkgd_redirector:
                 if i == 0:
                     legend = legendDict[plotVar]
                     legend.AddEntry(hBkgd, process)
-            hBkgdCutflow = hBkgdCutflowDict[subprocess+"_"+str(i)+"Parton"]
+            name = subprocess+"_"+str(i)+"Parton"
+            print name
+            hBkgdCutflow = hBkgdCutflowDict[name]
             hBkgdCutflow.Scale(norm)
-            print subprocess+"_"+str(i)+"Parton"
-            for i, cut in enumerate(cuts):
-                if i >= nCuts: break
-                hBkgdCutsCountDict[process][i] += int(hBkgdCutflow.GetBinContent(i+1))
+            for c, cut in enumerate(cuts):
+                if c >= nCuts: break
+                hBkgdCutsCountDict[process][c]+=int(hBkgdCutflow.GetBinContent(c+1))
+            hFakeSorting = hFakeSortingDict[name]
+            hFakeSorting.Scale(norm)
+            hFakeSorting.SetFillColor(processes[process])
+            hFakeSorting.SetLineColor(processes[process])
+            hFakeSortingStack.Add(hFakeSorting)
+            if i == 0:
+                legend_fakeSorting.AddEntry(hFakeSorting, process)
     elif not DYJetsIncl_only and subprocess == "DYJetsToLL_M-50":
         DYIncl_totgenwt = bkgdTotGenweight # will be used later for DYxJets
         DYIncl_xsec = xsec
@@ -471,12 +561,20 @@ for subprocessLine in bkgd_redirector:
                 if i == 0:
                     legend = legendDict[plotVar]
                     legend.AddEntry(hBkgd, process)
-            hBkgdCutflow = hBkgdCutflowDict[subprocess+"_"+str(i)+"Parton"]
+            name = subprocess+"_"+str(i)+"Parton"
+            print name
+            hBkgdCutflow = hBkgdCutflowDict[name]
             hBkgdCutflow.Scale(norm)
-            print subprocess+"_"+str(i)+"Parton"
-            for i, cut in enumerate(cuts):
-                if i >= nCuts: break
-                hBkgdCutsCountDict[process][i] += int(hBkgdCutflow.GetBinContent(i+1))
+            for c, cut in enumerate(cuts):
+                if c >= nCuts: break
+                hBkgdCutsCountDict[process][c] += int(hBkgdCutflow.GetBinContent(c+1))
+            hFakeSorting = hFakeSortingDict[name]
+            hFakeSorting.Scale(norm)
+            hFakeSorting.SetFillColor(processes[process])
+            hFakeSorting.SetLineColor(processes[process])
+            hFakeSortingStack.Add(hFakeSorting)
+            if i == 0:
+                legend_fakeSorting.AddEntry(hFakeSorting, process)
 
     # if running only on W/DYJets incl, then all subprocesses; otherwise all
     # subprocesses other than WJets incl and DYJets incl:
@@ -503,10 +601,18 @@ for subprocessLine in bkgd_redirector:
             if newProcess:
                 legend = legendDict[plotVar]
                 legend.AddEntry(hBkgd, process)
+
         hBkgdCutflow.Scale(norm)
-        for i, cut in enumerate(cuts):
-            if i >= nCuts: break
-            hBkgdCutsCountDict[process][i] += int(hBkgdCutflow.GetBinContent(i+1))
+        for c, cut in enumerate(cuts):
+            if c >= nCuts: break
+            hBkgdCutsCountDict[process][c] += int(hBkgdCutflow.GetBinContent(c+1))
+
+        hFakeSorting.Scale(norm)
+        hFakeSorting.SetFillColor(processes[process])
+        hFakeSorting.SetLineColor(processes[process])
+        hFakeSortingStack.Add(hFakeSorting)
+        if newProcess:
+            legend_fakeSorting.AddEntry(hFakeSorting, process)
 
     # all subprocesses:
     bkgdFile.Close()
@@ -525,6 +631,11 @@ for plotVar in plotSettings:
     except:
         sys.stderr.write("WARNING: no hBkgds were filled!\n")
         continue
+
+c_fakeSort.cd()
+hFakeSortingStack.Draw("hist")
+hFakeSortingStack.SetMinimum(1)
+hFakeSortingStack.SetMaximum(10**12)
 
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal in a separate hist ***************
@@ -600,9 +711,9 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
     hSigCutflow.SetDefaultSumw2() # automatically sum w^2 while filling
     hSigCutflowDict.update({subprocess:hSigCutflow})
     hSigCutsCountDict.update({subprocess:[0]*nCuts})
-    for i, cut in enumerate(cuts, start=1):
-        if i>nCuts: break
-        hSigCutflow.GetXaxis().SetBinLabel(i, cut)
+    for c, cut in enumerate(cuts, start=1):
+        if c>nCuts: break
+        hSigCutflow.GetXaxis().SetBinLabel(c, cut)
 
     hSigGenweights = sigFile.Get("genWeights")
     sigTotGenweight = hSigGenweights.GetSumOfWeights()
@@ -738,9 +849,9 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
         hSig.Draw("hist same") # same pad
 
     hSigCutflow.Scale(norm)
-    for i, cut in enumerate(cuts):
-        if i >= nCuts: break
-        hSigCutsCountDict[subprocess][i] = int(hSigCutflow.GetBinContent(i+1))
+    for c, cut in enumerate(cuts):
+        if c >= nCuts: break
+        hSigCutsCountDict[subprocess][c] = int(hSigCutflow.GetBinContent(c+1))
 
     sigFile.Close()
 
@@ -906,9 +1017,9 @@ for fileNum, subprocessLine in enumerate(data_redirector):
             if val <= xMax: hData.Fill(val, 1)
             else: hData.Fill(xMax - binwidth/2, 1) # overflow 
 
-    for i, cut in enumerate(cuts):
-        if i >= nCuts: break
-        hDataCutCountArr[i] += int(hDataCutflow.GetBinContent(i+1))
+    for c, cut in enumerate(cuts):
+        if c >= nCuts: break
+        hDataCutCountArr[c] += int(hDataCutflow.GetBinContent(c+1))
 
     dataFile.Close()
 
@@ -943,6 +1054,12 @@ for plotVar in plotSettings:
     legend.Draw("same")
     c.SetLogy()
     c.Update()
+c_fakeSort.cd()
+legend_fakeSorting.SetTextSize(0.017)
+legend_fakeSorting.SetNColumns(3)
+legend_fakeSorting.Draw("same")
+c_fakeSort.SetLogy()
+c_fakeSort.Update()
 
 # making cutflow pandas dataframe
 statsStack = {}
@@ -984,6 +1101,9 @@ else:
         for subprocess in hSigSubprocessesPlotVarDict:
             hSigSubprocessesPlotVarDict[subprocess][plotVar].Write()
         hDataPlotVarDict[plotVar].Write()
+    c_fakeSort.Write()
+    for subprocess in hFakeSortingDict:
+        hFakeSortingDict[subprocess].Write()
     outHistFile.Close()
     print "Saved hists in", outHistFileAdr
 
