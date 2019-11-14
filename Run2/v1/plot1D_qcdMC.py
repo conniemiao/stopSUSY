@@ -88,41 +88,48 @@ assert region == "any" or region == "A" or region == "B" or region == "C" or reg
 #--------------------------------------------------------------------------------#
 
 plotSettings = { # [nBins,xMin,xMax,units]
-#        "lep1_pt":[100,0,400,"[Gev]"],
-#        "lep1_eta":[100,-4,4,""],
-#        "lep1_phi":[100,-4,4,""],
-#        "lep1_relIso":[100,0,0.2,""],
-#        "lep1_mt":[100,0,500,"[GeV]"],
-#        "lep2_pt":[100,0,400,"[GeV]"],
-#        "lep2_eta":[100,-4,4,""],
-#        "lep2_phi":[100,-4,4,""],
-#        "lep2_relIso":[100,0,0.2,""],
-#        "lep2_mt":[100,0,500,"[GeV]"],
-#        "nJet":[10,0,10,""],
-#        "Jet_pt":[100,0,400,"[GeV]"], 
-#        "Jet_eta":[100,-3,3,""],
-#        "Jet_phi":[100,-4,4,""],
-#        "Jet_ht":[100,0,800,"[GeV]"],
-#        "nbtag":[5,0,5,""],
-#        "nbtagLoose":[10,0,10,""],
-#        "nbtagTight":[5,0,5,""],
-#        "dR_lep1_jet":[100,0,7,""],
-#        "dR_lep2_jet":[100,0,7,""],
-#        "MET_pt":[100,0,500,"[GeV]"], 
-#        "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
-#        "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
-#        "m_eff":[100,0,1000,"[GeV]"], # ht + MET + pt1 + pt2
-#        "Jet_ht_div_sqrt_MET":[100,0,200,""],
-#        "mt_tot_div_sqrt_MET":[100,0,200,""],
+        "lep1_pt":[100,0,400,"[Gev]"],
+        "lep1_eta":[100,-4,4,""],
+        "lep1_phi":[100,-4,4,""],
+        "lep1_relIso":[100,0,0.2,""],
+        "lep1_mt":[100,0,500,"[GeV]"],
+        "lep2_pt":[100,0,400,"[GeV]"],
+        "lep2_eta":[100,-4,4,""],
+        "lep2_phi":[100,-4,4,""],
+        "lep2_relIso":[100,0,0.2,""],
+        "lep2_mt":[100,0,500,"[GeV]"],
+        "nJet":[10,0,10,""],
+        "Jet_pt":[100,0,400,"[GeV]"], 
+        "Jet_eta":[100,-3,3,""],
+        "Jet_phi":[100,-4,4,""],
+        "Jet_ht":[100,0,800,"[GeV]"],
+        "nbtag":[5,0,5,""],
+        "nbtagLoose":[10,0,10,""],
+        "nbtagTight":[5,0,5,""],
+        "dR_lep1_jet":[100,0,7,""],
+        "dR_lep2_jet":[100,0,7,""],
+        "MET_pt":[100,0,500,"[GeV]"], 
+        "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
+        "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
+        "m_eff":[100,0,1000,"[GeV]"], # ht + MET + pt1 + pt2
+        "Jet_ht_div_sqrt_MET":[100,0,200,""],
+        "mt_tot_div_sqrt_MET":[100,0,200,""],
         "m_eff_div_sqrt_MET":[100,0,200,""]
         }
 
 # produced particle -> labeled particle
-# hq: heavy quarks (c,b,t) lq: light quarks (d,u,s), g: gluon
+# heavy quarks (c,b,t), light quarks (d,u,s), g: gluon
 # tau->mu,e, e->e, and mu->mu are allowed, others are fake in some way.
-fakeTypes = OrderedDict([("d/u/s->e/mu",0),("c/b/t->e/mu",1), ("g->e/mu",2), \
-        ("e->mu",3), ("tau->e/mu",4), ("e->e",5), ("mu->mu",6), ("other",7)])
-nFakeTypes = len(fakeTypes)
+# fakeTypes_idDict maps the genPartFlav tag number to the label
+fakeTypes_idDict = OrderedDict([(1, "e->e/mu->mu"), (15, "tau->e/mu"), \
+        (22, "photon->e"), (5, "b->e/mu"), (4, "c->e/mu"), \
+         (3, "d/u/s/unknown->e/mu"), (0, "unmatched")])
+# fakeTypes_orderDict maps name of the fake type to the index in the histogram
+fakeTypes_orderDict = OrderedDict()
+for i, fakeTypeId in enumerate(fakeTypes_idDict):
+    fakeTypes_orderDict[fakeTypeId] = i
+
+nFakeTypes = len(fakeTypes_idDict)
 
 # bkgd process name : color for plotting
 colorWJets = 38 # dark blue
@@ -253,8 +260,8 @@ for name in hBkgdSubprocessesPlotVarDict: # same as names in hBkgdCutflowDict
     hBkgdCutflow.SetDirectory(0) # necessary to keep hist from closing
     hBkgdCutflow.SetDefaultSumw2() # automatically sum w^2 while filling
 
-    for i, fakeType in enumerate(fakeTypes, start=1):
-        hFakeSorting.GetXaxis().SetBinLabel(i, fakeType)
+    for i, fakeTypeId in enumerate(fakeTypes_idDict, start=1):
+        hFakeSorting.GetXaxis().SetBinLabel(i, fakeTypes_idDict[fakeTypeId])
     hFakeSorting.SetDirectory(0)
     hFakeSorting.SetDefaultSumw2()
 
@@ -411,48 +418,10 @@ for subprocessLine in bkgd_redirector:
 
         # ********** Sorting fake types. ***********
         # fill twice for each event (once for each lepton)
-
-        if getattr(event, l1Flav+"_pdgId")[l1Index]==1 or \
-                getattr(event, l1Flav+"_pdgId")[l1Index]==2 or \
-                getattr(event, l1Flav+"_pdgId")[l1Index]==3: # d:1, u:2, s:3
-                    hFakeSorting.Fill(fakeTypes["d/u/s->e/mu"])
-        elif getattr(event, l1Flav+"_pdgId")[l1Index]==4 or \
-                getattr(event, l1Flav+"_pdgId")[l1Index]==5 or \
-                getattr(event, l1Flav+"_pdgId")[l1Index]==6: # c:4, b:5, t:6
-                    hFakeSorting.Fill(fakeTypes["c/b/t->e/mu"])
-        elif getattr(event, l1Flav+"_pdgId")[l1Index]==9 or \
-                getattr(event, l1Flav+"_pdgId")[l1Index]==21: # g:9 or 21?
-                    hFakeSorting.Fill(fakeTypes["g->e/mu"])
-        elif (l1Flav[0]=="M" and getattr(event, l1Flav+"_pdgId")[l1Index]==11):
-            hFakeSorting.Fill(fakeTypes["e->mu"]) # e:11
-        elif getattr(event, l1Flav+"_pdgId")[l1Index]==15: # tau:15
-            hFakeSorting.Fill(fakeTypes["tau->e/mu"])
-        elif (l1Flav[0]=="E" and getattr(event, l1Flav+"_pdgId")[l1Index]==11):
-            hFakeSorting.Fill(fakeTypes["e->e"])
-        elif (l1Flav[0]=="M" and getattr(event, l1Flav+"_pdgId")[l1Index]==13):
-            hFakeSorting.Fill(fakeTypes["mu->mu"]) # mu:13
-        else: hFakeSorting.Fill(fakeTypes["other"])
-
-        if getattr(event, l2Flav+"_pdgId")[l2Index]==1 or \
-                getattr(event, l2Flav+"_pdgId")[l2Index]==2 or \
-                getattr(event, l2Flav+"_pdgId")[l2Index]==3:
-                    hFakeSorting.Fill(fakeTypes["d/u/s->e/mu"])
-        elif getattr(event, l2Flav+"_pdgId")[l2Index]==4 or \
-                getattr(event, l2Flav+"_pdgId")[l2Index]==5 or \
-                getattr(event, l2Flav+"_pdgId")[l2Index]==6:
-                    hFakeSorting.Fill(fakeTypes["c/b/t->e/mu"])
-        elif getattr(event, l2Flav+"_pdgId")[l2Index]==9 or \
-                getattr(event, l2Flav+"_pdgId")[l2Index]==21:
-                    hFakeSorting.Fill(fakeTypes["g->e/mu"])
-        elif (l2Flav[0]=="M" and getattr(event, l2Flav+"_pdgId")[l2Index]==11):
-            hFakeSorting.Fill(fakeTypes["e->mu"])
-        elif getattr(event, l2Flav+"_pdgId")[l2Index]==15:
-            hFakeSorting.Fill(fakeTypes["tau->e/mu"])
-        elif (l2Flav[0]=="E" and getattr(event, l2Flav+"_pdgId")[l2Index]==11):
-            hFakeSorting.Fill(fakeTypes["e->e"])
-        elif (l2Flav[0]=="M" and getattr(event, l2Flav+"_pdgId")[l2Index]==13):
-            hFakeSorting.Fill(fakeTypes["mu->mu"])
-        else: hFakeSorting.Fill(fakeTypes["other"])
+        l1_genPartFlav = getattr(event, l1Flav+"_genPartFlav")[l1Index]
+        l2_genPartFlav = getattr(event, l2Flav+"_genPartFlav")[l2Index]
+        hFakeSorting.Fill(fakeTypes_orderDict[l1_genPartFlav])
+        hFakeSorting.Fill(fakeTypes_orderDict[l2_genPartFlav])
 
         # ********** Filling plotVars. ***********
         if event.nJet > 0:
