@@ -24,7 +24,7 @@ statsDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/
 # location where the cutflow plots will be saved
 cutflowPlotsDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/v1/cutflow"
 
-assert len(sys.argv) == 5, "needs 4 command line args: testMode{0,1}, displayMode {show, save}, channel {mumu, elel, muel}, region {A,B,C,D}"
+assert len(sys.argv) == 5, "needs 4 command line args: testMode{test, all}, displayMode {show, save}, channel {mumu, elel, muel}, region {A,B,C,D}"
 
 if sys.argv[1] == "test": testMode = True
 elif sys.argv[1] == "all": testMode = False
@@ -60,8 +60,16 @@ region = sys.argv[4]
 assert region == "any" or region == "A" or region == "B" or region == "C" or region == "D", "invalid region, need {any, A, B, C, D}"
 
 # bkgd process name : color for plotting
-processes = OrderedDict([("W-Jets",38), ("Drell-Yan",46), ("TTBar",30), \
-        ("Diboson",41), ("Single-Top",40), ("TT+X",7)])
+colorWJets = 38 # dark blue
+colorDY = 46 # red
+colorTTBar = 835 # teal 
+colorSingleTop = 832  
+colorTTX = 831 
+colorDiboson = 806 # orange
+colorQCD = 868 # light blue
+processes = OrderedDict([("W-Jets",colorWJets), ("Drell-Yan",colorDY), \
+        ("TTBar",colorTTBar), ("Single-Top",colorSingleTop), ("TT+X",colorTTX), \
+        ("Diboson",colorDiboson), ("QCD", colorQCD)])
 
 if not displayMode:
     if not os.path.exists(cutflowPlotsDir): os.makedirs(cutflowPlotsDir)
@@ -278,7 +286,7 @@ c_pie.cd()
 baselinePie.Draw("nol sc")
 c_pie.Update()
 if displayMode:
-    print "Done with baseline pie. Press enter to finish."
+    print "Done with baseline pie. Press enter to continue."
     raw_input()
 else:
     gSystem.ProcessEvents()

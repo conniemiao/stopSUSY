@@ -286,6 +286,8 @@ DYIncl_totgenwt = 0
 for process in processes:
     hBkgdCutsCountDict.update({process:[0]*nCuts})
 
+avgEvtwt = 0
+countBaseline = 0
 for subprocessLine in bkgd_redirector:
     subprocessLine = subprocessLine.rstrip('\n').split(" ")
     subprocess = subprocessLine[0]
@@ -343,7 +345,7 @@ for subprocessLine in bkgd_redirector:
         hFakeSorting = hFakeSortingDict[subprocess]
 
     nMax = nentries
-    if testMode: nMax = 1000
+    if testMode: nMax = 10000
 
     # ********** Looping over events. ***********
     for count, event in enumerate(tBkgd):
@@ -352,6 +354,7 @@ for subprocessLine in bkgd_redirector:
         genwt = event.genWeight
         puwt = event.puWeight
         evtwt = genwt*puwt
+        # if evtwt < 0: continue
 
         nPartons = event.LHE_Njets
 
@@ -396,6 +399,8 @@ for subprocessLine in bkgd_redirector:
             if not isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, \
                     findingSameFlavor): continue
         hBkgdCutflow.Fill(cuts["baseline"], evtwt)
+        countBaseline += 1
+        avgEvtwt += evtwt
 
         # if nCuts > cuts["dilepton"]: # not doing this; doing ABCD regions instead
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
@@ -570,12 +575,10 @@ for subprocessLine in bkgd_redirector:
             if newProcess:
                 legend = legendDict[plotVar]
                 legend.AddEntry(hBkgd, process)
-
         hBkgdCutflow.Scale(norm)
         for c, cut in enumerate(cuts):
             if c >= nCuts: break
             hBkgdCutsCountDict[process][c] += int(hBkgdCutflow.GetBinContent(c+1))
-
         hFakeSorting.Scale(norm)
         hFakeSorting.SetFillColor(processes[process])
         hFakeSorting.SetLineColor(processes[process])
@@ -605,6 +608,8 @@ c_fakeSort.cd()
 hFakeSortingStack.Draw("hist")
 hFakeSortingStack.SetMinimum(1)
 hFakeSortingStack.SetMaximum(10**12)
+
+print "avg evtwt", avgEvtwt/countBaseline
 
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal in a separate hist ***************
@@ -688,7 +693,7 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
     sigTotGenweight = hSigGenweights.GetSumOfWeights()
 
     nMax = nentries
-    if testMode: nMax = 1000
+    # if testMode: nMax = 1000
 
     # ********** Looping over events. ***********
     for count, event in enumerate(tSig):
@@ -816,10 +821,10 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
         legend = legendDict[plotVar]
         legend.AddEntry(hSig, hSig.GetTitle())
         hSig.Draw("hist same") # same pad
-
     hSigCutflow.Scale(norm)
     for c, cut in enumerate(cuts):
         if c >= nCuts: break
+        print c, int(hSigCutflow.GetBinContent(c+1))
         hSigCutsCountDict[subprocess][c] = int(hSigCutflow.GetBinContent(c+1))
 
     sigFile.Close()
@@ -888,6 +893,7 @@ for fileNum, subprocessLine in enumerate(data_redirector):
     for count, event in enumerate(tData):
         if count > nMax : break
         if count % 100000 == 0: print "count =", count
+        evtwt = 1 # just in case I forgot to change it somewhere
     
         # ********** Additional cuts. ***********
     
@@ -920,26 +926,26 @@ for fileNum, subprocessLine in enumerate(data_redirector):
         elif region == "D":
             if not isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, \
                     findingSameFlavor): continue
-        hDataCutflow.Fill(cuts["baseline"], evtwt)
+        hDataCutflow.Fill(cuts["baseline"], 1)
 
         # if nCuts > cuts["dilepton"]: # not doing this; doing ABCD regions instead
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
 
         if nCuts > cuts["no3rdlept"]:
             if event.found3rdLept: continue
-            hDataCutflow.Fill(cuts["no3rdlept"], evtwt)
+            hDataCutflow.Fill(cuts["no3rdlept"], 1)
 
         if nCuts > cuts["nbtag<2"]:
             if event.nbtag > 1: continue
-            hDataCutflow.Fill(cuts["nbtag<2"], evtwt)
+            hDataCutflow.Fill(cuts["nbtag<2"], 1)
 
         if nCuts > cuts["MET>80"]:
             if event.MET_pt < 80: continue
-            hDataCutflow.Fill(cuts["MET>80"], evtwt)
+            hDataCutflow.Fill(cuts["MET>80"], 1)
 
         if nCuts > cuts["nJet<4"]:
             if event.nJet >= 4: continue
-            hDataCutflow.Fill(cuts["nJet<4"], evtwt)
+            hDataCutflow.Fill(cuts["nJet<4"], 1)
 
         # ********** Filling. ***********
         if event.nJet > 0:
@@ -986,11 +992,11 @@ for fileNum, subprocessLine in enumerate(data_redirector):
             if val <= xMax: hData.Fill(val, 1)
             else: hData.Fill(xMax - binwidth/2, 1) # overflow 
 
-    for c, cut in enumerate(cuts):
-        if c >= nCuts: break
-        hDataCutCountArr[c] += int(hDataCutflow.GetBinContent(c+1))
-
     dataFile.Close()
+
+for c, cut in enumerate(cuts):
+    if c >= nCuts: break
+    hDataCutCountArr[c] += int(hDataCutflow.GetBinContent(c+1))
 
 # ********** Drawing. ***********
 hcolor = 1 # black
@@ -1087,4 +1093,3 @@ else:
     else: print statsDF
 
     print "Done."
-
