@@ -44,12 +44,12 @@ elif [[ "$inputType" == "sig" ]]; then
 fi 
 
 # necessary for condor to work nicely with das
-cp /tmp/x509up_u112655 /afs/cern.ch/user/c/cmiao
+cp /tmp/x509up_u13585 /afs/cern.ch/user/a/alkaloge/.
 if [ $? -ne 0 ]; then
     echo "You need to do voms-proxy init!"
     exit 1
 fi
-chmod 777 /afs/cern.ch/user/c/cmiao/x509up_u112655
+#chmod 777 /afs/cern.ch/user/c/cmiao/x509up_u112655
 
 # start submitting files
 datasetNum=0

@@ -2,11 +2,11 @@
 # specified subprocess
 
 # location of the github repo (base directory)
-baseDir="/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY"
+baseDir="/afs/cern.ch/user/a/alkaloge/work/Connie/CMSSW_10_2_9/src/stopSUSY/"
 # location where condor logs will be placed
-condorLogDir="/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs"
+condorLogDir="/afs/cern.ch/user/a/alkaloge/work/Connie/CMSSW_10_2_9/src/stopSUSY/Run2/v1/Logs/"
 # address to the GRID certificate created with voms-proxy-init
-x509Adr="/afs/cern.ch/user/c/cmiao/x509up_u112655"
+x509Adr="/afs/cern.ch/user/a/alkaloge/x509up_u13585"
 
 testMode=$1
 inputType=$2
@@ -24,9 +24,9 @@ executable  = makeNtuple.py
 
 universe    = vanilla
 initialdir  = $baseDir/Run2/v1
-output      = $condorLogDir/makeNtuple.\$(ClusterId).\$(ProcId).out
-error       = $condorLogDir/makeNtuple.\$(ClusterId).\$(ProcId).err
-log         = $condorLogDir/makeNtuple.\$(ClusterId).\$(ProcId).log
+output      = $condorLogDir/${channel}_${ntupleFileName}.\$(ClusterId).\$(ProcId).out
+error       = $condorLogDir/${channel}_${ntupleFileName}.\$(ClusterId).\$(ProcId).err
+log         = $condorLogDir/${channel}_${ntupleFileName}.\$(ClusterId).\$(ProcId).log
 
 +MaxRuntime = 129600
 

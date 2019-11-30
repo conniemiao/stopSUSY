@@ -144,37 +144,6 @@ if not isData:
     Muon_genPartIdx = np.zeros(10, dtype=np.int32)
 Muon_mt = np.zeros(10, dtype=np.float32)
 
-
-nExMuon = array('i',[0])
-ExMuon_pt = np.zeros(10, dtype=np.float32)
-ExMuon_eta = np.zeros(10, dtype=np.float32)
-ExMuon_phi = np.zeros(10, dtype=np.float32)
-ExMuon_relIso = np.zeros(10, dtype=np.float32)
-ExMuon_charge = np.zeros(10, dtype=np.float32)
-ExMuon_dxy = np.zeros(10, dtype=np.float32)
-ExMuon_dz = np.zeros(10, dtype=np.float32)
-ExMuon_mass = np.zeros(10, dtype=np.float32)
-ExMuon_miniPFRelIso_all = np.zeros(10, dtype=np.float32)
-ExMuon_inTimeMuon = np.zeros(10, dtype=np.int32) # read as bool
-ExMuon_ip3d = np.zeros(10, dtype=np.float32)
-ExMuon_isGlobal = np.zeros(10, dtype=np.int32) # read as bool
-ExMuon_isPFcand = np.zeros(10, dtype=np.int32) # read as bool
-ExMuon_isTracker = np.zeros(10, dtype=np.int32) # read as bool
-ExMuon_jetIdx = np.zeros(10, dtype=np.int32)
-ExMuon_pdgId = np.zeros(10, dtype=np.int32)
-ExMuon_looseId = np.zeros(10, dtype=np.int32) # read as bool
-ExMuon_mediumId = np.zeros(10, dtype=np.int32) # read as bool
-ExMuon_mediumPromptId = np.zeros(10, dtype=np.int32) # read as bool
-ExMuon_mvaId = np.zeros(10, dtype=np.int32)
-ExMuon_tightId = np.zeros(10, dtype=np.int32) # read as bool
-if not isData:
-    ExMuon_genPartFlav = np.zeros(10, dtype=np.int32)
-    ExMuon_genPartIdx = np.zeros(10, dtype=np.int32)
-ExMuon_mt = np.zeros(10, dtype=np.float32)
-
-
-
-
 nElectron = array('i',[0])
 Electron_pt = np.zeros(10, dtype=np.float32)
 Electron_eta = np.zeros(10, dtype=np.float32)
@@ -193,29 +162,6 @@ if not isData:
     Electron_genPartFlav = np.zeros(10, dtype=np.int32)
     Electron_genPartIdx = np.zeros(10, dtype=np.int32)
 Electron_mt = np.zeros(10, dtype=np.float32)
-
-
-nExElectron = array('i',[0])
-ExElectron_pt = np.zeros(10, dtype=np.float32)
-ExElectron_eta = np.zeros(10, dtype=np.float32)
-ExElectron_phi = np.zeros(10, dtype=np.float32)
-ExElectron_relIso = np.zeros(10, dtype=np.float32)
-ExElectron_charge = np.zeros(10, dtype=np.float32)
-ExElectron_dxy = np.zeros(10, dtype=np.float32)
-ExElectron_dz = np.zeros(10, dtype=np.float32)
-ExElectron_mass = np.zeros(10, dtype=np.float32)
-ExElectron_miniPFRelIso_all = np.zeros(10, dtype=np.float32)
-ExElectron_ip3d = np.zeros(10, dtype=np.float32)
-ExElectron_isPFcand = np.zeros(10, dtype=np.int32) # read as bool
-ExElectron_jetIdx = np.zeros(10, dtype=np.int32)
-ExElectron_pdgId = np.zeros(10, dtype=np.int32)
-if not isData:
-    ExElectron_genPartFlav = np.zeros(10, dtype=np.int32)
-    ExElectron_genPartIdx = np.zeros(10, dtype=np.int32)
-ExElectron_mt = np.zeros(10, dtype=np.float32)
-
-
-
 
 HLT_IsoMu24 = array('i',[0]) # read as bool
 HLT_Ele25_eta2p1_WPTight_Gsf = array('i',[0]) # read as bool
@@ -303,96 +249,49 @@ outFile = TFile(outName, "recreate")
 outFile.cd() # cd to outFile to write to it
 Events = TTree("Events", "SUSY stop cut events")
 Events.Branch("nMuon", nMuon, "nMuon/I")
-Events.Branch("Muon_pt", Muon_pt, "Muon_pt[10]/F")
-Events.Branch("Muon_eta", Muon_eta, "Muon_eta[10]/F")
-Events.Branch("Muon_phi", Muon_phi, "Muon_phi[10]/F")
-Events.Branch("Muon_relIso", Muon_relIso, "Muon_relIso[10]/F")
-Events.Branch("Muon_charge", Muon_charge, "Muon_charge[10]/F")
-Events.Branch("Muon_dxy", Muon_dxy, "Muon_dxy[10]/F")
-Events.Branch("Muon_dz", Muon_dz, "Muon_dz[10]/F")
-Events.Branch("Muon_mass", Muon_mass, "Muon_mass[10]/F")
-Events.Branch("Muon_miniPFRelIso_all", Muon_miniPFRelIso_all, "Muon_miniPFRelIso_all[10]/F")
-Events.Branch("Muon_inTimeMuon", Muon_inTimeMuon, "Muon_inTimeMuon[10]/I")
-Events.Branch("Muon_ip3d", Muon_ip3d, "Muon_ip3d[10]/F")
-Events.Branch("Muon_isGlobal", Muon_isGlobal, "Muon_isGlobal[10]/I")
-Events.Branch("Muon_isPFcand", Muon_isPFcand, "Muon_isPFcand[10]/I")
-Events.Branch("Muon_isTracker", Muon_isTracker, "Muon_isTracker[10]/I")
-Events.Branch("Muon_jetIdx", Muon_jetIdx, "Muon_jetIdx[10]/I")
-Events.Branch("Muon_pdgId", Muon_pdgId, "Muon_pdgId[10]/I")
-Events.Branch("Muon_looseId", Muon_looseId, "Muon_looseId[10]/I")
-Events.Branch("Muon_mediumId", Muon_mediumId, "Muon_mediumId[10]/I")
-Events.Branch("Muon_mediumPromptId", Muon_mediumPromptId, "Muon_mediumPromptId[10]/I")
-Events.Branch("Muon_mvaId", Muon_mvaId, "Muon_mvaId[10]/I")
-Events.Branch("Muon_tightId", Muon_tightId, "Muon_tightId[10]/I")
+Events.Branch("Muon_pt", Muon_pt, "Muon_pt[20]/F")
+Events.Branch("Muon_eta", Muon_eta, "Muon_eta[20]/F")
+Events.Branch("Muon_phi", Muon_phi, "Muon_phi[20]/F")
+Events.Branch("Muon_relIso", Muon_relIso, "Muon_relIso[20]/F")
+Events.Branch("Muon_charge", Muon_charge, "Muon_charge[20]/F")
+Events.Branch("Muon_dxy", Muon_dxy, "Muon_dxy[20]/F")
+Events.Branch("Muon_dz", Muon_dz, "Muon_dz[20]/F")
+Events.Branch("Muon_mass", Muon_mass, "Muon_mass[20]/F")
+Events.Branch("Muon_miniPFRelIso_all", Muon_miniPFRelIso_all, "Muon_miniPFRelIso_all[20]/F")
+Events.Branch("Muon_inTimeMuon", Muon_inTimeMuon, "Muon_inTimeMuon[20]/I")
+Events.Branch("Muon_ip3d", Muon_ip3d, "Muon_ip3d[20]/F")
+Events.Branch("Muon_isGlobal", Muon_isGlobal, "Muon_isGlobal[20]/I")
+Events.Branch("Muon_isPFcand", Muon_isPFcand, "Muon_isPFcand[20]/I")
+Events.Branch("Muon_isTracker", Muon_isTracker, "Muon_isTracker[20]/I")
+Events.Branch("Muon_jetIdx", Muon_jetIdx, "Muon_jetIdx[20]/I")
+Events.Branch("Muon_pdgId", Muon_pdgId, "Muon_pdgId[20]/I")
+Events.Branch("Muon_looseId", Muon_looseId, "Muon_looseId[20]/I")
+Events.Branch("Muon_mediumId", Muon_mediumId, "Muon_mediumId[20]/I")
+Events.Branch("Muon_mediumPromptId", Muon_mediumPromptId, "Muon_mediumPromptId[20]/I")
+Events.Branch("Muon_mvaId", Muon_mvaId, "Muon_mvaId[20]/I")
+Events.Branch("Muon_tightId", Muon_tightId, "Muon_tightId[20]/I")
 if not isData:
-    Events.Branch("Muon_genPartFlav", Muon_genPartFlav, "Muon_genPartFlav[10]/I")
-    Events.Branch("Muon_genPartIdx", Muon_genPartIdx, "Muon_genPartIdx[10]/I")
-Events.Branch("Muon_mt", Muon_mt, "Muon_mt[10]/F")
-
-
-Events.Branch("nExMuon", nExMuon, "nExMuon/I")
-Events.Branch("ExMuon_pt", Muon_pt, "ExMuon_pt[10]/F")
-Events.Branch("ExMuon_eta", Muon_eta, "ExMuon_eta[10]/F")
-Events.Branch("ExMuon_phi", Muon_phi, "ExMuon_phi[10]/F")
-Events.Branch("ExMuon_relIso", Muon_relIso, "ExMuon_relIso[10]/F")
-Events.Branch("ExMuon_charge", Muon_charge, "ExMuon_charge[10]/F")
-Events.Branch("ExMuon_dxy", Muon_dxy, "ExMuon_dxy[10]/F")
-Events.Branch("ExMuon_dz", Muon_dz, "ExMuon_dz[10]/F")
-Events.Branch("ExMuon_mass", Muon_mass, "ExMuon_mass[10]/F")
-Events.Branch("ExMuon_miniPFRelIso_all", Muon_miniPFRelIso_all, "ExMuon_miniPFRelIso_all[10]/F")
-Events.Branch("ExMuon_inTimeExMuon", Muon_inTimeMuon, "ExMuon_inTimeExMuon[10]/I")
-Events.Branch("ExMuon_ip3d", Muon_ip3d, "ExMuon_ip3d[10]/F")
-Events.Branch("ExMuon_isGlobal", Muon_isGlobal, "ExMuon_isGlobal[10]/I")
-Events.Branch("ExMuon_isPFcand", Muon_isPFcand, "ExMuon_isPFcand[10]/I")
-Events.Branch("ExMuon_isTracker", Muon_isTracker, "ExMuon_isTracker[10]/I")
-Events.Branch("ExMuon_jetIdx", Muon_jetIdx, "ExMuon_jetIdx[10]/I")
-Events.Branch("ExMuon_pdgId", Muon_pdgId, "ExMuon_pdgId[10]/I")
-Events.Branch("ExMuon_looseId", Muon_looseId, "ExMuon_looseId[10]/I")
-Events.Branch("ExMuon_mediumId", Muon_mediumId, "ExMuon_mediumId[10]/I")
-Events.Branch("ExMuon_mediumPromptId", Muon_mediumPromptId, "ExMuon_mediumPromptId[10]/I")
-Events.Branch("ExMuon_mvaId", Muon_mvaId, "ExMuon_mvaId[10]/I")
-Events.Branch("ExMuon_tightId", Muon_tightId, "ExMuon_tightId[10]/I")
-if not isData:
-    Events.Branch("ExMuon_genPartFlav", Muon_genPartFlav, "ExMuon_genPartFlav[10]/I")
-    Events.Branch("ExMuon_genPartIdx", Muon_genPartIdx, "ExMuon_genPartIdx[10]/I")
-Events.Branch("ExMuon_mt", Muon_mt, "ExMuon_mt[10]/F")
-
+    Events.Branch("Muon_genPartFlav", Muon_genPartFlav, "Muon_genPartFlav[20]/I")
+    Events.Branch("Muon_genPartIdx", Muon_genPartIdx, "Muon_genPartIdx[20]/I")
+Events.Branch("Muon_mt", Muon_mt, "Muon_mt[20]/F")
 Events.Branch("nElectron", nElectron, "nElectron/I")
-Events.Branch("Electron_pt", Electron_pt, "Electron_pt[10]/F")
-Events.Branch("Electron_eta", Electron_eta, "Electron_eta[10]/F")
-Events.Branch("Electron_phi", Electron_phi, "Electron_phi[10]/F")
-Events.Branch("Electron_relIso", Electron_relIso, "Electron_relIso[10]/F")
-Events.Branch("Electron_charge", Electron_charge, "Electron_charge[10]/F")
-Events.Branch("Electron_dxy", Electron_dxy, "Electron_dxy[10]/F")
-Events.Branch("Electron_dz", Electron_dz, "Electron_dz[10]/F")
-Events.Branch("Electron_mass", Electron_mass, "Electron_mass[10]/F")
-Events.Branch("Electron_miniPFRelIso_all", Electron_miniPFRelIso_all, "Electron_miniPFRelIso_all[10]/F")
-Events.Branch("Electron_ip3d", Electron_ip3d, "Electron_ip3d[10]/F")
-Events.Branch("Electron_isPFcand", Electron_isPFcand, "Electron_isPFcand[10]/I")
-Events.Branch("Electron_jetIdx", Electron_jetIdx, "Electron_jetIdx[10]/I")
-Events.Branch("Electron_pdgId", Electron_pdgId, "Electron_pdgId[10]/I")
+Events.Branch("Electron_pt", Electron_pt, "Electron_pt[20]/F")
+Events.Branch("Electron_eta", Electron_eta, "Electron_eta[20]/F")
+Events.Branch("Electron_phi", Electron_phi, "Electron_phi[20]/F")
+Events.Branch("Electron_relIso", Electron_relIso, "Electron_relIso[20]/F")
+Events.Branch("Electron_charge", Electron_charge, "Electron_charge[20]/F")
+Events.Branch("Electron_dxy", Electron_dxy, "Electron_dxy[20]/F")
+Events.Branch("Electron_dz", Electron_dz, "Electron_dz[20]/F")
+Events.Branch("Electron_mass", Electron_mass, "Electron_mass[20]/F")
+Events.Branch("Electron_miniPFRelIso_all", Electron_miniPFRelIso_all, "Electron_miniPFRelIso_all[20]/F")
+Events.Branch("Electron_ip3d", Electron_ip3d, "Electron_ip3d[20]/F")
+Events.Branch("Electron_isPFcand", Electron_isPFcand, "Electron_isPFcand[20]/I")
+Events.Branch("Electron_jetIdx", Electron_jetIdx, "Electron_jetIdx[20]/I")
+Events.Branch("Electron_pdgId", Electron_pdgId, "Electron_pdgId[20]/I")
 if not isData:
-    Events.Branch("Electron_genPartFlav", Electron_genPartFlav, "Electron_genPartFlav[10]/I")
-    Events.Branch("Electron_genPartIdx", Electron_genPartIdx, "Electron_genPartIdx[10]/I")
-Events.Branch("Electron_mt", Electron_mt, "Electron_mt[10]/F")
-Events.Branch("nExElectron", nExElectron, "nExElectron/I")
-Events.Branch("ExElectron_pt", Electron_pt, "ExElectron_pt[10]/F")
-Events.Branch("ExElectron_eta", Electron_eta, "ExElectron_eta[10]/F")
-Events.Branch("ExElectron_phi", Electron_phi, "ExElectron_phi[10]/F")
-Events.Branch("ExElectron_relIso", Electron_relIso, "ExElectron_relIso[10]/F")
-Events.Branch("ExElectron_charge", Electron_charge, "ExElectron_charge[10]/F")
-Events.Branch("ExElectron_dxy", Electron_dxy, "ExElectron_dxy[10]/F")
-Events.Branch("ExElectron_dz", Electron_dz, "ExElectron_dz[10]/F")
-Events.Branch("ExElectron_mass", Electron_mass, "ExElectron_mass[10]/F")
-Events.Branch("ExElectron_miniPFRelIso_all", Electron_miniPFRelIso_all, "ExElectron_miniPFRelIso_all[10]/F")
-Events.Branch("ExElectron_ip3d", Electron_ip3d, "ExElectron_ip3d[10]/F")
-Events.Branch("ExElectron_isPFcand", Electron_isPFcand, "ExElectron_isPFcand[10]/I")
-Events.Branch("ExElectron_jetIdx", Electron_jetIdx, "ExElectron_jetIdx[10]/I")
-Events.Branch("ExElectron_pdgId", Electron_pdgId, "ExElectron_pdgId[10]/I")
-if not isData:
-    Events.Branch("ExElectron_genPartFlav", Electron_genPartFlav, "ExElectron_genPartFlav[10]/I")
-    Events.Branch("ExElectron_genPartIdx", Electron_genPartIdx, "ExElectron_genPartIdx[10]/I")
-Events.Branch("ExElectron_mt", Electron_mt, "ExElectron_mt[10]/F")
+    Events.Branch("Electron_genPartFlav", Electron_genPartFlav, "Electron_genPartFlav[20]/I")
+    Events.Branch("Electron_genPartIdx", Electron_genPartIdx, "Electron_genPartIdx[20]/I")
+Events.Branch("Electron_mt", Electron_mt, "Electron_mt[20]/F")
 Events.Branch("HLT_IsoMu24", HLT_IsoMu24, "HLT_IsoMu24/I")
 Events.Branch("HLT_Ele25_eta2p1_WPTight_Gsf", HLT_Ele25_eta2p1_WPTight_Gsf, "HLT_Ele25_eta2p1_WPTight_Gsf/I")
 Events.Branch("HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL", HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL, "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL/I")
@@ -484,7 +383,6 @@ print "nentries =", nentries
 nMax = nentries
 if testMode: nMax = 10000 
 
-nMax=10000
 # ************ BEGIN LOOPING OVER EVENTS **********
 if not isData:
     # skip evts with < 0 genWeight if it's a madgraph file
@@ -515,23 +413,21 @@ for count, event in enumerate(inTree):
     # ****** Loose selection for valid lep1, lep2, jets (with trigger) ******
     if findSameFlav:
         if muPref:
-            lepIndices = selectMuMu(event, isData, maxOkIso=0.2)
-        else: lepIndices = selectElEl(event, isData, maxOkIso=0.2)
+            lepIndices = selectMuMu(event, isData, maxOkIso=0.3)
+        else: lepIndices = selectElEl(event, isData, maxOkIso=0.3)
         if lepIndices is None: continue
     else:
-        lepIndices = selectMuEl(event, isData, maxOkIso=0.2)
+        lepIndices = selectMuEl(event, isData, maxOkIso=0.3)
         l1Flav = "Muon"
         l2Flav = "Electron"
         if lepIndices is None:
-            lepIndices = selectElMu(event, isData, maxOkIso=0.2)
+            lepIndices = selectElMu(event, isData, maxOkIso=0.3)
             if lepIndices is None: continue
             l1Flav = "Electron"
             l2Flav = "Muon"
 
     l1Index = lepIndices[0]
     l2Index = lepIndices[1]
-    l3Index = lepIndices[2]
-    l4Index = lepIndices[3]
 
     jets = findValidJets(event, l1Flav, l1Index, l2Flav, l2Index)
     numGoodJets = len(jets)
@@ -571,35 +467,7 @@ for count, event in enumerate(inTree):
             Muon_genPartFlav[i] = ord(list(event.Muon_genPartFlav)[i])
             Muon_genPartIdx[i] = list(event.Muon_genPartIdx)[i]
         Muon_mt[i] = sqrt(2 * Muon_pt[i] * event.MET_pt * \
-                (1 - cos(ExMuon_phi[i] - event.MET_phi)))
-
-	if l1Flav == 'Muon' or l2Flav == 'Muon' and l3Index > -1 : 
-	    ExMuon_pt[i] = list(event.Muon_pt)[i]
-	    ExMuon_eta[i] = list(event.Muon_eta)[i]
-	    ExMuon_phi[i] = list(event.Muon_phi)[i]
-	    ExMuon_relIso[i] = list(event.Muon_pfRelIso04_all)[i]
-	    ExMuon_charge[i] = list(event.Muon_charge)[i]
-	    ExMuon_dxy[i] = list(event.Muon_dxy)[i]
-	    ExMuon_dz[i] = list(event.Muon_dz)[i]
-	    ExMuon_mass[i] = list(event.Muon_mass)[i]
-	    ExMuon_miniPFRelIso_all[i] = list(event.Muon_miniPFRelIso_all)[i]
-	    ExMuon_inTimeMuon[i] = list(event.Muon_inTimeMuon)[i]
-	    ExMuon_ip3d[i] = list(event.Muon_ip3d)[i]
-	    ExMuon_isGlobal[i] = list(event.Muon_isGlobal)[i]
-	    ExMuon_isPFcand[i] = list(event.Muon_isPFcand)[i]
-	    ExMuon_isTracker[i] = list(event.Muon_isTracker)[i]
-	    ExMuon_jetIdx[i] = list(event.Muon_jetIdx)[i]
-	    ExMuon_pdgId[i] = list(event.Muon_pdgId)[i]
-	    ExMuon_looseId[i] = list(event.Muon_looseId)[i]
-	    ExMuon_mediumId[i] = list(event.Muon_mediumId)[i]
-	    ExMuon_mediumPromptId[i] = list(event.Muon_mediumPromptId)[i]
-	    ExMuon_mvaId[i] = ord(list(event.Muon_mvaId)[i]) # UChar_t conversion
-	    ExMuon_tightId[i] = list(event.Muon_tightId)[i]
-	    if not isData:
-	        ExMuon_genPartFlav[i] = ord(list(event.Muon_genPartFlav)[i])
-	        ExMuon_genPartIdx[i] = list(event.Muon_genPartIdx)[i]
-	    ExMuon_mt[i] = sqrt(2 * Muon_pt[i] * event.MET_pt * \
-		    (1 - cos(ExMuon_phi[i] - event.MET_phi)))
+                (1 - cos(Muon_phi[i] - event.MET_phi)))
 
     assert l2Index > -1
     nElectron[0] = event.nElectron
@@ -622,26 +490,6 @@ for count, event in enumerate(inTree):
             Electron_genPartIdx[i] = list(event.Electron_genPartIdx)[i]
         Electron_mt[i] = sqrt(2 * Electron_pt[i] * event.MET_pt * \
                 (1 - cos(Electron_phi[i] - event.MET_phi)))
-	if l1Flav == 'Electron' or l2Flav == 'Electron' and l4Index > -1 : 
-            ExElectron_pt[i] = list(event.Electron_pt)[i]
-            ExElectron_eta[i] = list(event.Electron_eta)[i]
-            ExElectron_phi[i] = list(event.Electron_phi)[i]
-            ExElectron_relIso[i] = list(event.Electron_pfRelIso03_all)[i]
-            ExElectron_charge[i] = list(event.Electron_charge)[i]
-            ExElectron_dxy[i] = list(event.Electron_dxy)[i]
-            ExElectron_dz[i] = list(event.Electron_dz)[i]
-            ExElectron_mass[i] = list(event.Electron_mass)[i]
-            ExElectron_miniPFRelIso_all[i] = list(event.Electron_miniPFRelIso_all)[i]
-            ExElectron_ip3d[i] = list(event.Electron_ip3d)[i]
-            ExElectron_isPFcand[i] = list(event.Electron_isPFcand)[i]
-            ExElectron_jetIdx[i] = list(event.Electron_jetIdx)[i]
-            ExElectron_pdgId[i] = list(event.Electron_pdgId)[i]
-            if not isData:
-                ExElectron_genPartFlav[i] = ord(list(event.Electron_genPartFlav)[i])
-                ExElectron_genPartIdx[i] = list(event.Electron_genPartIdx)[i]
-            ExElectron_mt[i] = sqrt(2 * Electron_pt[i] * event.MET_pt * \
-                    (1 - cos(ExElectron_phi[i] - event.MET_phi)))
-
 
     Flag_goodVertices[0] = event.Flag_goodVertices
     Flag_HBHENoiseFilter[0] = event.Flag_HBHENoiseFilter
@@ -675,7 +523,6 @@ for count, event in enumerate(inTree):
 
     # veto (3rd lepton) checks:
     found3rdLept[0] = False
-    '''
     if findSameFlav:
         # when looking for mumu/elel, event should not give valid muel or elmu pair
         if selectMuEl(event, isData) is not None: found3rdLept[0] = True
@@ -684,9 +531,6 @@ for count, event in enumerate(inTree):
         # when looking for muel/elmu, event should not give valid mumu or elel pair
         if selectMuMu(event, isData) is not None: found3rdLept[0] = True
         if selectElEl(event, isData) is not None: found3rdLept[0] = True
-    '''
-    # when looking for mumu/elel, event should not give valid muel or elmu pair
-    if l3Index > -1 or l4Index > -1  : found3rdLept[0] = True
     
     nJet[0] = numGoodJets
     nbtag[0] = len(evt_btag_indices)
@@ -774,7 +618,6 @@ for count, event in enumerate(inTree):
     Events.Fill()
 
 outFile.cd()
-print 'Will be writing ',Events.GetEntries(), 'events'
 Events.Write()
 if not isData: 
     if subprocess == "WJetsToLNu":

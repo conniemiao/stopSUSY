@@ -20,7 +20,7 @@ elif [[ "$testMode" == "all" ]]; then
     # bkgdProcesses=("QCD")
 else
     echo "need {test, all} as arg to makeAllNtuples.sh"
-    exit 1
+    #exit 1
 fi
 
 
