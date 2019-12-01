@@ -1,7 +1,7 @@
 # Defines functions to perform object and event selection.
 
 import numpy as np
-from math import sqrt, cos
+from math import sqrt, cos, pi, sin, acos
 
 #--------------------------------------------------------------------------------#
 
@@ -11,34 +11,57 @@ from math import sqrt, cos
 # "Jet"
 def deltaR(event, type1, index1, type2, index2):
     eta1 = list(getattr(event, type1+"_eta"))[index1]
-    eta2 = list(getattr(event, type2+"_eta"))[index2]
     phi1 = list(getattr(event, type1+"_phi"))[index1]
+    eta2 = list(getattr(event, type2+"_eta"))[index2]
     phi2 = list(getattr(event, type2+"_phi"))[index2]
+  
+    dPhi = min(abs(phi2-phi1), 2.0*pi-abs(phi2-phi1))
+    return sqrt(dPhi**2 + (eta2-eta1)**2)
     
-    return sqrt((eta1-eta2)*(eta1-eta2)+(phi1-phi2)*(phi1-phi2))
-    
+# general version of deltaR with values of eta, phi given
+def dR(eta1, phi1, eta2, phi2):
+    dPhi = min(abs(phi2-phi1),2.*pi-abs(phi2-phi1))
+    return sqrt(dPhi**2 + (eta2-eta1)**2)
+
+# another way of calculating dR
+def dPhiFrom2P(Px1, Py1, Px2, Py2) :
+    prod = Px1*Px2 + Py1*Py2
+    mod1 = sqrt(Px1*Px1+Py1*Py1)
+    mod2 = sqrt(Px2*Px2+Py2*Py2)
+    cosDPhi = prod/(mod1*mod2)
+    return acos(cosDPhi)
+def dR2(eta1, phi1, eta2, phi2) : 
+    Px1 = cos(phi1)
+    Py1 = sin(phi1)
+    Px2 = cos(phi2)
+    Py2 = sin(phi2)
+    dPhi = dPhiFrom2P(Px1,Py1,Px2,Py2)
+    dEta = eta1 - eta2
+    dR = sqrt(dPhi*dPhi+dEta*dEta)
+    return dR
+
 #--------------------------------------------------------------------------------#
 
 # The following methods all call one of the channels of __selectLepts with default
 # max eta, min pt, and max iso values.
 
 def selectMuMu(event, isData, maxL1OkEta=2.4, maxL2OkEta=2.4, l1MinOkPt=20, \
-        l2MinOkPt=-0.01, maxOkIso=1, maxOkDxy=1, maxOkDz=1):
+        l2MinOkPt=-0.01, maxOkIso=0.5, maxOkDxy=0.045, maxOkDz=0.2):
     return __selectLepts(event, isData, True, True, maxL1OkEta, maxL2OkEta, \
             l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
 
-def selectElEl(event, isData, maxL1OkEta=1.6, maxL2OkEta=1.6, l1MinOkPt=20, \
-        l2MinOkPt=-0.01, maxOkIso=1, maxOkDxy=1, maxOkDz=1):
+def selectElEl(event, isData, maxL1OkEta=2.1, maxL2OkEta=2.1, l1MinOkPt=20, \
+        l2MinOkPt=-0.01, maxOkIso=0.5, maxOkDxy=0.045, maxOkDz=0.2):
     return __selectLepts(event, isData, True, False, maxL1OkEta, maxL2OkEta, \
             l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
 
-def selectMuEl(event, isData, maxL1OkEta=2.4, maxL2OkEta=1.6, l1MinOkPt=12, \
-        l2MinOkPt=15, maxOkIso=1, maxOkDxy=1, maxOkDz=1):
+def selectMuEl(event, isData, maxL1OkEta=2.4, maxL2OkEta=2.1, l1MinOkPt=12, \
+        l2MinOkPt=15, maxOkIso=0.5, maxOkDxy=0.045, maxOkDz=0.2):
     return __selectLepts(event, isData, False, True, maxL1OkEta, maxL2OkEta, \
             l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
 
-def selectElMu(event, isData, maxL1OkEta=1.6, maxL2OkEta=2.4, l1MinOkPt=25, \
-        l2MinOkPt=5, maxOkIso=1, maxOkDxy=1, maxOkDz=1):
+def selectElMu(event, isData, maxL1OkEta=2.1, maxL2OkEta=2.4, l1MinOkPt=25, \
+        l2MinOkPt=5, maxOkIso=0.5, maxOkDxy=0.045, maxOkDz=0.2):
     return __selectLepts(event, isData, False, False, maxL1OkEta, maxL2OkEta, \
             l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
 
@@ -72,42 +95,73 @@ def __selectLepts(event, isData, findSameFlav, muPref, maxL1OkEta, \
 
     l1Index = -1
     l2Index = -1
-    minSumIso = 1
-
+    minSumIso = 999
     # select leading lepton
     l1count = getattr(event, "n"+l1Flav)
     if findSameFlav and l1count<2: return None
     for i1 in range(l1count):
         pt1 = list(getattr(event, l1Flav+"_pt"))[i1]
+        phi1 = list(getattr(event, l1Flav+"_phi"))[i1]
         absDxy1 = abs(list(getattr(event, l1Flav+"_dxy"))[i1])
         absDz1 = abs(list(getattr(event, l1Flav+"_dz"))[i1])
         absEta1 = abs(list(getattr(event, l1Flav+"_eta"))[i1])
+        eta1 = list(getattr(event, l1Flav+"_eta"))[i1]
         if l1Flav[0] == "M": # Muon:
             iso1 = list(getattr(event, "Muon_pfRelIso04_all"))[i1]
+            isGlobal1 = list(getattr(event, "Muon_isGlobal"))[i1]
+            isTracker1 = list(getattr(event, "Muon_isTracker"))[i1]
+            #isTight = list(getattr(event, "tightId"))[i1]
+            isMedium1 = list(getattr(event, "Muon_mediumId"))[i1]
         else: # Electron 
             iso1 = list(getattr(event, "Electron_pfRelIso03_all"))[i1]
+            hits1 = ord(list(getattr(event, "Electron_lostHits"))[i1])
+            convVeto1 = list(getattr(event, "Electron_convVeto"))[i1]
+            mvaId1 = list(getattr(event, "Electron_mvaFall17V2noIso_WP90"))[i1]
 
         if not(pt1 > l1MinOkPt and iso1 < maxOkIso and absEta1 < maxL1OkEta\
                 and absDxy1 < maxOkDxy and absDz1 < maxOkDz): continue
+        #if l1Flav[0] == "M" and not isGlobal1 and not isTracker1 : continue
+        if l1Flav[0] == "M" and not isMedium1: continue
+        else:
+            if hits1 > 1 or not convVeto1 or not mvaId1: continue
 
         # select trailing lepton
         l2count = getattr(event, "n"+l2Flav)
         if findSameFlav: startl2Search = i1+1 # don't want l1 = l2
         else: startl2Search = 0
         for i2 in range(startl2Search, l2count):
+            if findSameFlav and i2 == i1 : continue
             pt2 = list(getattr(event, l2Flav+"_pt"))[i2]
+            phi2 = list(getattr(event, l2Flav+"_phi"))[i2]
             absDxy2 = abs(list(getattr(event, l2Flav+"_dxy"))[i2])
             absDz2 = abs(list(getattr(event, l2Flav+"_dz"))[i2])
             absEta2 = abs(list(getattr(event, l2Flav+"_eta"))[i2])
+            eta2 = list(getattr(event, l2Flav+"_eta"))[i2]
             if l2Flav[0] == "M": # Muon:
                 iso2 = list(getattr(event, "Muon_pfRelIso04_all"))[i2]
+                isGlobal2 = list(getattr(event, "Muon_isGlobal"))[i2]
+                isTracker2 = list(getattr(event, "Muon_isTracker"))[i2]
+                #isTight = list(getattr(event, "tightId"))[i2]
+                isMedium2 = list(getattr(event, "Muon_mediumId"))[i2]
+
             else: # Electron 
                 iso2 = list(getattr(event, "Electron_pfRelIso03_all"))[i2]
+                hits2 = ord(list(getattr(event, "Electron_lostHits"))[i2])
+                convVeto2 = list(getattr(event, "Electron_convVeto"))[i2]
+                mvaId2 = list(getattr(event, "Electron_mvaFall17V2noIso_WP90"))[i2]
 
             if not(pt2 > l2MinOkPt and iso2 < maxOkIso and absEta2 < maxL2OkEta \
                     and absDxy2 < maxOkDxy and absDz2 < maxOkDz): continue
 
-            # total iso check
+            # if l2Flav[0] == "M" and not isGlobal2 and not isTracker2 : continue
+            if l2Flav[0] == "M" and not isMedium2: continue
+            else:
+                if hits2 > 1 or not convVeto2 or not mvaId2: continue
+
+            dr = deltaR(event, l1Flav, i1, l2Flav, i2)
+            if dr < 0.3 : continue
+
+            # total iso check to keep pair with min total iso
             if (iso1+iso2) >= minSumIso: continue
             minSumIso = iso1+iso2
 
@@ -120,11 +174,77 @@ def __selectLepts(event, isData, findSameFlav, muPref, maxL1OkEta, \
                 l1Index = i1
                 l2Index = i2
 
-            # don't check for opposite charge since needed for regions
-
+            # don't check for opposite charge since needed for QCD regions
+    
     if l1Index == -1: return None
     if l2Index == -1: return None
 
+    return [l1Index, l2Index]
+
+def __findExtraLeptons(event, isData, findSameFlav, muPref, maxL1OkEta, \
+        maxL2OkEta, l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz):
+    if findSameFlav:
+        if muPref: # mumu
+            l1Flav = "Muon"
+            l2Flav = "Muon"
+        else: # elel
+            l1Flav = "Electron"
+            l2Flav = "Electron"
+    else:
+        if muPref: # muel
+            l1Flav = "Muon"
+            l2Flav = "Electron"
+        else: # elmu
+            l1Flav = "Electron"
+            l2Flav = "Muon"
+
+    l1extra = getattr(event, "nMuon")
+    for i3 in range(l1extra):
+        if l1Flav == 'Muon' and l2Flav == 'Muon' and (i3 == l1Index or i3==l2Index) : continue
+        if l1Flav == 'Muon' and l2Flav == 'Electron' and i3 == l1Index : continue
+        if l1Flav == 'Electron' and l2Flav == 'Muon' and i3==l2Index : continue
+        if l1Flav == 'Electron' and l2Flav == 'Electron' : continue #this is make sure that we get an extra lepton of the same flavor like the main ones
+        if l3Index > -1 : continue 
+
+        pt3 = list(getattr(event, "Muon_pt"))[i3]
+        phi3 = list(getattr(event, "Muon_phi"))[i3]
+        absDxy3 = abs(list(getattr(event, "Muon_dxy"))[i3])
+        absDz3 = abs(list(getattr(event, "Muon_dz"))[i3])
+        absEta3 = abs(list(getattr(event, "Muon_eta"))[i3])
+        iso3 = list(getattr(event, "Muon_pfRelIso04_all"))[i3]
+        isGlobal3 = list(getattr(event, "Muon_isGlobal"))[i3]
+        isTracker3 = list(getattr(event, "Muon_isTracker"))[i3]
+        isMedium3 = list(getattr(event, "Muon_mediumId"))[i3]
+
+        if  pt3 < 5 or absEta3 > 2.4 or absDxy3 > maxOkDxy or absDz3 > maxOkDz : continue
+        if  not isMedium3 : continue
+        l3Index = i3
+        #print 'for ', l1Flav, l2Flav, pt3, 'iso3=========', iso3, 'dxy========', absDxy3, 'dz=========', absDz3, 'l3Ind=======', l3Index, isMedium3
+
+    l2extra = getattr(event, "nElectron")
+    for i4 in range(l2extra):
+        if l1Flav == 'Electron' and l2Flav == 'Electron' and (i4 == l1Index or i4==l2Index) : continue
+        if l1Flav == 'Muon' and l2Flav == 'Electron' and i4 == l2Index : continue
+        if l1Flav == 'Electron' and l2Flav == 'Muon' and i4==l1Index : continue
+        if l1Flav == 'Muon' and l2Flav == 'Muon' :  continue
+        if l4Index > -1 : continue
+
+        pt4 = list(getattr(event, "Electron_pt"))[i4]
+        phi4 = list(getattr(event, "Electron_phi"))[i4]
+        absDxy4 = abs(list(getattr(event, "Electron_dxy"))[i4])
+        absDz4 = abs(list(getattr(event, "Electron_dz"))[i4])
+        absEta4 = abs(list(getattr(event, "Electron_eta"))[i4])
+        iso4 = list(getattr(event, "Electron_pfRelIso03_all"))[i4]
+        hits4 = ord(list(getattr(event, "Electron_lostHits"))[i4])
+        convVeto4 = list(getattr(event, "Electron_convVeto"))[i4]
+        mvaID4 = list(getattr(event, "Electron_mvaFall17V2noIso_WP90"))[i4]
+
+        if  pt4 < 5 or absEta4 > 2.1 or absDxy4 > maxOkDxy or absDz4 > maxOkDz : continue
+
+        if hits4 > 1 or not convVeto4 or not mvaID4 : continue
+        l4Index = i4
+        #print 'for ', l1Flav, l2Flav, pt4, 'iso4=========', iso4, 'dxy========', absDxy4, 'dz=========', absDz4, 'l4Ind=======', l4Index, mvaID4, convVeto4
+        
     # print l1Index, l2Index, "n1", l1count, "n2", l2count
 
     # print
@@ -135,8 +255,8 @@ def __selectLepts(event, isData, findSameFlav, muPref, maxL1OkEta, \
     # print "l2 pt: " + str(list(getattr(event, l2Flav+"_pt"))[l2Index])
     # print "l2 eta: " + str(list(getattr(event, l2Flav+"_eta"))[l2Index])
     # print "l2 relIso: " + str(list(getattr(event, l2Flav+"_relIso"))[l2Index])
-
-    return [l1Index, l2Index]
+    #print 'now.....', l1Flav, l2Flav, l1Index, l2Index, l3Index, l4Index
+    return [l1Index, l2Index, l3Index, l4Index]
 
 #--------------------------------------------------------------------------------#
 
@@ -164,7 +284,8 @@ def passCrossTrig(event, findSameFlav, muPref, index, isData, flav):
 # Returns true if the muon at muIndex passes the single muon trigger check.
 def passMuTrigger(event, muIndex):
     if not event.HLT_IsoMu24 and not event.HLT_IsoMu27: return False
-    if list(event.Muon_pt)[muIndex] < 26: return False
+    if list(event.Muon_pt)[muIndex] < 26 and event.HLT_IsoMu24 and not event.HLT_IsoMu27 : return False
+    if list(event.Muon_pt)[muIndex] < 29 and not event.HLT_IsoMu24 and  event.HLT_IsoMu27 : return False
     for iObj in range(event.nTrigObj):
         dR = deltaR(event, "Muon", muIndex, "TrigObj", iObj)
         # filter bit 2: iso
@@ -175,7 +296,8 @@ def passMuTrigger(event, muIndex):
 def passElTrigger(event, elIndex):
     if not event.HLT_Ele25_eta2p1_WPTight_Gsf and \
             not event.HLT_Ele27_eta2p1_WPTight_Gsf: return False
-    if list(event.Electron_pt)[elIndex] < 27: return False
+    if list(event.Electron_pt)[elIndex] < 27 and event.HLT_Ele25_eta2p1_WPTight_Gsf and not event.HLT_Ele27_eta2p1_WPTight_Gsf: return False
+    if list(event.Electron_pt)[elIndex] < 29 and not event.HLT_Ele25_eta2p1_WPTight_Gsf and event.HLT_Ele27_eta2p1_WPTight_Gsf: return False
     for iObj in range(event.nTrigObj):
         dR = deltaR(event, "Electron", elIndex, "TrigObj", iObj)
         # filter bit 2: el working point tight
@@ -291,12 +413,14 @@ def findValidJets(event, l1Flav, l1Index, l2Flav, l2Index):
 # fulfilling some strictness (0=loose, 1=medium, 2=tight).
 # threshold = [0.5803, 0.8838, 0.9693] # Jet_btagCSSV2
 # threshold = [0.1522, 0.4941, 0.8001] # Jet_btagDeepB 
-threshold = [0.0521, 0.3033, 0.7489] # Jet_btagDeepFlavB 
+#threshold = [0.0521, 0.3033, 0.7489] # Jet_btagDeepFlavB 
+threshold = [0.2217, 0.6321, 0.8953] # Jet_btagDeepCSVB 
 def getBtagIndices(event, jets, strictness=1):
     # bool Jet_btag[jet][0, 1, 2]: 0, 1, 2 = passed loose, medium, tight cuts
     # stored as float so > 0.5 = True
     indices = []
-    Jet_btag = list(event.Jet_btagDeepFlavB)
+    #Jet_btag = list(event.Jet_btagDeepFlavB)
+    Jet_btag = list(event.Jet_btagDeepB)
     for iGoodJets, iAllJets in enumerate(jets):
         if Jet_btag[iAllJets] > threshold[strictness]: indices.append(iGoodJets)
     return indices 
@@ -306,26 +430,26 @@ def getBtagIndices(event, jets, strictness=1):
 # Returns true if an event with l1/l2Charge, l1/l2RelIso, and findSameFlav
 # parameters falls in region A (same sign, nominal rel iso)
 def isRegionA(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
-    if findSameFlav: maxRelIso = 0.1
-    else: maxRelIso = 0.2
-    if l1Charge*l2Charge > 0 and (l1RelIso < maxRelIso and l2RelIso < maxRelIso):
+    if findSameFlav: maxRelIso = 0.15
+    else: maxRelIso = 0.25
+    if l1Charge*l2Charge > 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso:
         return True
     return False
 
 # Returns true if an event with l1/l2Charge, l1/l2RelIso, and findSameFlav
 # parameters falls in region B (opposite sign, nominal rel iso; signal region)
 def isRegionB(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
-    if findSameFlav: maxRelIso = 0.1
-    else: maxRelIso = 0.2
-    if l1Charge*l2Charge < 0 and (l1RelIso < maxRelIso and l2RelIso < maxRelIso):
+    if findSameFlav: maxRelIso = 0.15
+    else: maxRelIso = 0.25
+    if l1Charge*l2Charge < 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso:
         return True
     return False
 
 # Returns true if an event with l1/l2Charge, l1/l2RelIso, and findSameFlav
 # parameters falls in region C (opposite sign, inverted rel iso)
 def isRegionC(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
-    if findSameFlav: maxRelIso = 0.1
-    else: maxRelIso = 0.2
+    if findSameFlav: maxRelIso = 0.15
+    else: maxRelIso = 0.25
     if l1Charge*l2Charge < 0 and l1RelIso > maxRelIso and l2RelIso > maxRelIso \
             and l1RelIso < 2*maxRelIso and l2RelIso < 2*maxRelIso:
         return True
@@ -334,8 +458,8 @@ def isRegionC(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
 # Returns true if an event with l1/l2Charge, l1/l2RelIso, and findSameFlav
 # parameters falls in region D (same sign, inverted rel iso)
 def isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
-    if findSameFlav: maxRelIso = 0.1
-    else: maxRelIso = 0.2
+    if findSameFlav: maxRelIso = 0.15
+    else: maxRelIso = 0.25
     if l1Charge*l2Charge > 0 and l1RelIso > maxRelIso and l2RelIso > maxRelIso \
             and l1RelIso < 2*maxRelIso and l2RelIso < 2*maxRelIso:
         return True
