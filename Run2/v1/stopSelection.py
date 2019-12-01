@@ -241,8 +241,7 @@ def __selectLepts(event, isData, findSameFlav, muPref, maxL1OkEta, \
         isTracker3 = list(getattr(event, "Muon_isTracker"))[i3]
         isMedium3 = list(getattr(event, "Muon_mediumId"))[i3]
 
-        if  pt3 < 5 or iso3 < maxOkIso or absEta3 > 2.4\
-                or absDxy3 > maxOkDxy or absDz3 > maxOkDz : continue
+        if  pt3 < 5 or absEta3 > 2.4 or absDxy3 > maxOkDxy or absDz3 > maxOkDz : continue
         if  not isMedium3 : continue
         l3Index = i3
         #print 'for ', l1Flav, l2Flav, pt3, 'iso3=========', iso3, 'dxy========', absDxy3, 'dz=========', absDz3, 'l3Ind=======', l3Index, isMedium3
@@ -265,8 +264,7 @@ def __selectLepts(event, isData, findSameFlav, muPref, maxL1OkEta, \
         conveto4 = list(getattr(event, "Electron_convVeto"))[i4]
         mvaID4 = list(getattr(event, "Electron_mvaFall17V2noIso_WP90"))[i4]
 
-        if  pt4 < 5 or iso4 < maxOkIso  or absEta4 > 2.1\
-                or absDxy4 > maxOkDxy or absDz4 > maxOkDz : continue
+        if  pt4 < 5 or absEta4 > 2.1 or absDxy4 > maxOkDxy or absDz4 > maxOkDz : continue
 
         if hits4 > 1 or not conveto4 or not mvaID4 : continue
         l4Index = i4

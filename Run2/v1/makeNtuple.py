@@ -515,15 +515,15 @@ for count, event in enumerate(inTree):
     # ****** Loose selection for valid lep1, lep2, jets (with trigger) ******
     if findSameFlav:
         if muPref:
-            lepIndices = selectMuMu(event, isData, maxOkIso=0.2)
-        else: lepIndices = selectElEl(event, isData, maxOkIso=0.2)
+            lepIndices = selectMuMu(event, isData, maxOkIso=0.3)
+        else: lepIndices = selectElEl(event, isData, maxOkIso=0.3)
         if lepIndices is None: continue
     else:
-        lepIndices = selectMuEl(event, isData, maxOkIso=0.2)
+        lepIndices = selectMuEl(event, isData, maxOkIso=0.3)
         l1Flav = "Muon"
         l2Flav = "Electron"
         if lepIndices is None:
-            lepIndices = selectElMu(event, isData, maxOkIso=0.2)
+            lepIndices = selectElMu(event, isData, maxOkIso=0.3)
             if lepIndices is None: continue
             l1Flav = "Electron"
             l2Flav = "Muon"
