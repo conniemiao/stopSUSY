@@ -308,16 +308,16 @@ def getBtagIndices(event, jets, strictness=1):
 def isRegionA(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
     if findSameFlav: maxRelIso = 0.1
     else: maxRelIso = 0.2
-    if l1Charge*l2Charge > 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso:
+    if l1Charge*l2Charge > 0 and (l1RelIso < maxRelIso and l2RelIso < maxRelIso):
         return True
     return False
 
 # Returns true if an event with l1/l2Charge, l1/l2RelIso, and findSameFlav
-# parameters falls in region B (opposite sign, nominal rel iso - signal region)
+# parameters falls in region B (opposite sign, nominal rel iso; signal region)
 def isRegionB(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
     if findSameFlav: maxRelIso = 0.1
     else: maxRelIso = 0.2
-    if l1Charge*l2Charge < 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso:
+    if l1Charge*l2Charge < 0 and (l1RelIso < maxRelIso and l2RelIso < maxRelIso):
         return True
     return False
 

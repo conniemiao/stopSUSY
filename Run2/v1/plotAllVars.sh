@@ -16,7 +16,8 @@ elif [[ "$testMode" == "all" ]]; then
     cuts=("baseline" "nJet<4")
     plotVars2D=("lep1_pt" "lep2_pt" "lep1_mt" "lep2_mt" "MET_pt" "lep1_eta" \
         "lep2_eta" "Jet_ht" "mt_tot" "mt_sum" "m_eff")
-    regions=("A" "B" "C" "D")
+    # regions=("A" "B" "C" "D")
+    regions=("any")
 else
     echo "need {test, all} as 1st arg to plotAllVars.sh"
     exit 1

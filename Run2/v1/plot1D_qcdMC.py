@@ -124,7 +124,7 @@ plotSettings = { # [nBins,xMin,xMax,units]
 fakeTypes_idDict = OrderedDict([(1, "e->e/mu->mu"), (15, "tau->e/mu"), \
         (22, "photon->e"), (5, "b->e/mu"), (4, "c->e/mu"), \
          (3, "d/u/s/unknown->e/mu"), (0, "unmatched")])
-# fakeTypes_orderDict maps name of the fake type to the index in the histogram
+# fakeTypes_orderDict maps id of the fake type to the index in the histogram
 fakeTypes_orderDict = OrderedDict()
 for i, fakeTypeId in enumerate(fakeTypes_idDict):
     fakeTypes_orderDict[fakeTypeId] = i
@@ -286,8 +286,6 @@ DYIncl_totgenwt = 0
 for process in processes:
     hBkgdCutsCountDict.update({process:[0]*nCuts})
 
-avgEvtwt = 0
-countBaseline = 0
 for subprocessLine in bkgd_redirector:
     subprocessLine = subprocessLine.rstrip('\n').split(" ")
     subprocess = subprocessLine[0]
@@ -399,8 +397,6 @@ for subprocessLine in bkgd_redirector:
             if not isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, \
                     findingSameFlavor): continue
         hBkgdCutflow.Fill(cuts["baseline"], evtwt)
-        countBaseline += 1
-        avgEvtwt += evtwt
 
         # if nCuts > cuts["dilepton"]: # not doing this; doing ABCD regions instead
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
@@ -563,6 +559,7 @@ for subprocessLine in bkgd_redirector:
             if DYIncl_totgenwt > 0: # if not, then missed DYIncl; use the default norm
                 norm = lumi/(DYIncl_totgenwt/DYIncl_xsec + bkgdTotGenweight/\
                         (DYNJetsXsecs[int(subprocess[1])-1]*DYJets_kfactor))
+
         # if running only on W/DYJets incl, then all subprocesses; otherwise all
         # subprocesses other than WJets incl and DYJets incl:
         for plotVar in plotSettings:
@@ -608,8 +605,6 @@ c_fakeSort.cd()
 hFakeSortingStack.Draw("hist")
 hFakeSortingStack.SetMinimum(1)
 hFakeSortingStack.SetMaximum(10**12)
-
-print "avg evtwt", avgEvtwt/countBaseline
 
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal in a separate hist ***************
@@ -821,10 +816,10 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
         legend = legendDict[plotVar]
         legend.AddEntry(hSig, hSig.GetTitle())
         hSig.Draw("hist same") # same pad
+
     hSigCutflow.Scale(norm)
     for c, cut in enumerate(cuts):
         if c >= nCuts: break
-        print c, int(hSigCutflow.GetBinContent(c+1))
         hSigCutsCountDict[subprocess][c] = int(hSigCutflow.GetBinContent(c+1))
 
     sigFile.Close()
@@ -900,7 +895,7 @@ for fileNum, subprocessLine in enumerate(data_redirector):
         # if findingSameFlavor, l1/l2Flav set at runtime
         if not findingSameFlavor: 
             if event.lep1_isMu: l1Flav = "Muon"
-            else: l1Flav = "Electron"
+           else: l1Flav = "Electron"
             if event.lep2_isMu: l1Flav = "Muon"
             else: l2Flav = "Electron"
         l1Index = event.lep1_index
@@ -962,12 +957,11 @@ for fileNum, subprocessLine in enumerate(data_redirector):
             binwidth = (xMax - xMin)/nBins
 
             # Figure out what value to plot.
-
             # flag to divide by sqrt MET before plotting
             div_sqrt_MET = False
             if "div_sqrt_MET" in plotVar: 
                 div_sqrt_MET = True
-                plotVar = plotVar[:-13]
+                plotVar = plotVar[:-len("_div_sqrt_MET")]
 
             # plotting a jet related var
             if "Jet" in plotVar and plotVar != "nJet":

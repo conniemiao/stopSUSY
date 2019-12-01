@@ -180,20 +180,28 @@ with open("bkgd_fileRedirector") as bkgd_redirector:
         if process == "QCD": continue
 
         if subprocess == "WJetsToLNu" or subprocess == "DYJetsToLL_M-50":
+            useNPartons = True # true if npartons were all handled in qcd mc
             for i in range(5):
                 name = subprocess+"_"+str(i)+"Parton"
-                
-                # make sure this process was actually run in plot1D_qcdMC
+                # make sure all the npartons were actually run in plot1D_qcdMC
                 histname = "bkgd_"+name+"_m_eff"
+                useNPartons = histFileB.GetListOfKeys().Contains(histname) and \
+                        useNPartons
+            if useNPartons:
+                for i in range(5):
+                    name = subprocess+"_"+str(i)+"Parton"
+                    bkgdSubprocesses.append(name)
+                    hBkgdSubprocessesPlotVarDict.update({name:{}})
+            else: # W/DY Jets incl only
+                # make sure this process was actually run in plot1D_qcdMC
+                histname = "bkgd_"+subprocess+"_m_eff"
                 if not histFileB.GetListOfKeys().Contains(histname): continue
-
-                bkgdSubprocesses.append(name)
-                hBkgdSubprocessesPlotVarDict.update({name:{}})
+                bkgdSubprocesses.append(subprocess)
+                hBkgdSubprocessesPlotVarDict.update({subprocess:{}})
         else: 
             # make sure this process was actually run in plot1D_qcdMC
             histname = "bkgd_"+subprocess+"_m_eff"
             if not histFileB.GetListOfKeys().Contains(histname): continue
-
             bkgdSubprocesses.append(subprocess)
             hBkgdSubprocessesPlotVarDict.update({subprocess:{}})
 
@@ -241,22 +249,26 @@ for plotVarNum, plotVar in enumerate(plotSettings):
         hBkgd_A = histFileA.Get("bkgd_"+subprocess+"_"+plotVar)
         if hBkgd_A.GetSumOfWeights() <= 0: hBkgd_A.Scale(0)
         elif plotVarNum == 0: print "Adding", subprocess, "region A"
+        # hBkgd_A.Scale(0.5) # lol this is definitely not ok (!!!)
         hBkgdMC_A.Add(hBkgd_A)
 
         hBkgd_C = histFileC.Get("bkgd_"+subprocess+"_"+plotVar)
         if hBkgd_C.GetSumOfWeights() <= 0: hBkgd_C.Scale(0)
         elif plotVarNum == 0: print "Adding", subprocess, "region C"
+        # hBkgd_C.Scale(0.5) # lol this is definitely not ok (!!!)
         hBkgdMC_C.Add(hBkgd_C)
 
         hBkgd_D = histFileD.Get("bkgd_"+subprocess+"_"+plotVar)
         if hBkgd_D.GetSumOfWeights() <= 0: hBkgd_D.Scale(0)
         elif plotVarNum == 0: print "Adding", subprocess, "region D"
+        # hBkgd_D.Scale(0.5) # lol this is definitely not ok (!!!)
         hBkgdMC_D.Add(hBkgd_D)
 
         # for final plotting (using plots from MC_B):
         histname = "bkgd_"+subprocess+"_"+plotVar
         hBkgd_B = histFileB.Get(histname)
         hBkgd_B.SetDirectory(0)
+        # hBkgd_B.Scale(0.5) # lol this is definitely not ok (!!!)
         hBkgdSubprocessesPlotVarDict[subprocess].update({plotVar:hBkgd_B})
         hBkgdStack.Add(hBkgd_B) 
         hBkgdColor = hBkgd_B.GetFillColor() # colors/styles determined in plot1D_qcdMC
@@ -272,22 +284,25 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     # ********** hQCD calculation. ***********
     hQCD = hQCDPlotVarDict[plotVar]
     hQCD.Add(hData_C, hBkgdMC_C, 1, -1) # hQCD = hDataC - hBkgdMC_C
-    if plotVarNum == 0 and hQCD.GetSumOfWeights() < 0:
-        sys.stderr.write("WARNING: Sum of weights hData_C - hBkgdMC_C = "+\
-                str(hDiffC.GetSumOfWeights())+" (< 0)!\n")
+    if hQCD.GetSumOfWeights() < 0:
+        if plotVarNum == 0: # just print once
+            sys.stderr.write("WARNING: Sum of weights hData_C - hBkgdMC_C < 0! ("+\
+                    str(hQCD.GetSumOfWeights())+")\n")
 
     hDiffD = hData_D.Clone()
     hDiffD.Add(hBkgdMC_D, -1) # hDiffD = hData_D - hBkgdMC_D
-    if plotVarNum == 0 and hDiffD.GetSumOfWeights() < 0:
-        sys.stderr.write("WARNING: Sum of weights hData_D - hBkgdMC_D = "+\
-                str(hDiffD.GetSumOfWeights())+" (< 0)!\n")
+    if hDiffD.GetSumOfWeights() < 0:
+        if plotVarNum == 0: # just print once
+            sys.stderr.write("WARNING: Sum of weights hData_D - hBkgdMC_D < 0! ("+\
+                    str(hDiffD.GetSumOfWeights())+")\n")
     hQCD.Divide(hDiffD) # hQCD = hQCD/hDiffD
 
     hDiffA = hData_A.Clone()
     hDiffA.Add(hBkgdMC_A, -1) # hDiffA = hData_A - hBkgdMC_A
-    if plotVarNum == 0 and hDiffA.GetSumOfWeights() < 0:
-        sys.stderr.write("WARNING: Sum of weights hData_A - hBkgdMC_A = "+\
-                str(hDiffA.GetSumOfWeights())+" (< 0)!\n")
+    if hDiffA.GetSumOfWeights() < 0:
+        if plotVarNum == 0: # don't keep printing this
+            sys.stderr.write("WARNING: Sum of weights hData_A - hBkgdMC_A < 0! ("+\
+                    str(hDiffA.GetSumOfWeights())+")\n")
     hQCD.Multiply(hDiffA) # hQCD = hQCD * hDiffA
 
     hQCD.SetFillColor(colorQCD)

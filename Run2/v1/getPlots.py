@@ -65,7 +65,7 @@ plotVars = {"lep1_pt", "lep1_eta", "lep1_phi", "lep1_relIso", "lep1_mt",
 "lep2_pt", "lep2_eta", "lep2_phi", "lep2_relIso", "lep2_mt", "nJet", "Jet_pt", 
 "Jet_eta", "Jet_phi", "Jet_ht", "nbtag", "nbtagLoose", "nbtagTight", "dR_lep1_jet",
 "dR_lep2_jet", "MET_pt", "mt_tot", "mt_sum", "m_eff", "Jet_ht_div_sqrt_MET",
-"mt_tot_div_sqrt_MET", "m_eff_div_sqrt_MET"}
+"mt_tot_div_sqrt_MET", "m_eff_div_sqrt_MET", "fakeSort"}
 
 # do the thing
 if displayMode:

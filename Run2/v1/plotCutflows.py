@@ -248,8 +248,8 @@ else:
 #--------------------------------------------------------------------------------#
 # *************** Draw pie charts ************
 c.SetLogy(0) # unset logy
-c_pie = TCanvas("c_pie","c_pie",10,10,700,700)
 
+c_pie_baseline = TCanvas("c_pie_baseline","c_pie_baseline",10,10,700,700)
 baselinePieVals = []
 allcutsPieVals = []
 pieColors = []
@@ -269,6 +269,7 @@ baselinePie.SetValueFormat("%.0f")
 baselinePie.SetTextSize(0.02)
 baselinePie.SetRadius(0.3)
 
+c_pie_lastcut = TCanvas("c_pie_lastcut","c_pie_lastcut",10,10,700,700)
 lastcut = cuts[nCuts-1]
 allcutsPie = TPie("allcutsPie", "Bkgd breakdown, "+lastcut+"("+channel+")", \
         len(allcutsPieVals), array('f',allcutsPieVals))
@@ -282,9 +283,9 @@ for i, process in enumerate(processes):
     baselinePie.SetEntryLabel(i, process)
     allcutsPie.SetEntryLabel(i, process)
 
-c_pie.cd()
+c_pie_baseline.cd()
 baselinePie.Draw("nol sc")
-c_pie.Update()
+c_pie_baseline.Update()
 if displayMode:
     print "Done with baseline pie. Press enter to continue."
     raw_input()
@@ -294,13 +295,13 @@ else:
     imgName += ".png"
     print "Saving image", imgName
     img = TImage.Create()
-    img.FromPad(c_pie)
+    img.FromPad(c_pie_baseline)
     img.WriteImage(imgName)
 
 if survivingEvts:
-    c_pie.cd()
+    c_pie_lastcut.cd()
     allcutsPie.Draw("nol sc")
-    c_pie.Update()
+    c_pie_lastcut.Update()
     if displayMode:
         print "Done with all cuts pie. Press enter to finish."
         raw_input()
@@ -310,6 +311,6 @@ if survivingEvts:
         imgName += ".png"
         print "Saving image", imgName
         img = TImage.Create()
-        img.FromPad(c)
+        img.FromPad(c_pie_lastcut)
         img.WriteImage(imgName)
         print "Done."
