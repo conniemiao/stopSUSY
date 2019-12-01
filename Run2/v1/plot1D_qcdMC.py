@@ -36,10 +36,13 @@ import time
 print "Beginning execution of", sys.argv
 
 # location of input ntuples
+# myDataDir = "/eos/user/a/alkaloge/Connie/"
 myDataDir = "/eos/user/c/cmiao/private/myDataSusy/Run2"
 # location where cutflow stats will be saved
+# statsDir = "/afs/cern.ch/user/a/alkaloge/work/Connie/CMSSW_10_2_9/src/stopSUSY/Run2/v1/cutflow_stats"
 statsDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/v1/cutflow_stats"
 # location where the root file with all the control plots will be saved
+# imgDir = "/afs/cern.ch/user/a/alkaloge/work/Connie/CMSSW_10_2_9/src/stopSUSY/Run2/v1/plot1D"
 imgDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/v1/plot1D"
 
 if sys.argv[1] == "test": testMode = True
@@ -98,14 +101,14 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "lep2_phi":[100,-4,4,""],
         "lep2_relIso":[100,0,0.2,""],
         "lep2_mt":[100,0,500,"[GeV]"],
-        "nJet":[10,0,10,""],
+        "nJet":[10,0.5,10.5,""],
         "Jet_pt":[100,0,400,"[GeV]"], 
         "Jet_eta":[100,-3,3,""],
         "Jet_phi":[100,-4,4,""],
         "Jet_ht":[100,0,800,"[GeV]"],
-        "nbtag":[5,0,5,""],
-        "nbtagLoose":[10,0,10,""],
-        "nbtagTight":[5,0,5,""],
+        "nbtag":[5,0.5,5.5,""],
+        "nbtagLoose":[10,0.5,10.5,""],
+        "nbtagTight":[5,0.5,5.5,""],
         "dR_lep1_jet":[100,0,7,""],
         "dR_lep2_jet":[100,0,7,""],
         "MET_pt":[100,0,500,"[GeV]"], 

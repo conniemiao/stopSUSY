@@ -24,9 +24,9 @@ executable  = makeNtuple.py
 
 universe    = vanilla
 initialdir  = $baseDir/Run2/v1
-output      = $condorLogDir/makeNtuple.\$(ClusterId).\$(ProcId).out
-error       = $condorLogDir/makeNtuple.\$(ClusterId).\$(ProcId).err
-log         = $condorLogDir/makeNtuple.\$(ClusterId).\$(ProcId).log
+output      = $condorLogDir/makeNtuple_${channel}_${subprocess}.\$(ClusterId).\$(ProcId).out
+error       = $condorLogDir/makeNtuple_${channel}_${subprocess}.\$(ClusterId).\$(ProcId).err
+log         = $condorLogDir/makeNtuple_${channel}_${subprocess}.\$(ClusterId).\$(ProcId).log
 
 +MaxRuntime = 129600
 
