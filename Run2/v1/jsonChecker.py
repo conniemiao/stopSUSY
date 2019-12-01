@@ -16,7 +16,7 @@ class jsonChecker():
         try: 
             LSlist = self.json_array[str(run)]
             for LSrange in LSlist:
-                if LS >= LSrange[0] and LS <= LSrange[1]:
+                if int(LS) >= int(LSrange[0]) and int(LS) <= int(LSrange[1])
                     self.good += 1
                     return True
         except KeyError: pass

@@ -55,22 +55,22 @@ def DR2(eta1, phi1, eta2, phi2) :
 # max eta, min pt, and max iso values.
 
 def selectMuMu(event, isData, maxL1OkEta=2.4, maxL2OkEta=2.4, l1MinOkPt=20, \
-        l2MinOkPt=-0.01, maxOkIso=1, maxOkDxy=0.045, maxOkDz=0.2):
+        l2MinOkPt=-0.01, maxOkIso=0.5, maxOkDxy=0.045, maxOkDz=0.2):
     return __selectLepts(event, isData, True, True, maxL1OkEta, maxL2OkEta, \
             l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
 
 def selectElEl(event, isData, maxL1OkEta=2.1, maxL2OkEta=2.1, l1MinOkPt=20, \
-        l2MinOkPt=-0.01, maxOkIso=1, maxOkDxy=0.045, maxOkDz=0.2):
+        l2MinOkPt=-0.01, maxOkIso=0.5, maxOkDxy=0.045, maxOkDz=0.2):
     return __selectLepts(event, isData, True, False, maxL1OkEta, maxL2OkEta, \
             l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
 
 def selectMuEl(event, isData, maxL1OkEta=2.4, maxL2OkEta=2.1, l1MinOkPt=12, \
-        l2MinOkPt=15, maxOkIso=1, maxOkDxy=0.045, maxOkDz=0.2):
+        l2MinOkPt=15, maxOkIso=0.5, maxOkDxy=0.045, maxOkDz=0.2):
     return __selectLepts(event, isData, False, True, maxL1OkEta, maxL2OkEta, \
             l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
 
 def selectElMu(event, isData, maxL1OkEta=2.1, maxL2OkEta=2.4, l1MinOkPt=25, \
-        l2MinOkPt=5, maxOkIso=1, maxOkDxy=0.045, maxOkDz=0.2):
+        l2MinOkPt=5, maxOkIso=0.5, maxOkDxy=0.045, maxOkDz=0.2):
     return __selectLepts(event, isData, False, False, maxL1OkEta, maxL2OkEta, \
             l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz)
 
@@ -440,12 +440,14 @@ def findValidJets(event, l1Flav, l1Index, l2Flav, l2Index):
 # fulfilling some strictness (0=loose, 1=medium, 2=tight).
 # threshold = [0.5803, 0.8838, 0.9693] # Jet_btagCSSV2
 # threshold = [0.1522, 0.4941, 0.8001] # Jet_btagDeepB 
-threshold = [0.0521, 0.3033, 0.7489] # Jet_btagDeepFlavB 
+#threshold = [0.0521, 0.3033, 0.7489] # Jet_btagDeepFlavB 
+threshold = [0.2217, 0.6321, 0.8953] # Jet_btagDeepCSVB 
 def getBtagIndices(event, jets, strictness=1):
     # bool Jet_btag[jet][0, 1, 2]: 0, 1, 2 = passed loose, medium, tight cuts
     # stored as float so > 0.5 = True
     indices = []
-    Jet_btag = list(event.Jet_btagDeepFlavB)
+    #Jet_btag = list(event.Jet_btagDeepFlavB)
+    Jet_btag = list(event.Jet_btagDeepB)
     for iGoodJets, iAllJets in enumerate(jets):
         if Jet_btag[iAllJets] > threshold[strictness]: indices.append(iGoodJets)
     return indices 
@@ -455,8 +457,8 @@ def getBtagIndices(event, jets, strictness=1):
 # Returns true if an event with l1/l2Charge, l1/l2RelIso, and findSameFlav
 # parameters falls in region A (same sign, nominal rel iso)
 def isRegionA(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
-    if findSameFlav: maxRelIso = 0.1
-    else: maxRelIso = 0.2
+    if findSameFlav: maxRelIso = 0.15
+    else: maxRelIso = 0.25
     if l1Charge*l2Charge > 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso:
         return True
     return False
@@ -464,8 +466,8 @@ def isRegionA(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
 # Returns true if an event with l1/l2Charge, l1/l2RelIso, and findSameFlav
 # parameters falls in region B (opposite sign, nominal rel iso - signal region)
 def isRegionB(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
-    if findSameFlav: maxRelIso = 0.1
-    else: maxRelIso = 0.2
+    if findSameFlav: maxRelIso = 0.15
+    else: maxRelIso = 0.25
     if l1Charge*l2Charge < 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso:
         return True
     return False
@@ -473,8 +475,8 @@ def isRegionB(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
 # Returns true if an event with l1/l2Charge, l1/l2RelIso, and findSameFlav
 # parameters falls in region C (opposite sign, inverted rel iso)
 def isRegionC(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
-    if findSameFlav: maxRelIso = 0.1
-    else: maxRelIso = 0.2
+    if findSameFlav: maxRelIso = 0.15
+    else: maxRelIso = 0.25
     if l1Charge*l2Charge < 0 and l1RelIso > maxRelIso and l2RelIso > maxRelIso \
             and l1RelIso < 2*maxRelIso and l2RelIso < 2*maxRelIso:
         return True
@@ -483,8 +485,8 @@ def isRegionC(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
 # Returns true if an event with l1/l2Charge, l1/l2RelIso, and findSameFlav
 # parameters falls in region D (same sign, inverted rel iso)
 def isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
-    if findSameFlav: maxRelIso = 0.1
-    else: maxRelIso = 0.2
+    if findSameFlav: maxRelIso = 0.15
+    else: maxRelIso = 0.25
     if l1Charge*l2Charge > 0 and l1RelIso > maxRelIso and l2RelIso > maxRelIso \
             and l1RelIso < 2*maxRelIso and l2RelIso < 2*maxRelIso:
         return True
