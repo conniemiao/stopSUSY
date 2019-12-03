@@ -140,7 +140,6 @@ def __selectLepts(event, isData, findSameFlav, muPref, maxL1OkEta, \
         if findSameFlav: startl2Search = i1+1 # don't want l1 = l2
         else: startl2Search = 0
         for i2 in range(startl2Search, l2count):
-            if findSameFlav and i2 == i1 : continue
             if not passCuts(event, l2Flav, i2, maxL2OkEta, l2MinOkPt, maxOkIso, \
                     maxOkDxy, maxOkDz): continue
 
@@ -167,7 +166,6 @@ def __selectLepts(event, isData, findSameFlav, muPref, maxL1OkEta, \
                 l2Index = i2
 
             # don't check for opposite charge since needed for QCD regions
-    
     if l1Index == -1: return None
     if l2Index == -1: return None
 
@@ -208,7 +206,6 @@ def findExtraLeptSameFlav(event, flav, l1Index, l2Index, maxOkEta, maxOkDxy, max
             extraLeptsIndices.append(i3)
     return extraLeptsIndices
 
-
 # Given that a pair of opp flav leptons was already found, and the index of one of
 # those leptons (which is of type flav), returns an array of the indices of all
 # additional leptons of type flav that satisfy the same eta, dxy, and dz cuts,
@@ -247,9 +244,10 @@ def passCrossTrig(event, findSameFlav, muPref, index, isData, flav):
 
 # Returns true if the muon at muIndex passes the single muon trigger check.
 def passMuTrigger(event, muIndex):
-    if not event.HLT_IsoMu24 and not event.HLT_IsoMu27: return False
-    if list(event.Muon_pt)[muIndex] < 26 and event.HLT_IsoMu24 and not event.HLT_IsoMu27 : return False
-    if list(event.Muon_pt)[muIndex] < 29 and not event.HLT_IsoMu24 and  event.HLT_IsoMu27 : return False
+    if (not (event.HLT_IsoMu27 and list(event.Muon_pt)[muIndex] > 29)) and \
+            (not (event.HLT_IsoMu24 and list(event.Muon_pt)[muIndex] > 26)):
+                return False
+
     for iObj in range(event.nTrigObj):
         dR = deltaR(event, "Muon", muIndex, "TrigObj", iObj)
         # filter bit 2: iso
@@ -258,10 +256,11 @@ def passMuTrigger(event, muIndex):
 
 # Returns true if the electron at elIndex passes the single electron trigger check.
 def passElTrigger(event, elIndex):
-    if not event.HLT_Ele25_eta2p1_WPTight_Gsf and \
-            not event.HLT_Ele27_eta2p1_WPTight_Gsf: return False
-    if list(event.Electron_pt)[elIndex] < 27 and event.HLT_Ele25_eta2p1_WPTight_Gsf and not event.HLT_Ele27_eta2p1_WPTight_Gsf: return False
-    if list(event.Electron_pt)[elIndex] < 29 and not event.HLT_Ele25_eta2p1_WPTight_Gsf and event.HLT_Ele27_eta2p1_WPTight_Gsf: return False
+    if (not (event.HLT_Ele27_eta2p1_WPTight_Gsf and \
+            list(event.Electron_pt)[elIndex] > 29)) and \
+            (not (event.HLT_Ele25_eta2p1_WPTight_Gsf and \
+            list(event.Electron_pt)[elIndex] > 27)):
+                return False
     for iObj in range(event.nTrigObj):
         dR = deltaR(event, "Electron", elIndex, "TrigObj", iObj)
         # filter bit 2: el working point tight
@@ -377,7 +376,7 @@ def findValidJets(event, l1Flav, l1Index, l2Flav, l2Index):
 # fulfilling some strictness (0=loose, 1=medium, 2=tight).
 # threshold = [0.5803, 0.8838, 0.9693] # Jet_btagCSSV2
 # threshold = [0.1522, 0.4941, 0.8001] # Jet_btagDeepB 
-#threshold = [0.0521, 0.3033, 0.7489] # Jet_btagDeepFlavB 
+# threshold = [0.0521, 0.3033, 0.7489] # Jet_btagDeepFlavB 
 threshold = [0.2217, 0.6321, 0.8953] # Jet_btagDeepCSVB 
 def getBtagIndices(event, jets, strictness=1):
     # bool Jet_btag[jet][0, 1, 2]: 0, 1, 2 = passed loose, medium, tight cuts

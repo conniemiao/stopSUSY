@@ -445,7 +445,7 @@ for count, event in enumerate(inTree):
     l2Index = lepIndices[1]
     evt_extraMuIndices = lepIndices[2]
     evt_extraElIndices = lepIndices[3]
-    print l1Index, l2Index, evt_extraMuIndices, evt_extraElIndices
+    # print l1Index, l1Flav,  l2Index, l2Flav, evt_extraMuIndices, evt_extraElIndices
 
     jets = findValidJets(event, l1Flav, l1Index, l2Flav, l2Index)
     numGoodJets = len(jets)
