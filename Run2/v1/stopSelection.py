@@ -67,13 +67,45 @@ def selectElMu(event, isData, maxL1OkEta=2.1, maxL2OkEta=2.4, l1MinOkPt=25, \
 
 #--------------------------------------------------------------------------------#
 
+# Generalized method to determine whether some event's lepton of flavor flav and
+# at index i passes cuts determined by the eta, pt, iso, dxy, and dz cuts and also
+# passes the appropriate reconstruction flags.
+def passCuts(event, flav, i, maxOkEta, minOkPt, maxOkIso, maxOkDxy, maxOkDz):
+    pt = list(getattr(event, flav+"_pt"))[i]
+    phi = list(getattr(event, flav+"_phi"))[i]
+    absDxy = abs(list(getattr(event, flav+"_dxy"))[i])
+    absDz = abs(list(getattr(event, flav+"_dz"))[i])
+    absEta = abs(list(getattr(event, flav+"_eta"))[i])
+    eta = list(getattr(event, flav+"_eta"))[i]
+    if flav[0] == "M": # Muon:
+        iso = list(getattr(event, "Muon_pfRelIso04_all"))[i]
+        isGlobal = list(getattr(event, "Muon_isGlobal"))[i]
+        isTracker = list(getattr(event, "Muon_isTracker"))[i]
+        #isTight = list(getattr(event, "tightId"))[i]
+        isMedium = list(getattr(event, "Muon_mediumId"))[i]
+    else: # Electron 
+        iso = list(getattr(event, "Electron_pfRelIso03_all"))[i]
+        hits = ord(list(getattr(event, "Electron_lostHits"))[i])
+        convVeto = list(getattr(event, "Electron_convVeto"))[i]
+        mvaId = list(getattr(event, "Electron_mvaFall17V2noIso_WP90"))[i]
+
+    if pt > minOkPt and iso < maxOkIso and absEta < maxOkEta and \
+            absDxy < maxOkDxy and absDz < maxOkDz: return True
+    return False
+
+#--------------------------------------------------------------------------------#
+
 # Selects a pair of leptons from an event (general private helper method). 
 # If findSameFlav is True: selects for pair of muons if muPref is True, 
 # or for pair of electrons if False. 
 # If findSameFlav is False: selects for leading mu and trailing el if
 # muPref is True, or for leading el and trailing mu if False.
 # isData is used to determine proper trigger checks.
-# Returns an array of 2 entries where a[0] = l1Index, a[1] = l2Index, where 
+# Returns an array of length 4, where a[0] = l1Index, a[1] = l2Index, a[2] = an array
+# of the indices of all extra 3rd leptons that are muons, a[3] = an array of the
+# indices of all extra 3rd leptons that are electrons. a[2] and a[3] will be of
+# length 0 either if it's not valid to have extra leptons for that flavor (e.g. 
+# don't look for extra electrons if it's mumu), or if no extra leptons were found.
 # l1 is always the leading lepton (satisfies the higher pt cut), l2 is trailing.
 # All the max/min parameters should be specified by selectMuMu/ElEl/MuEl/ElMu.
 def __selectLepts(event, isData, findSameFlav, muPref, maxL1OkEta, \
@@ -95,35 +127,13 @@ def __selectLepts(event, isData, findSameFlav, muPref, maxL1OkEta, \
 
     l1Index = -1
     l2Index = -1
-    minSumIso = 999
+    minSumIso = 9999
     # select leading lepton
     l1count = getattr(event, "n"+l1Flav)
     if findSameFlav and l1count<2: return None
     for i1 in range(l1count):
-        pt1 = list(getattr(event, l1Flav+"_pt"))[i1]
-        phi1 = list(getattr(event, l1Flav+"_phi"))[i1]
-        absDxy1 = abs(list(getattr(event, l1Flav+"_dxy"))[i1])
-        absDz1 = abs(list(getattr(event, l1Flav+"_dz"))[i1])
-        absEta1 = abs(list(getattr(event, l1Flav+"_eta"))[i1])
-        eta1 = list(getattr(event, l1Flav+"_eta"))[i1]
-        if l1Flav[0] == "M": # Muon:
-            iso1 = list(getattr(event, "Muon_pfRelIso04_all"))[i1]
-            isGlobal1 = list(getattr(event, "Muon_isGlobal"))[i1]
-            isTracker1 = list(getattr(event, "Muon_isTracker"))[i1]
-            #isTight = list(getattr(event, "tightId"))[i1]
-            isMedium1 = list(getattr(event, "Muon_mediumId"))[i1]
-        else: # Electron 
-            iso1 = list(getattr(event, "Electron_pfRelIso03_all"))[i1]
-            hits1 = ord(list(getattr(event, "Electron_lostHits"))[i1])
-            convVeto1 = list(getattr(event, "Electron_convVeto"))[i1]
-            mvaId1 = list(getattr(event, "Electron_mvaFall17V2noIso_WP90"))[i1]
-
-        if not(pt1 > l1MinOkPt and iso1 < maxOkIso and absEta1 < maxL1OkEta\
-                and absDxy1 < maxOkDxy and absDz1 < maxOkDz): continue
-        #if l1Flav[0] == "M" and not isGlobal1 and not isTracker1 : continue
-        if l1Flav[0] == "M" and not isMedium1: continue
-        else:
-            if hits1 > 1 or not convVeto1 or not mvaId1: continue
+        if not passCuts(event, l1Flav, i1, maxL1OkEta, l1MinOkPt, maxOkIso, maxOkDxy,\
+                maxOkDz): continue
 
         # select trailing lepton
         l2count = getattr(event, "n"+l2Flav)
@@ -131,37 +141,19 @@ def __selectLepts(event, isData, findSameFlav, muPref, maxL1OkEta, \
         else: startl2Search = 0
         for i2 in range(startl2Search, l2count):
             if findSameFlav and i2 == i1 : continue
-            pt2 = list(getattr(event, l2Flav+"_pt"))[i2]
-            phi2 = list(getattr(event, l2Flav+"_phi"))[i2]
-            absDxy2 = abs(list(getattr(event, l2Flav+"_dxy"))[i2])
-            absDz2 = abs(list(getattr(event, l2Flav+"_dz"))[i2])
-            absEta2 = abs(list(getattr(event, l2Flav+"_eta"))[i2])
-            eta2 = list(getattr(event, l2Flav+"_eta"))[i2]
-            if l2Flav[0] == "M": # Muon:
-                iso2 = list(getattr(event, "Muon_pfRelIso04_all"))[i2]
-                isGlobal2 = list(getattr(event, "Muon_isGlobal"))[i2]
-                isTracker2 = list(getattr(event, "Muon_isTracker"))[i2]
-                #isTight = list(getattr(event, "tightId"))[i2]
-                isMedium2 = list(getattr(event, "Muon_mediumId"))[i2]
-
-            else: # Electron 
-                iso2 = list(getattr(event, "Electron_pfRelIso03_all"))[i2]
-                hits2 = ord(list(getattr(event, "Electron_lostHits"))[i2])
-                convVeto2 = list(getattr(event, "Electron_convVeto"))[i2]
-                mvaId2 = list(getattr(event, "Electron_mvaFall17V2noIso_WP90"))[i2]
-
-            if not(pt2 > l2MinOkPt and iso2 < maxOkIso and absEta2 < maxL2OkEta \
-                    and absDxy2 < maxOkDxy and absDz2 < maxOkDz): continue
-
-            # if l2Flav[0] == "M" and not isGlobal2 and not isTracker2 : continue
-            if l2Flav[0] == "M" and not isMedium2: continue
-            else:
-                if hits2 > 1 or not convVeto2 or not mvaId2: continue
+            if not passCuts(event, l2Flav, i2, maxL2OkEta, l2MinOkPt, maxOkIso, \
+                    maxOkDxy, maxOkDz): continue
 
             dr = deltaR(event, l1Flav, i1, l2Flav, i2)
             if dr < 0.3 : continue
 
-            # total iso check to keep pair with min total iso
+            # total iso check; want to keep pair with min total iso
+            if l1Flav[0] == "M":
+                iso1 = list(getattr(event, "Muon_pfRelIso04_all"))[i1]
+            else: iso1 = list(getattr(event, "Electron_pfRelIso03_all"))[i1]
+            if l2Flav[0] == "M":
+                iso2 = list(getattr(event, "Muon_pfRelIso04_all"))[i2]
+            else: iso2 = list(getattr(event, "Electron_pfRelIso03_all"))[i2]
             if (iso1+iso2) >= minSumIso: continue
             minSumIso = iso1+iso2
 
@@ -179,84 +171,56 @@ def __selectLepts(event, isData, findSameFlav, muPref, maxL1OkEta, \
     if l1Index == -1: return None
     if l2Index == -1: return None
 
-    return [l1Index, l2Index]
-
-def __findExtraLeptons(event, isData, findSameFlav, muPref, maxL1OkEta, \
-        maxL2OkEta, l1MinOkPt, l2MinOkPt, maxOkIso, maxOkDxy, maxOkDz):
+    extraMuIndices = []
+    extraElIndices = []
     if findSameFlav:
         if muPref: # mumu
-            l1Flav = "Muon"
-            l2Flav = "Muon"
+            extraMuIndices = findExtraLeptSameFlav(event, l1Flav, l1Index, l2Index,\
+                    maxL1OkEta, maxOkDxy, maxOkDz)
         else: # elel
-            l1Flav = "Electron"
-            l2Flav = "Electron"
+            extraElIndices = findExtraLeptSameFlav(event, l1Flav, l1Index, l2Index,\
+                    maxL1OkEta, maxOkDxy, maxOkDz)
     else:
         if muPref: # muel
-            l1Flav = "Muon"
-            l2Flav = "Electron"
+            extraMuIndices = findExtraLeptOppFlav(event, l1Flav, l1Index,\
+                    maxL1OkEta, maxOkDxy, maxOkDz)
+            extraElIndices = findExtraLeptOppFlav(event, l2Flav, l2Index,\
+                    maxL2OkEta, maxOkDxy, maxOkDz)
         else: # elmu
-            l1Flav = "Electron"
-            l2Flav = "Muon"
+            extraElIndices = findExtraLeptOppFlav(event, l1Flav, l1Index,\
+                    maxL1OkEta, maxOkDxy, maxOkDz)
+            extraMuIndices = findExtraLeptOppFlav(event, l2Flav, l2Index,\
+                    maxL2OkEta, maxOkDxy, maxOkDz)
 
-    l1extra = getattr(event, "nMuon")
-    for i3 in range(l1extra):
-        if l1Flav == 'Muon' and l2Flav == 'Muon' and (i3 == l1Index or i3==l2Index) : continue
-        if l1Flav == 'Muon' and l2Flav == 'Electron' and i3 == l1Index : continue
-        if l1Flav == 'Electron' and l2Flav == 'Muon' and i3==l2Index : continue
-        if l1Flav == 'Electron' and l2Flav == 'Electron' : continue #this is make sure that we get an extra lepton of the same flavor like the main ones
-        if l3Index > -1 : continue 
+    return [l1Index, l2Index, extraMuIndices, extraElIndices]
 
-        pt3 = list(getattr(event, "Muon_pt"))[i3]
-        phi3 = list(getattr(event, "Muon_phi"))[i3]
-        absDxy3 = abs(list(getattr(event, "Muon_dxy"))[i3])
-        absDz3 = abs(list(getattr(event, "Muon_dz"))[i3])
-        absEta3 = abs(list(getattr(event, "Muon_eta"))[i3])
-        iso3 = list(getattr(event, "Muon_pfRelIso04_all"))[i3]
-        isGlobal3 = list(getattr(event, "Muon_isGlobal"))[i3]
-        isTracker3 = list(getattr(event, "Muon_isTracker"))[i3]
-        isMedium3 = list(getattr(event, "Muon_mediumId"))[i3]
+#--------------------------------------------------------------------------------#
 
-        if  pt3 < 5 or absEta3 > 2.4 or absDxy3 > maxOkDxy or absDz3 > maxOkDz : continue
-        if  not isMedium3 : continue
-        l3Index = i3
-        #print 'for ', l1Flav, l2Flav, pt3, 'iso3=========', iso3, 'dxy========', absDxy3, 'dz=========', absDz3, 'l3Ind=======', l3Index, isMedium3
+# Given the indices of a pair of same flav leptons already found, returns an array of
+# the indices of all additional leptons of the same flav that satisfy the same eta,
+# dxy, and dz cuts, plus a very loose minimum pt cut and no iso cut.
+def findExtraLeptSameFlav(event, flav, l1Index, l2Index, maxOkEta, maxOkDxy, maxOkDz):
+    nLeptons = getattr(event, "n"+flav)
+    extraLeptsIndices = []
+    for i3 in range(nLeptons):
+        if i3 == l1Index or i3 == l2Index: continue
+        if passCuts(event, flav, i3, maxOkEta, 5, 9999, maxOkDxy, maxOkDz):
+            extraLeptsIndices.append(i3)
+    return extraLeptsIndices
 
-    l2extra = getattr(event, "nElectron")
-    for i4 in range(l2extra):
-        if l1Flav == 'Electron' and l2Flav == 'Electron' and (i4 == l1Index or i4==l2Index) : continue
-        if l1Flav == 'Muon' and l2Flav == 'Electron' and i4 == l2Index : continue
-        if l1Flav == 'Electron' and l2Flav == 'Muon' and i4==l1Index : continue
-        if l1Flav == 'Muon' and l2Flav == 'Muon' :  continue
-        if l4Index > -1 : continue
 
-        pt4 = list(getattr(event, "Electron_pt"))[i4]
-        phi4 = list(getattr(event, "Electron_phi"))[i4]
-        absDxy4 = abs(list(getattr(event, "Electron_dxy"))[i4])
-        absDz4 = abs(list(getattr(event, "Electron_dz"))[i4])
-        absEta4 = abs(list(getattr(event, "Electron_eta"))[i4])
-        iso4 = list(getattr(event, "Electron_pfRelIso03_all"))[i4]
-        hits4 = ord(list(getattr(event, "Electron_lostHits"))[i4])
-        convVeto4 = list(getattr(event, "Electron_convVeto"))[i4]
-        mvaID4 = list(getattr(event, "Electron_mvaFall17V2noIso_WP90"))[i4]
-
-        if  pt4 < 5 or absEta4 > 2.1 or absDxy4 > maxOkDxy or absDz4 > maxOkDz : continue
-
-        if hits4 > 1 or not convVeto4 or not mvaID4 : continue
-        l4Index = i4
-        #print 'for ', l1Flav, l2Flav, pt4, 'iso4=========', iso4, 'dxy========', absDxy4, 'dz=========', absDz4, 'l4Ind=======', l4Index, mvaID4, convVeto4
-        
-    # print l1Index, l2Index, "n1", l1count, "n2", l2count
-
-    # print
-    # print "l1 pt: " + str(list(getattr(event, l1Flav+"_pt"))[l1Index])
-    # print "l1 eta: " + str(list(getattr(event, l1Flav+"_eta"))[l1Index])
-    # print "l1 relIso: " + str(list(getattr(event, l1Flav+"_relIso"))[l1Index])
-
-    # print "l2 pt: " + str(list(getattr(event, l2Flav+"_pt"))[l2Index])
-    # print "l2 eta: " + str(list(getattr(event, l2Flav+"_eta"))[l2Index])
-    # print "l2 relIso: " + str(list(getattr(event, l2Flav+"_relIso"))[l2Index])
-    #print 'now.....', l1Flav, l2Flav, l1Index, l2Index, l3Index, l4Index
-    return [l1Index, l2Index, l3Index, l4Index]
+# Given that a pair of opp flav leptons was already found, and the index of one of
+# those leptons (which is of type flav), returns an array of the indices of all
+# additional leptons of type flav that satisfy the same eta, dxy, and dz cuts,
+# plus a very loose minimum pt cut and no iso cut.
+def findExtraLeptOppFlav(event, flav, index, maxOkEta, maxOkDxy, maxOkDz):
+    nLeptons = getattr(event, "n"+flav)
+    extraLeptsIndices = []
+    for i3 in range(nLeptons):
+        if i3 == index: continue
+        if passCuts(event, flav, i3, maxOkEta, 5, 9999, maxOkDxy, maxOkDz):
+            extraLeptsIndices.append(i3)
+    return extraLeptsIndices
 
 #--------------------------------------------------------------------------------#
 

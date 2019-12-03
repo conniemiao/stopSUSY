@@ -148,9 +148,8 @@ if not isData:
     Muon_genPartFlav = np.zeros(10, dtype=np.int32)
     Muon_genPartIdx = np.zeros(10, dtype=np.int32)
 Muon_mt = np.zeros(10, dtype=np.float32)
-
-nExtraEl = array('i',[0])
-extraElIndices = np.zeros(10, dtype=np.int32)
+nExtraMuon = array('i',[0])
+extraMuIndices = np.zeros(10, dtype=np.int32)
 
 nElectron = array('i',[0])
 Electron_pt = np.zeros(10, dtype=np.float32)
@@ -170,8 +169,7 @@ if not isData:
     Electron_genPartFlav = np.zeros(10, dtype=np.int32)
     Electron_genPartIdx = np.zeros(10, dtype=np.int32)
 Electron_mt = np.zeros(10, dtype=np.float32)
-
-nExtraEl = array('i',[0])
+nExtraElectron = array('i',[0])
 extraElIndices = np.zeros(10, dtype=np.int32)
 
 HLT_IsoMu24 = array('i',[0]) # read as bool
@@ -285,34 +283,8 @@ if not isData:
     Events.Branch("Muon_genPartFlav", Muon_genPartFlav, "Muon_genPartFlav[10]/I")
     Events.Branch("Muon_genPartIdx", Muon_genPartIdx, "Muon_genPartIdx[10]/I")
 Events.Branch("Muon_mt", Muon_mt, "Muon_mt[10]/F")
-
-
 Events.Branch("nExtraMuon", nExtraMuon, "nExtraMuon/I")
-Events.Branch("ExtraMuon_pt", ExtraMuon_pt, "ExtraMuon_pt[10]/F")
-Events.Branch("ExtraMuon_eta", ExtraMuon_eta, "ExtraMuon_eta[10]/F")
-Events.Branch("ExtraMuon_phi", ExtraMuon_phi, "ExtraMuon_phi[10]/F")
-Events.Branch("ExtraMuon_relIso", ExtraMuon_relIso, "ExtraMuon_relIso[10]/F")
-Events.Branch("ExtraMuon_charge", ExtraMuon_charge, "ExtraMuon_charge[10]/F")
-Events.Branch("ExtraMuon_dxy", ExtraMuon_dxy, "ExtraMuon_dxy[10]/F")
-Events.Branch("ExtraMuon_dz", ExtraMuon_dz, "ExtraMuon_dz[10]/F")
-Events.Branch("ExtraMuon_mass", ExtraMuon_mass, "ExtraMuon_mass[10]/F")
-Events.Branch("ExtraMuon_miniPFRelIso_all", ExtraMuon_miniPFRelIso_all, "ExtraMuon_miniPFRelIso_all[10]/F")
-Events.Branch("ExtraMuon_inTimeExtraMuon", ExtraMuon_inTimeMuon, "ExtraMuon_inTimeExtraMuon[10]/I")
-Events.Branch("ExtraMuon_ip3d", ExtraMuon_ip3d, "ExtraMuon_ip3d[10]/F")
-Events.Branch("ExtraMuon_isGlobal", ExtraMuon_isGlobal, "ExtraMuon_isGlobal[10]/I")
-Events.Branch("ExtraMuon_isPFcand", ExtraMuon_isPFcand, "ExtraMuon_isPFcand[10]/I")
-Events.Branch("ExtraMuon_isTracker", ExtraMuon_isTracker, "ExtraMuon_isTracker[10]/I")
-Events.Branch("ExtraMuon_jetIdx", ExtraMuon_jetIdx, "ExtraMuon_jetIdx[10]/I")
-Events.Branch("ExtraMuon_pdgId", ExtraMuon_pdgId, "ExtraMuon_pdgId[10]/I")
-Events.Branch("ExtraMuon_looseId", ExtraMuon_looseId, "ExtraMuon_looseId[10]/I")
-Events.Branch("ExtraMuon_mediumId", ExtraMuon_mediumId, "ExtraMuon_mediumId[10]/I")
-Events.Branch("ExtraMuon_mediumPromptId", ExtraMuon_mediumPromptId, "ExtraMuon_mediumPromptId[10]/I")
-Events.Branch("ExtraMuon_mvaId", ExtraMuon_mvaId, "ExtraMuon_mvaId[10]/I")
-Events.Branch("ExtraMuon_tightId", ExtraMuon_tightId, "ExtraMuon_tightId[10]/I")
-if not isData:
-    Events.Branch("ExtraMuon_genPartFlav", ExtraMuon_genPartFlav, "ExtraMuon_genPartFlav[10]/I")
-    Events.Branch("ExtraMuon_genPartIdx", ExtraMuon_genPartIdx, "ExtraMuon_genPartIdx[10]/I")
-Events.Branch("ExtraMuon_mt", ExtraMuon_mt, "ExtraMuon_mt[10]/F")
+Events.Branch("extraMuIndices", extraMuIndices, "extraMuIndices[10]/I")
 
 Events.Branch("nElectron", nElectron, "nElectron/I")
 Events.Branch("Electron_pt", Electron_pt, "Electron_pt[10]/F")
@@ -332,25 +304,8 @@ if not isData:
     Events.Branch("Electron_genPartFlav", Electron_genPartFlav, "Electron_genPartFlav[10]/I")
     Events.Branch("Electron_genPartIdx", Electron_genPartIdx, "Electron_genPartIdx[10]/I")
 Events.Branch("Electron_mt", Electron_mt, "Electron_mt[10]/F")
-
 Events.Branch("nExtraElectron", nExtraElectron, "nExtraElectron/I")
-Events.Branch("ExtraElectron_pt", ExtraElectron_pt, "ExtraElectron_pt[10]/F")
-Events.Branch("ExtraElectron_eta", ExtraElectron_eta, "ExtraElectron_eta[10]/F")
-Events.Branch("ExtraElectron_phi", ExtraElectron_phi, "ExtraElectron_phi[10]/F")
-Events.Branch("ExtraElectron_relIso", ExtraElectron_relIso, "ExtraElectron_relIso[10]/F")
-Events.Branch("ExtraElectron_charge", ExtraElectron_charge, "ExtraElectron_charge[10]/F")
-Events.Branch("ExtraElectron_dxy", ExtraElectron_dxy, "ExtraElectron_dxy[10]/F")
-Events.Branch("ExtraElectron_dz", ExtraElectron_dz, "ExtraElectron_dz[10]/F")
-Events.Branch("ExtraElectron_mass", ExtraElectron_mass, "ExtraElectron_mass[10]/F")
-Events.Branch("ExtraElectron_miniPFRelIso_all", ExtraElectron_miniPFRelIso_all, "ExtraElectron_miniPFRelIso_all[10]/F")
-Events.Branch("ExtraElectron_ip3d", ExtraElectron_ip3d, "ExtraElectron_ip3d[10]/F")
-Events.Branch("ExtraElectron_isPFcand", ExtraElectron_isPFcand, "ExtraElectron_isPFcand[10]/I")
-Events.Branch("ExtraElectron_jetIdx", ExtraElectron_jetIdx, "ExtraElectron_jetIdx[10]/I")
-Events.Branch("ExtraElectron_pdgId", ExtraElectron_pdgId, "ExtraElectron_pdgId[10]/I")
-if not isData:
-    Events.Branch("ExtraElectron_genPartFlav", ExtraElectron_genPartFlav, "ExtraElectron_genPartFlav[10]/I")
-    Events.Branch("ExtraElectron_genPartIdx", ExtraElectron_genPartIdx, "ExtraElectron_genPartIdx[10]/I")
-Events.Branch("ExtraElectron_mt", ExtraElectron_mt, "ExtraElectron_mt[10]/F")
+Events.Branch("extraElIndices", extraElIndices, "extraElIndices[10]/I")
 
 Events.Branch("HLT_IsoMu24", HLT_IsoMu24, "HLT_IsoMu24/I")
 Events.Branch("HLT_Ele25_eta2p1_WPTight_Gsf", HLT_Ele25_eta2p1_WPTight_Gsf, "HLT_Ele25_eta2p1_WPTight_Gsf/I")
@@ -428,12 +383,12 @@ if not isData:
                     "DY"+str(i)+"genWeights",1,-0.5,0.5))
     hGenweights = TH1D("genWeights","genWeights",1,-0.5,0.5)
 
-try: 
+try:
     if testMode: inFile = TFile.Open(ntupleFileName, "READ") # use test_WJets.root
     else: 
-        if 'store' in ntupleFileName : inFile = TFile.Open("root://cms-xrd-global.cern.ch//"+ntupleFileName, "READ")
-        else : inFile = TFile.Open(ntupleFileName, "READ")
+        inFile = TFile.Open("root://cms-xrd-global.cern.ch//"+ntupleFileName, "READ")
 except: exit()
+
 
 try: inTree = inFile.Get("Events")
 except: exit()
@@ -486,11 +441,11 @@ for count, event in enumerate(inTree):
             l1Flav = "Electron"
             l2Flav = "Muon"
 
-    assert False, "FIX THIS"
     l1Index = lepIndices[0]
     l2Index = lepIndices[1]
-    l3Index = lepIndices[2]
-    l4Index = lepIndices[3]
+    evt_extraMuIndices = lepIndices[2]
+    evt_extraElIndices = lepIndices[3]
+    print l1Index, l2Index, evt_extraMuIndices, evt_extraElIndices
 
     jets = findValidJets(event, l1Flav, l1Index, l2Flav, l2Index)
     numGoodJets = len(jets)
@@ -530,36 +485,7 @@ for count, event in enumerate(inTree):
             Muon_genPartFlav[i] = ord(list(event.Muon_genPartFlav)[i])
             Muon_genPartIdx[i] = list(event.Muon_genPartIdx)[i]
         Muon_mt[i] = sqrt(2 * Muon_pt[i] * event.MET_pt * \
-                (1 - cos(ExtraMuon_phi[i] - event.MET_phi)))
-
-    assert False, "FIX THIS"
-	if l1Flav == 'Muon' or l2Flav == 'Muon' and l3Index > -1 : 
-	    ExtraMuon_pt[i] = list(event.Muon_pt)[i]
-	    ExtraMuon_eta[i] = list(event.Muon_eta)[i]
-	    ExtraMuon_phi[i] = list(event.Muon_phi)[i]
-	    ExtraMuon_relIso[i] = list(event.Muon_pfRelIso04_all)[i]
-	    ExtraMuon_charge[i] = list(event.Muon_charge)[i]
-	    ExtraMuon_dxy[i] = list(event.Muon_dxy)[i]
-	    ExtraMuon_dz[i] = list(event.Muon_dz)[i]
-	    ExtraMuon_mass[i] = list(event.Muon_mass)[i]
-	    ExtraMuon_miniPFRelIso_all[i] = list(event.Muon_miniPFRelIso_all)[i]
-	    ExtraMuon_inTimeMuon[i] = list(event.Muon_inTimeMuon)[i]
-	    ExtraMuon_ip3d[i] = list(event.Muon_ip3d)[i]
-	    ExtraMuon_isGlobal[i] = list(event.Muon_isGlobal)[i]
-	    ExtraMuon_isPFcand[i] = list(event.Muon_isPFcand)[i]
-	    ExtraMuon_isTracker[i] = list(event.Muon_isTracker)[i]
-	    ExtraMuon_jetIdx[i] = list(event.Muon_jetIdx)[i]
-	    ExtraMuon_pdgId[i] = list(event.Muon_pdgId)[i]
-	    ExtraMuon_looseId[i] = list(event.Muon_looseId)[i]
-	    ExtraMuon_mediumId[i] = list(event.Muon_mediumId)[i]
-	    ExtraMuon_mediumPromptId[i] = list(event.Muon_mediumPromptId)[i]
-	    ExtraMuon_mvaId[i] = ord(list(event.Muon_mvaId)[i]) # UChar_t conversion
-	    ExtraMuon_tightId[i] = list(event.Muon_tightId)[i]
-	    if not isData:
-	        ExtraMuon_genPartFlav[i] = ord(list(event.Muon_genPartFlav)[i])
-	        ExtraMuon_genPartIdx[i] = list(event.Muon_genPartIdx)[i]
-	    ExtraMuon_mt[i] = sqrt(2 * Muon_pt[i] * event.MET_pt * \
-		    (1 - cos(ExtraMuon_phi[i] - event.MET_phi)))
+                (1 - cos(Muon_phi[i] - event.MET_phi)))
 
     assert l2Index > -1
     nElectron[0] = event.nElectron
@@ -582,28 +508,6 @@ for count, event in enumerate(inTree):
             Electron_genPartIdx[i] = list(event.Electron_genPartIdx)[i]
         Electron_mt[i] = sqrt(2 * Electron_pt[i] * event.MET_pt * \
                 (1 - cos(Electron_phi[i] - event.MET_phi)))
-
-    assert False, "FIX THIS"
-	if l1Flav == 'Electron' or l2Flav == 'Electron' and l4Index > -1 : 
-            ExtraElectron_pt[i] = list(event.Electron_pt)[i]
-            ExtraElectron_eta[i] = list(event.Electron_eta)[i]
-            ExtraElectron_phi[i] = list(event.Electron_phi)[i]
-            ExtraElectron_relIso[i] = list(event.Electron_pfRelIso03_all)[i]
-            ExtraElectron_charge[i] = list(event.Electron_charge)[i]
-            ExtraElectron_dxy[i] = list(event.Electron_dxy)[i]
-            ExtraElectron_dz[i] = list(event.Electron_dz)[i]
-            ExtraElectron_mass[i] = list(event.Electron_mass)[i]
-            ExtraElectron_miniPFRelIso_all[i] = list(event.Electron_miniPFRelIso_all)[i]
-            ExtraElectron_ip3d[i] = list(event.Electron_ip3d)[i]
-            ExtraElectron_isPFcand[i] = list(event.Electron_isPFcand)[i]
-            ExtraElectron_jetIdx[i] = list(event.Electron_jetIdx)[i]
-            ExtraElectron_pdgId[i] = list(event.Electron_pdgId)[i]
-            if not isData:
-                ExtraElectron_genPartFlav[i] = ord(list(event.Electron_genPartFlav)[i])
-                ExtraElectron_genPartIdx[i] = list(event.Electron_genPartIdx)[i]
-            ExtraElectron_mt[i] = sqrt(2 * Electron_pt[i] * event.MET_pt * \
-                    (1 - cos(ExtraElectron_phi[i] - event.MET_phi)))
-
 
     Flag_goodVertices[0] = event.Flag_goodVertices
     Flag_HBHENoiseFilter[0] = event.Flag_HBHENoiseFilter
@@ -634,22 +538,24 @@ for count, event in enumerate(inTree):
     lep1_index[0] = l1Index
     lep2_isMu[0] = int(l2Flav == "Muon") 
     lep2_index[0] = l2Index
+    nExtraMuon[0] = len(evt_extraMuIndices)
+    nExtraElectron[0] = len(evt_extraElIndices)
+    for i, iExtraMu in enumerate(evt_extraMuIndices):
+        extraMuIndices[i] = iExtraMu
+    for i, iExtraEl in enumerate(evt_extraElIndices):
+        extraElIndices[i] = iExtraEl
 
     # veto (3rd lepton) checks:
-    assert False, "FIX THIS"
     found3rdLept[0] = False
-    '''
-    if findSameFlav:
-        # when looking for mumu/elel, event should not give valid muel or elmu pair
-        if selectMuEl(event, isData) is not None: found3rdLept[0] = True
-        if selectElMu(event, isData) is not None: found3rdLept[0] = True
-    else:
-        # when looking for muel/elmu, event should not give valid mumu or elel pair
-        if selectMuMu(event, isData) is not None: found3rdLept[0] = True
-        if selectElEl(event, isData) is not None: found3rdLept[0] = True
-    '''
-    # when looking for mumu/elel, event should not give valid muel or elmu pair
-    if l3Index > -1 or l4Index > -1  : found3rdLept[0] = True
+    # if findSameFlav:
+    #     # when looking for mumu/elel, event should not give valid muel or elmu pair
+    #     if selectMuEl(event, isData) is not None: found3rdLept[0] = True
+    #     if selectElMu(event, isData) is not None: found3rdLept[0] = True
+    # else:
+    #     # when looking for muel/elmu, event should not give valid mumu or elel pair
+    #     if selectMuMu(event, isData) is not None: found3rdLept[0] = True
+    #     if selectElEl(event, isData) is not None: found3rdLept[0] = True
+    if nExtraMuon > 0 or nExtraElectron > 0: found3rdLept[0] = True
     
     nJet[0] = numGoodJets
     nbtag[0] = len(evt_btag_indices)
@@ -737,7 +643,7 @@ for count, event in enumerate(inTree):
     Events.Fill()
 
 outFile.cd()
-print "Saving ", Events.GetEntries(), "events."
+print "Saving", Events.GetEntries(), "events."
 Events.Write()
 if not isData: 
     if subprocess == "WJetsToLNu":
