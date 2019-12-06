@@ -2,11 +2,11 @@
 
 # NOTE: NEEDS 5 CMD LINE ARGS with values:
 # testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, 
-# lastcut, region {any, A, B, C, D}
-# A = SS, nominal rel iso
-# B = OS, nominal rel iso (signal)
-# C = OS, inverted rel iso
-# D = SS, inverted rel iso
+# region {sr, cr1a, cr1b, cr3, any}
+# sr: mass of 2 leptons far from Z mass, no 3rd lepton possible
+# cr1a: replace 1 lepton in pair with any 3rd lepton to check data/mc fake agreement
+# cr1b: replace 1 lepton with inverted iso to model fake leptons
+# cr3: mass of 2 leptons close to Z mass to model fake MET from DY
 # Possible lastcuts: listed in cuts below.
 #
 # Implements additional cuts and then draws 1D hist for data for each variable in
@@ -20,14 +20,14 @@
 # Uses data_fileRedirector
 
 import sys, os
-assert len(sys.argv) == 6, "need 5 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut, region {A, B, C, D, any}"
+assert len(sys.argv) == 5, "need 5 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, region {sr, cr1a, cr1b, cr3, any}"
 
 print "Importing modules."
 from ROOT import TFile, TTree, TH1D, TCanvas, TImage, TLegend, TText, THStack
 from ROOT import gSystem, gStyle, gROOT, kTRUE
 from stopSelection import deltaR
-from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
-from stopSelection import isRegionA, isRegionB, isRegionC, isRegionD
+from stopSelectionTemp import selectMuMu, selectElEl, selectMuEl, selectElMu
+from stopSelectionTemp import isSR, getCR1al2Index, getCR1bl2Index, isCR3
 from collections import OrderedDict
 from math import sqrt, cos
 import numpy as np
@@ -77,16 +77,13 @@ elif sys.argv[3] == "muel":
 else: assert False, "invalid channel, need {mumu, elel, muel}"
 channel = l1Flav[:2] + l2Flav[:2]
 
-# cuts = OrderedDict([("baseline",0), ("dilepton",1), ("no3rdlept",2), ("nbtag<2",3), \
-#         ("MET>80",4),("nJet<4",5)])
-cuts = OrderedDict([("baseline",0), ("no3rdlept",1), ("nbtag<2",2), ("MET>80",3), \
-        ("nJet<4",4)])
-lastcut = sys.argv[4]
+cuts = OrderedDict([("baseline",0), ("allCuts",1)])
+lastcut = "allCuts"
 assert lastcut in cuts, "invalid last cut %s" % lastcut
 nCuts = cuts[lastcut]+1
 
-region = sys.argv[5]
-assert region == "any" or region == "A" or region == "B" or region == "C" or region == "D", "invalid region, need {any, A, B, C, D}"
+region = sys.argv[4]
+assert region == "any" or region == "sr" or  region == "cr1a" or region == "cr1b" or region == "cr3", "invalid region, need {any, sr, cr1a, cr1b, cr3}"
 
 #--------------------------------------------------------------------------------#
 
@@ -379,46 +376,21 @@ for subprocessLine in bkgd_redirector:
         l1Index = event.lep1_index
         l2Index = event.lep2_index
 
-        l1Charge = list(getattr(event, l1Flav+"_charge"))[l1Index]
-        l2Charge = list(getattr(event, l2Flav+"_charge"))[l2Index]
-        l1RelIso = list(getattr(event, l1Flav+"_relIso"))[l1Index]
-        l2RelIso = list(getattr(event, l2Flav+"_relIso"))[l2Index]
-
         if not (event.PV_npvsGood and event.PV_npvs > 1): continue
-
-        if region == "any": pass
-        elif region == "A":
-            if not isRegionA(l1Charge, l2Charge, l1RelIso, l2RelIso, \
-                    findingSameFlavor): continue
-        elif region == "B":
-            if not isRegionB(l1Charge, l2Charge, l1RelIso, l2RelIso, \
-                    findingSameFlavor): continue
-        elif region == "C":
-            if not isRegionC(l1Charge, l2Charge, l1RelIso, l2RelIso, \
-                    findingSameFlavor): continue
-        elif region == "D":
-            if not isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, \
-                    findingSameFlavor): continue
         hBkgdCutflow.Fill(cuts["baseline"], evtwt)
 
-        # if nCuts > cuts["dilepton"]: # not doing this; doing ABCD regions instead
-        # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
+        if region == "sr":
+            if not isSR(event, l1Flav, l1Index, l2Flav, l2Index): continue
+        elif region == "cr1a":
+            l2Index = getCR1al2Index(event, l1Flav, l1Index, l2Flav)
+            if l2Index == -1: continue
+        elif region == "cr1b":
+            l2Index = getCR1bl2Index(event, l1Flav, l1Index, l2Flav)
+            if l2Index == -1: continue
+        elif region == "cr3":
+            if not isCR3(event, l1Flav, l1Index, l2Flav, l2Index): continue
 
-        if nCuts > cuts["no3rdlept"]:
-            if event.found3rdLept: continue
-            hBkgdCutflow.Fill(cuts["no3rdlept"], evtwt)
-
-        if nCuts > cuts["nbtag<2"]:
-            if event.nbtag > 1: continue
-            hBkgdCutflow.Fill(cuts["nbtag<2"], evtwt)
-
-        if nCuts > cuts["MET>80"]:
-            if event.MET_pt < 80: continue
-            hBkgdCutflow.Fill(cuts["MET>80"], evtwt)
-        
-        if nCuts > cuts["nJet<4"]:
-            if event.nJet >= 4: continue
-            hBkgdCutflow.Fill(cuts["nJet<4"], evtwt)
+        hBkgdCutflow.Fill(cuts["all"], evtwt)
 
         # ********** Sorting fake types. ***********
         # fill twice for each event (once for each lepton)
@@ -718,40 +690,22 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
         l2RelIso = list(getattr(event, l2Flav+"_relIso"))[l2Index]
 
         if not (event.PV_npvsGood and event.PV_npvs > 1): continue
+        if l1Charge * l2Charge > 0: continue # need opposite sign
 
         if region == "any": pass
-        elif region == "A":
-            if not isRegionA(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+        elif region == "sr":
+            if not isSR(l1Charge, l2Charge, l1RelIso, l2RelIso, \
                     findingSameFlavor): continue
-        elif region == "B":
-            if not isRegionB(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+        elif region == "cr1a":
+            if not isCR3rdLeptA(l1Charge, l2Charge, l1RelIso, l2RelIso, \
                     findingSameFlavor): continue
-        elif region == "C":
-            if not isRegionC(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+        elif region == "cr1b":
+            if not isCR3rdLeptB(l1Charge, l2Charge, l1RelIso, l2RelIso, \
                     findingSameFlavor): continue
-        elif region == "D":
-            if not isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+        elif region == "cr3":
+            if not isCRfakeMET(l1Charge, l2Charge, l1RelIso, l2RelIso, \
                     findingSameFlavor): continue
         hSigCutflow.Fill(cuts["baseline"], evtwt)
-
-        # if nCuts > cuts["dilepton"]: # not doing this; doing ABCD regions instead
-        # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
-
-        if nCuts > cuts["no3rdlept"]:
-            if event.found3rdLept: continue
-            hSigCutflow.Fill(cuts["no3rdlept"], evtwt)
-
-        if nCuts > cuts["nbtag<2"]:
-            if event.nbtag > 1: continue
-            hSigCutflow.Fill(cuts["nbtag<2"], evtwt)
-
-        if nCuts > cuts["MET>80"]:
-            if event.MET_pt < 80: continue
-            hSigCutflow.Fill(cuts["MET>80"], evtwt)
-        
-        if nCuts > cuts["nJet<4"]:
-            if event.nJet >= 4: continue
-            hSigCutflow.Fill(cuts["nJet<4"], evtwt)
 
         # ********** Filling. ***********
         if event.nJet > 0:
@@ -910,40 +864,22 @@ for fileNum, subprocessLine in enumerate(data_redirector):
         l2RelIso = list(getattr(event, l2Flav+"_relIso"))[l2Index]
 
         if not (event.PV_npvsGood and event.PV_npvs > 1): continue
+        if l1Charge * l2Charge > 0: continue # need opposite sign
 
         if region == "any": pass
-        elif region == "A":
-            if not isRegionA(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+        elif region == "sr":
+            if not isSR(l1Charge, l2Charge, l1RelIso, l2RelIso, \
                     findingSameFlavor): continue
-        elif region == "B":
-            if not isRegionB(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+        elif region == "cr1a":
+            if not isCR3rdLeptA(l1Charge, l2Charge, l1RelIso, l2RelIso, \
                     findingSameFlavor): continue
-        elif region == "C":
-            if not isRegionC(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+        elif region == "cr1b":
+            if not isCR3rdLeptB(l1Charge, l2Charge, l1RelIso, l2RelIso, \
                     findingSameFlavor): continue
-        elif region == "D":
-            if not isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, \
+        elif region == "cr3":
+            if not isCRfakeMET(l1Charge, l2Charge, l1RelIso, l2RelIso, \
                     findingSameFlavor): continue
         hDataCutflow.Fill(cuts["baseline"], 1)
-
-        # if nCuts > cuts["dilepton"]: # not doing this; doing ABCD regions instead
-        # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
-
-        if nCuts > cuts["no3rdlept"]:
-            if event.found3rdLept: continue
-            hDataCutflow.Fill(cuts["no3rdlept"], 1)
-
-        if nCuts > cuts["nbtag<2"]:
-            if event.nbtag > 1: continue
-            hDataCutflow.Fill(cuts["nbtag<2"], 1)
-
-        if nCuts > cuts["MET>80"]:
-            if event.MET_pt < 80: continue
-            hDataCutflow.Fill(cuts["MET>80"], 1)
-
-        if nCuts > cuts["nJet<4"]:
-            if event.nJet >= 4: continue
-            hDataCutflow.Fill(cuts["nJet<4"], 1)
 
         # ********** Filling. ***********
         if event.nJet > 0:
@@ -1061,7 +997,7 @@ if displayMode:
 else:
     gSystem.ProcessEvents()
     if not os.path.exists(imgDir): os.makedirs(imgDir) 
-    outHistFileAdr = imgDir+"/QCDMC_plot1D_"
+    outHistFileAdr = imgDir+"/fakeRegions_plot1D_"
     if testMode: outHistFileAdr += "test_"
     else: outHistFileAdr += "all_"
     outHistFileAdr += channel+"_"+lastcut+"_"+region+".root"
@@ -1079,7 +1015,7 @@ else:
     outHistFile.Close()
     print "Saved hists in", outHistFileAdr
 
-    if lastcut == "nJet<4": # don't save the cutflow unless made all cuts
+    if lastcut == cuts.keys()[nCuts-1]: # don't save the cutflow unless made all cuts
         statsFile = open(statsFileName+".txt", "w")
         statsFile.write(statsDF.to_string()+"\n")
         statsFile.close()

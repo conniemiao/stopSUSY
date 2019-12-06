@@ -1,3 +1,4 @@
+
 # Defines functions to perform object and event selection.
 
 import numpy as np
@@ -431,6 +432,95 @@ def isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
 
 #--------------------------------------------------------------------------------#
 
-# under construction
+# Regions for fake estimation
 
-#--------------------------------------------------------------------------------#
+# sr: Given the flav/index of 1st and 2nd leptons in pair from the baseline
+# selection, returns True if the event has nbtag < 2, nJet < 4, no 3rd lepton was
+# found, meets signal region iso and charge reqs, and |mll-mZ|>15. Otherwise returns
+# False.
+def isSR(event, l1Flav, l1Index, l2Flav, l2Index):
+    if event.found3rdLept: return False 
+    if event.nbtag > 1: return False 
+    if event.nJet >= 4: return False
+
+    if l1Flav[0] == l2Flav[0]: maxRelIso = 0.15
+    else: maxRelIso = 0.25
+    l1Charge = list(getattr(event, l1Flav+"_charge"))[l1Index]
+    l1RelIso = list(getattr(event, l1Flav+"_relIso"))[l1Index]
+    l2Charge = list(getattr(event, l2Flav+"_charge"))[l2Index]
+    l2RelIso = list(getattr(event, l2Flav+"_relIso"))[l2Index]
+    if not (l1Charge*l2Charge < 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso):
+        return False
+    mll = mass(l1, l2)
+    if abs(mll-80) < 15: return False
+    return True 
+
+# cr1a: Given the flav/index of 1st lepton in pair and the flavor of the 2nd as 
+# found in the baseline selection, returns the index of a 2nd lepton for the event,
+# which is the highest pt 3rd lepton found (no iso cuts), if the event has nbtag < 2,
+# nJet < 4, meets signal region iso and charge reqs, and |mll-mZ|>15. If the event 
+# didn't pass the CR1a selection, returns -1.
+def getCR1al2Index(event, l1Flav, l1Index, l2Flav):
+    if getattr(event, "nExtra"+l2Flav) == 0: return -1
+    if event.nbtag > 1: return -1 
+    if event.nJet >= 4: return -1
+
+    if l1Flav[0] == l2Flav[0]: maxRelIso = 0.15
+    else: maxRelIso = 0.25
+    l1Charge = list(getattr(event, l1Flav+"_charge"))[l1Index]
+    l1RelIso = list(getattr(event, l1Flav+"_relIso"))[l1Index]
+    if l1RelIso >= maxRelIso: return -1
+
+    for extraLeptInd in list(getattr(event, "extra"+l2Flav[:2]+"Indices")):
+        l2Charge = list(getattr(event, l2Flav+"_charge"))[extraLeptInd]
+        mll = mass(l1, l2)
+        if l1Charge*l2Charge < 0 and abs(mll-80) > 15:
+            return extraLeptInd
+    return -1
+
+# cr1b: Given the flav/index of 1st lepton in pair and the flavor of the 2nd as 
+# found in the baseline selection, returns the index of a 2nd lepton for the event,
+# which is the highest pt 3rd lepton found with inverted iso, if the event has 
+# nbtag < 2, nJet < 4, meets signal region iso and charge reqs, and |mll-mZ|>15. 
+# If the event didn't pass the CR1b selection, returns -1.
+def getCR1bl2Index(event, l1Flav, l1Index, l2Flav):
+    if getattr(event, "nExtra"+l2Flav) == 0: return -1
+    if event.nbtag > 1: return -1 
+    if event.nJet >= 4: return -1
+
+    if l1Flav[0] == l2Flav[0]: maxRelIso = 0.15
+    else: maxRelIso = 0.25
+    l1Charge = list(getattr(event, l1Flav+"_charge"))[l1Index]
+    l1RelIso = list(getattr(event, l1Flav+"_relIso"))[l1Index]
+    if l1RelIso >= maxRelIso: return -1
+
+    for extraLeptInd in list(getattr(event, "extra"+l2Flav[:2]+"Indices")):
+        l2Charge = list(getattr(event, l2Flav+"_charge"))[extraLeptInd]
+        l2RelIso = list(getattr(event, l1Flav+"_relIso"))[extraLeptInd]
+        mll = mass(l1, l2)
+        if l1Charge*l2Charge < 0 and \
+                (l2RelIso > maxRelIso and l2RelIso < 2 * maxRelIso) and \
+                abs(mll-80) > 15:
+            return extraLeptInd
+    return -1
+
+# cr3: Given the flav/index of 1st and 2nd leptons in pair from the baseline
+# selection, returns True if the event has nbtag = 0, nJet < 4, a 3rd lepton was
+# found, meets signal region iso and charge reqs, and |mll-mZ|<15. Otherwise returns
+# False.
+def isCR3(event, l1Flav, l1Index, l2Flav):
+    if not event.found3rdLept: return False 
+    if event.nbtag > 0: return False 
+    if event.nJet >= 4: return False
+
+    if l1Flav[0] == l2Flav[0]: maxRelIso = 0.15
+    else: maxRelIso = 0.25
+    l1Charge = list(getattr(event, l1Flav+"_charge"))[l1Index]
+    l1RelIso = list(getattr(event, l1Flav+"_relIso"))[l1Index]
+    l2Charge = list(getattr(event, l2Flav+"_charge"))[l2Index]
+    l2RelIso = list(getattr(event, l2Flav+"_relIso"))[l2Index]
+    if not (l1Charge*l2Charge < 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso):
+        return False
+    mll = mass(l1, l2)
+    if abs(mll-80) > 15: return False
+    return True 
