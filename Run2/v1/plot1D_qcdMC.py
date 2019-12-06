@@ -18,6 +18,7 @@
 # Uses bkgd_fileRedirector
 # Uses sig_fileRedirector
 # Uses data_fileRedirector
+# Uses stopSelection.py
 
 import sys, os
 assert len(sys.argv) == 6, "need 5 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut, region {A, B, C, D, any}"
@@ -26,7 +27,6 @@ print "Importing modules."
 from ROOT import TFile, TTree, TH1D, TCanvas, TImage, TLegend, TText, THStack
 from ROOT import gSystem, gStyle, gROOT, kTRUE
 from stopSelection import deltaR
-from stopSelection import selectMuMu, selectElEl, selectMuEl, selectElMu
 from stopSelection import isRegionA, isRegionB, isRegionC, isRegionD
 from collections import OrderedDict
 from math import sqrt, cos
@@ -405,7 +405,8 @@ for subprocessLine in bkgd_redirector:
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
 
         if nCuts > cuts["no3rdlept"]:
-            if event.found3rdLept: continue
+            if (event.nExtraMuon > 0 or event.nExtraMuon > 0): continue
+            # if event.found3rdLept: continue
             hBkgdCutflow.Fill(cuts["no3rdlept"], evtwt)
 
         if nCuts > cuts["nbtag<2"]:
@@ -599,7 +600,7 @@ for plotVar in plotSettings:
         hBkgdStack.GetXaxis().SetTitle(plotVar+" "+unitsLabel)
         hBkgdStack.GetYaxis().SetTitle("Number of Events, norm to 35921 /pb")
         hBkgdStack.SetMinimum(1)
-        hBkgdStack.SetMaximum(10**8)
+        hBkgdStack.SetMaximum(10**7)
     except:
         sys.stderr.write("WARNING: no hBkgds were filled!\n")
         continue
@@ -607,7 +608,7 @@ for plotVar in plotSettings:
 c_fakeSort.cd()
 hFakeSortingStack.Draw("hist")
 hFakeSortingStack.SetMinimum(1)
-hFakeSortingStack.SetMaximum(10**8)
+hFakeSortingStack.SetMaximum(10**7)
 
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal in a separate hist ***************
@@ -738,7 +739,8 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
 
         if nCuts > cuts["no3rdlept"]:
-            if event.found3rdLept: continue
+            if (event.nExtraMuon > 0 or event.nExtraMuon > 0): continue
+            # if event.found3rdLept: continue
             hSigCutflow.Fill(cuts["no3rdlept"], evtwt)
 
         if nCuts > cuts["nbtag<2"]:
@@ -930,7 +932,8 @@ for fileNum, subprocessLine in enumerate(data_redirector):
         # if deltaR(event, l1Flav, l1Index, l2Flav, l2Index) < 0.3: continue
 
         if nCuts > cuts["no3rdlept"]:
-            if event.found3rdLept: continue
+            if (event.nExtraMuon > 0 or event.nExtraMuon > 0): continue
+            # if event.found3rdLept: continue
             hDataCutflow.Fill(cuts["no3rdlept"], 1)
 
         if nCuts > cuts["nbtag<2"]:

@@ -3,6 +3,7 @@
 
 import numpy as np
 from math import sqrt, cos, pi, sin, acos
+from ROOT import TLorentzVector
 
 #--------------------------------------------------------------------------------#
 
@@ -40,6 +41,26 @@ def dR2(eta1, phi1, eta2, phi2) :
     dEta = eta1 - eta2
     dR = sqrt(dPhi*dPhi+dEta*dEta)
     return dR
+
+#--------------------------------------------------------------------------------#
+
+def invmass(event, flav1, i1, flav2, i2):
+    obj1 = TLorentzVector()
+    pt1 = list(getattr(event, flav1+"_pt"))[i1]
+    pt2 = list(getattr(event, flav2+"_pt"))[i2]
+    phi1 = list(getattr(event, flav1+"_phi"))[i1]
+    phi2 = list(getattr(event, flav2+"_phi"))[i2]
+    eta1 = list(getattr(event, flav1+"_eta"))[i1]
+    eta2 = list(getattr(event, flav2+"_eta"))[i2]
+    m1 = list(getattr(event, flav1+"_mass"))[i1]
+    m2 = list(getattr(event, flav2+"_mass"))[i2]
+    obj1 = TLorentzVector()
+    obj2 = TLorentzVector()
+    obj1.SetPtEtaPhiM(pt1, eta1, phi1, m1)
+    obj2.SetPtEtaPhiM(pt2, eta2, phi2, m2)
+    totm = (obj1+obj2).M()
+    # print "m1+m2", m1+m2, "mll", totm
+    return totm
 
 #--------------------------------------------------------------------------------#
 
@@ -439,7 +460,8 @@ def isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
 # found, meets signal region iso and charge reqs, and |mll-mZ|>15. Otherwise returns
 # False.
 def isSR(event, l1Flav, l1Index, l2Flav, l2Index):
-    if event.found3rdLept: return False 
+    if event.nExtraMuon > 0 or event.nExtraMuon > 0: return False 
+    # if event.found3rdLept: return False
     if event.nbtag > 1: return False 
     if event.nJet >= 4: return False
 
@@ -451,7 +473,7 @@ def isSR(event, l1Flav, l1Index, l2Flav, l2Index):
     l2RelIso = list(getattr(event, l2Flav+"_relIso"))[l2Index]
     if not (l1Charge*l2Charge < 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso):
         return False
-    mll = mass(l1, l2)
+    mll = invmass(event, l1Flav, l1Index, l2Flav, l2Index)
     if abs(mll-80) < 15: return False
     return True 
 
@@ -473,7 +495,7 @@ def getCR1al2Index(event, l1Flav, l1Index, l2Flav):
 
     for extraLeptInd in list(getattr(event, "extra"+l2Flav[:2]+"Indices")):
         l2Charge = list(getattr(event, l2Flav+"_charge"))[extraLeptInd]
-        mll = mass(l1, l2)
+        mll = invmass(event, l1Flav, l1Index, l2Flav, extraLeptInd)
         if l1Charge*l2Charge < 0 and abs(mll-80) > 15:
             return extraLeptInd
     return -1
@@ -497,7 +519,7 @@ def getCR1bl2Index(event, l1Flav, l1Index, l2Flav):
     for extraLeptInd in list(getattr(event, "extra"+l2Flav[:2]+"Indices")):
         l2Charge = list(getattr(event, l2Flav+"_charge"))[extraLeptInd]
         l2RelIso = list(getattr(event, l1Flav+"_relIso"))[extraLeptInd]
-        mll = mass(l1, l2)
+        mll = invmass(event, l1Flav, l1Index, l2Flav, extraLeptInd)
         if l1Charge*l2Charge < 0 and \
                 (l2RelIso > maxRelIso and l2RelIso < 2 * maxRelIso) and \
                 abs(mll-80) > 15:
@@ -508,8 +530,9 @@ def getCR1bl2Index(event, l1Flav, l1Index, l2Flav):
 # selection, returns True if the event has nbtag = 0, nJet < 4, a 3rd lepton was
 # found, meets signal region iso and charge reqs, and |mll-mZ|<15. Otherwise returns
 # False.
-def isCR3(event, l1Flav, l1Index, l2Flav):
-    if not event.found3rdLept: return False 
+def isCR3(event, l1Flav, l1Index, l2Flav, l2Index):
+    if not (event.nExtraMuon > 0 or event.nExtraMuon > 0): return False 
+    # if not event.found3rdLept: return False
     if event.nbtag > 0: return False 
     if event.nJet >= 4: return False
 
@@ -521,6 +544,6 @@ def isCR3(event, l1Flav, l1Index, l2Flav):
     l2RelIso = list(getattr(event, l2Flav+"_relIso"))[l2Index]
     if not (l1Charge*l2Charge < 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso):
         return False
-    mll = mass(l1, l2)
+    mll = invmass(event, l1Flav, l1Index, l2Flav, l2Index)
     if abs(mll-80) > 15: return False
     return True 

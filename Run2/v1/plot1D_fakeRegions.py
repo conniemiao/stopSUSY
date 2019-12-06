@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# NOTE: NEEDS 5 CMD LINE ARGS with values:
+# NOTE: NEEDS 4 CMD LINE ARGS with values:
 # testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, 
 # region {sr, cr1a, cr1b, cr3, any}
 # sr: mass of 2 leptons far from Z mass, no 3rd lepton possible
@@ -18,15 +18,15 @@
 # Uses bkgd_fileRedirector
 # Uses sig_fileRedirector
 # Uses data_fileRedirector
+# Uses stopSelection.py
 
 import sys, os
-assert len(sys.argv) == 5, "need 5 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, region {sr, cr1a, cr1b, cr3, any}"
+assert len(sys.argv) == 5, "need 4 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, region {sr, cr1a, cr1b, cr3, any}"
 
 print "Importing modules."
 from ROOT import TFile, TTree, TH1D, TCanvas, TImage, TLegend, TText, THStack
 from ROOT import gSystem, gStyle, gROOT, kTRUE
 from stopSelection import deltaR
-from stopSelectionTemp import selectMuMu, selectElEl, selectMuEl, selectElMu
 from stopSelectionTemp import isSR, getCR1al2Index, getCR1bl2Index, isCR3
 from collections import OrderedDict
 from math import sqrt, cos
@@ -88,33 +88,33 @@ assert region == "any" or region == "sr" or  region == "cr1a" or region == "cr1b
 #--------------------------------------------------------------------------------#
 
 plotSettings = { # [nBins,xMin,xMax,units]
-        "lep1_pt":[100,0,400,"[Gev]"],
-        "lep1_eta":[100,-4,4,""],
-        "lep1_phi":[100,-4,4,""],
-        "lep1_relIso":[100,0,0.2,""],
-        "lep1_mt":[100,0,500,"[GeV]"],
-        "lep2_pt":[100,0,400,"[GeV]"],
-        "lep2_eta":[100,-4,4,""],
-        "lep2_phi":[100,-4,4,""],
-        "lep2_relIso":[100,0,0.2,""],
-        "lep2_mt":[100,0,500,"[GeV]"],
-        "nJet":[10,0.5,10.5,""],
-        "Jet_pt":[100,0,400,"[GeV]"], 
-        "Jet_eta":[100,-3,3,""],
-        "Jet_phi":[100,-4,4,""],
-        "Jet_ht":[100,0,800,"[GeV]"],
-        "nbtag":[5,0.5,5.5,""],
-        "nbtagLoose":[10,0.5,10.5,""],
-        "nbtagTight":[5,0.5,5.5,""],
-        "dR_lep1_jet":[100,0,7,""],
-        "dR_lep2_jet":[100,0,7,""],
+        #"lep1_pt":[100,0,400,"[Gev]"],
+        #"lep1_eta":[100,-4,4,""],
+        #"lep1_phi":[100,-4,4,""],
+        #"lep1_relIso":[100,0,0.2,""],
+        #"lep1_mt":[100,0,500,"[GeV]"],
+        #"lep2_pt":[100,0,400,"[GeV]"],
+        #"lep2_eta":[100,-4,4,""],
+        #"lep2_phi":[100,-4,4,""],
+        #"lep2_relIso":[100,0,0.2,""],
+        #"lep2_mt":[100,0,500,"[GeV]"],
+        #"nJet":[10,0.5,10.5,""],
+        #"Jet_pt":[100,0,400,"[GeV]"], 
+        #"Jet_eta":[100,-3,3,""],
+        #"Jet_phi":[100,-4,4,""],
+        #"Jet_ht":[100,0,800,"[GeV]"],
+        #"nbtag":[5,0.5,5.5,""],
+        #"nbtagLoose":[10,0.5,10.5,""],
+        #"nbtagTight":[5,0.5,5.5,""],
+        #"dR_lep1_jet":[100,0,7,""],
+        #"dR_lep2_jet":[100,0,7,""],
         "MET_pt":[100,0,500,"[GeV]"], 
         "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
-        "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
-        "m_eff":[100,0,1000,"[GeV]"], # ht + MET + pt1 + pt2
-        "Jet_ht_div_sqrt_MET":[100,0,200,""],
-        "mt_tot_div_sqrt_MET":[100,0,200,""],
-        "m_eff_div_sqrt_MET":[100,0,200,""]
+        #"mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
+        #"m_eff":[100,0,1000,"[GeV]"], # ht + MET + pt1 + pt2
+        #"Jet_ht_div_sqrt_MET":[100,0,200,""],
+        #"mt_tot_div_sqrt_MET":[100,0,200,""],
+        #"m_eff_div_sqrt_MET":[100,0,200,""]
         }
 
 # produced particle -> labeled particle
@@ -390,7 +390,7 @@ for subprocessLine in bkgd_redirector:
         elif region == "cr3":
             if not isCR3(event, l1Flav, l1Index, l2Flav, l2Index): continue
 
-        hBkgdCutflow.Fill(cuts["all"], evtwt)
+        hBkgdCutflow.Fill(cuts["allCuts"], evtwt)
 
         # ********** Sorting fake types. ***********
         # fill twice for each event (once for each lepton)
@@ -571,7 +571,7 @@ for plotVar in plotSettings:
         hBkgdStack.GetXaxis().SetTitle(plotVar+" "+unitsLabel)
         hBkgdStack.GetYaxis().SetTitle("Number of Events, norm to 35921 /pb")
         hBkgdStack.SetMinimum(1)
-        hBkgdStack.SetMaximum(10**8)
+        hBkgdStack.SetMaximum(10**7)
     except:
         sys.stderr.write("WARNING: no hBkgds were filled!\n")
         continue
@@ -579,7 +579,7 @@ for plotVar in plotSettings:
 c_fakeSort.cd()
 hFakeSortingStack.Draw("hist")
 hFakeSortingStack.SetMinimum(1)
-hFakeSortingStack.SetMaximum(10**8)
+hFakeSortingStack.SetMaximum(10**7)
 
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal in a separate hist ***************
@@ -609,7 +609,6 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
     subprocess = subprocessLine[0]
     process = subprocessLine[1]
     xsec = float(subprocessLine[2])
-    print subprocess 
     
     # assemble the sigNtupleAdr
     sigNtupleAdr = myDataDir+"/sig/"+process+"/"+subprocess+"/"+subprocess+"_"
@@ -617,6 +616,7 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
     # else: sigNtupleAdr += "all_"
     sigNtupleAdr += "all_"
     sigNtupleAdr += channel+".root"
+    print "Plotting from", sigNtupleAdr
 
     try:
         sigFile = TFile.Open(sigNtupleAdr, "READ")
@@ -683,29 +683,22 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
             else: l2Flav = "Electron"
         l1Index = event.lep1_index
         l2Index = event.lep2_index
-    
-        l1Charge = list(getattr(event, l1Flav+"_charge"))[l1Index]
-        l2Charge = list(getattr(event, l2Flav+"_charge"))[l2Index]
-        l1RelIso = list(getattr(event, l1Flav+"_relIso"))[l1Index]
-        l2RelIso = list(getattr(event, l2Flav+"_relIso"))[l2Index]
 
         if not (event.PV_npvsGood and event.PV_npvs > 1): continue
-        if l1Charge * l2Charge > 0: continue # need opposite sign
-
-        if region == "any": pass
-        elif region == "sr":
-            if not isSR(l1Charge, l2Charge, l1RelIso, l2RelIso, \
-                    findingSameFlavor): continue
-        elif region == "cr1a":
-            if not isCR3rdLeptA(l1Charge, l2Charge, l1RelIso, l2RelIso, \
-                    findingSameFlavor): continue
-        elif region == "cr1b":
-            if not isCR3rdLeptB(l1Charge, l2Charge, l1RelIso, l2RelIso, \
-                    findingSameFlavor): continue
-        elif region == "cr3":
-            if not isCRfakeMET(l1Charge, l2Charge, l1RelIso, l2RelIso, \
-                    findingSameFlavor): continue
         hSigCutflow.Fill(cuts["baseline"], evtwt)
+
+        if region == "sr":
+            if not isSR(event, l1Flav, l1Index, l2Flav, l2Index): continue
+        elif region == "cr1a":
+            l2Index = getCR1al2Index(event, l1Flav, l1Index, l2Flav)
+            if l2Index == -1: continue
+        elif region == "cr1b":
+            l2Index = getCR1bl2Index(event, l1Flav, l1Index, l2Flav)
+            if l2Index == -1: continue
+        elif region == "cr3":
+            if not isCR3(event, l1Flav, l1Index, l2Flav, l2Index): continue
+
+        hSigCutflow.Fill(cuts["allCuts"], evtwt)
 
         # ********** Filling. ***********
         if event.nJet > 0:
@@ -817,7 +810,7 @@ for fileNum, subprocessLine in enumerate(data_redirector):
     # else: dataNtupleAdr += "all_"
     dataNtupleAdr += "all_"
     dataNtupleAdr += channel+".root"
-    print dataNtupleAdr
+    print "Plotting from", dataNtupleAdr
     
     try:
         dataFile = TFile.Open(dataNtupleAdr, "READ")
@@ -848,38 +841,31 @@ for fileNum, subprocessLine in enumerate(data_redirector):
         evtwt = 1 # just in case I forgot to change it somewhere
     
         # ********** Additional cuts. ***********
-    
+
         # if findingSameFlavor, l1/l2Flav set at runtime
         if not findingSameFlavor: 
             if event.lep1_isMu: l1Flav = "Muon"
-           else: l1Flav = "Electron"
+            else: l1Flav = "Electron"
             if event.lep2_isMu: l1Flav = "Muon"
             else: l2Flav = "Electron"
         l1Index = event.lep1_index
         l2Index = event.lep2_index
-    
-        l1Charge = list(getattr(event, l1Flav+"_charge"))[l1Index]
-        l2Charge = list(getattr(event, l2Flav+"_charge"))[l2Index]
-        l1RelIso = list(getattr(event, l1Flav+"_relIso"))[l1Index]
-        l2RelIso = list(getattr(event, l2Flav+"_relIso"))[l2Index]
 
         if not (event.PV_npvsGood and event.PV_npvs > 1): continue
-        if l1Charge * l2Charge > 0: continue # need opposite sign
-
-        if region == "any": pass
-        elif region == "sr":
-            if not isSR(l1Charge, l2Charge, l1RelIso, l2RelIso, \
-                    findingSameFlavor): continue
-        elif region == "cr1a":
-            if not isCR3rdLeptA(l1Charge, l2Charge, l1RelIso, l2RelIso, \
-                    findingSameFlavor): continue
-        elif region == "cr1b":
-            if not isCR3rdLeptB(l1Charge, l2Charge, l1RelIso, l2RelIso, \
-                    findingSameFlavor): continue
-        elif region == "cr3":
-            if not isCRfakeMET(l1Charge, l2Charge, l1RelIso, l2RelIso, \
-                    findingSameFlavor): continue
         hDataCutflow.Fill(cuts["baseline"], 1)
+
+        if region == "sr":
+            if not isSR(event, l1Flav, l1Index, l2Flav, l2Index): continue
+        elif region == "cr1a":
+            l2Index = getCR1al2Index(event, l1Flav, l1Index, l2Flav)
+            if l2Index == -1: continue
+        elif region == "cr1b":
+            l2Index = getCR1bl2Index(event, l1Flav, l1Index, l2Flav)
+            if l2Index == -1: continue
+        elif region == "cr3":
+            if not isCR3(event, l1Flav, l1Index, l2Flav, l2Index): continue
+
+        hDataCutflow.Fill(cuts["allCuts"], 1)
 
         # ********** Filling. ***********
         if event.nJet > 0:

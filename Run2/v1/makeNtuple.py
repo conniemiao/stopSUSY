@@ -460,6 +460,9 @@ for count, event in enumerate(inTree):
     assert l1Index > -1
     nMuon[0] = event.nMuon
     for i in range(event.nMuon):
+        if i>=10: 
+            sys.stderr.write("WARNING: more than 10 muons, skipping rest!\n")
+            break
         Muon_pt[i] = list(event.Muon_pt)[i]
         Muon_eta[i] = list(event.Muon_eta)[i]
         Muon_phi[i] = list(event.Muon_phi)[i]
@@ -490,6 +493,9 @@ for count, event in enumerate(inTree):
     assert l2Index > -1
     nElectron[0] = event.nElectron
     for i in range(event.nElectron):
+        if i>=10: 
+            sys.stderr.write("WARNING: more than 10 electrons, skipping rest!\n")
+            break
         Electron_pt[i] = list(event.Electron_pt)[i]
         Electron_eta[i] = list(event.Electron_eta)[i]
         Electron_phi[i] = list(event.Electron_phi)[i]
@@ -525,7 +531,7 @@ for count, event in enumerate(inTree):
 
     nTrigObj[0] = event.nTrigObj
     for i in range(event.nTrigObj):
-        if i>80: 
+        if i>=80: 
             sys.stderr.write("WARNING: more than 80 trig objs, skipping rest!\n")
             break
         TrigObj_filterBits[i] = list(event.TrigObj_filterBits)[i]
@@ -555,7 +561,7 @@ for count, event in enumerate(inTree):
     #     # when looking for muel/elmu, event should not give valid mumu or elel pair
     #     if selectMuMu(event, isData) is not None: found3rdLept[0] = True
     #     if selectElEl(event, isData) is not None: found3rdLept[0] = True
-    if nExtraMuon > 0 or nExtraElectron > 0: found3rdLept[0] = True
+    if nExtraMuon[0] > 0 or nExtraElectron[0] > 0: found3rdLept[0] = True
     
     nJet[0] = numGoodJets
     nbtag[0] = len(evt_btag_indices)
