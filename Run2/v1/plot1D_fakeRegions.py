@@ -19,6 +19,7 @@
 # Uses sig_fileRedirector
 # Uses data_fileRedirector
 # Uses stopSelection.py
+# Uses everything in the mt2 folder
 
 import sys, os
 assert len(sys.argv) == 5, "need 4 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, region {sr, cr1a, cr1b, cr3, any}"
@@ -27,7 +28,12 @@ print "Importing modules."
 from ROOT import TFile, TTree, TH1D, TCanvas, TImage, TLegend, TText, THStack
 from ROOT import gSystem, gStyle, gROOT, kTRUE
 from stopSelection import deltaR
-from stopSelectionTemp import isSR, getCR1al2Index, getCR1bl2Index, isCR3
+from stopSelection import isSR, getCR1al2Index, getCR1bl2Index, isCR3
+# full path needed for condor support
+gROOT.ProcessLine(".include /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1/mt2/")
+gROOT.ProcessLine(".L /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1/mt2/Davismt2.cc+" )
+sys.path.append('/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1/mt2')
+from mt2 import mt2
 from collections import OrderedDict
 from math import sqrt, cos
 import numpy as np
@@ -39,8 +45,8 @@ print "Beginning execution of", sys.argv
 # myDataDir = "/eos/user/a/alkaloge/Connie/"
 myDataDir = "/eos/user/c/cmiao/private/myDataSusy/Run2"
 # location where cutflow stats will be saved
-# statsDir = "/afs/cern.ch/user/a/alkaloge/work/Connie/CMSSW_10_2_9/src/stopSUSY/Run2/v1/cutflow_stats"
-statsDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/v1/cutflow_stats"
+# statsDir = "/afs/cern.ch/user/a/alkaloge/work/Connie/CMSSW_10_2_9/src/stopSUSY/Run2/v1"
+statsDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/v1"
 # location where the root file with all the control plots will be saved
 # imgDir = "/afs/cern.ch/user/a/alkaloge/work/Connie/CMSSW_10_2_9/src/stopSUSY/Run2/v1/plot1D"
 imgDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/v1/plot1D"
@@ -108,6 +114,7 @@ plotSettings = { # [nBins,xMin,xMax,units]
         #"nbtagTight":[5,0.5,5.5,""],
         #"dR_lep1_jet":[100,0,7,""],
         #"dR_lep2_jet":[100,0,7,""],
+        "mt2":[100,0,500,"[GeV]"],
         "MET_pt":[100,0,500,"[GeV]"], 
         "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
         #"mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
@@ -343,7 +350,7 @@ for subprocessLine in bkgd_redirector:
         hFakeSorting = hFakeSortingDict[subprocess]
 
     nMax = nentries
-    if testMode: nMax = 10000
+    if testMode: nMax = 1000
 
     # ********** Looping over events. ***********
     for count, event in enumerate(tBkgd):
@@ -432,6 +439,8 @@ for subprocessLine in bkgd_redirector:
                 val = list(getattr(event, l1Flav+plotVar[4:]))[l1Index]
             elif plotVar[:4] == "lep2":
                 val = list(getattr(event, l2Flav+plotVar[4:]))[l2Index]
+            elif plotVar == "mt2":
+                val = mt2(event, l1Flav, l1Index, l2Flav, l2Index) 
             # everything else
             else: val = getattr(event, plotVar)
 
@@ -734,6 +743,8 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
                 val = list(getattr(event, l1Flav+plotVar[4:]))[l1Index]
             elif plotVar[:4] == "lep2":
                 val = list(getattr(event, l2Flav+plotVar[4:]))[l2Index]
+            elif plotVar == "mt2":
+                val = mt2(event, l1Flav, l1Index, l2Flav, l2Index) 
             # everything else
             else: val = getattr(event, plotVar)
 
@@ -900,6 +911,8 @@ for fileNum, subprocessLine in enumerate(data_redirector):
                 val = list(getattr(event, l1Flav+plotVar[4:]))[l1Index]
             elif plotVar[:4] == "lep2":
                 val = list(getattr(event, l2Flav+plotVar[4:]))[l2Index]
+            elif plotVar == "mt2":
+                val = mt2(event, l1Flav, l1Index, l2Flav, l2Index) 
             # everything else
             else: val = getattr(event, plotVar)
  
@@ -954,6 +967,19 @@ legend_fakeSorting.SetNColumns(3)
 legend_fakeSorting.Draw("same")
 c_fakeSort.SetLogy()
 c_fakeSort.Update()
+# fake sorting pandas dataframe
+fakeStatsStack = {}
+fakeStatsStack.update({"Fake_type":fakeTypes_idDict.values()})
+fakeStatsNamesList = list(processes)
+for process in processes:
+    fakeSortCounts = [int(hFakeSortingDict[name].GetBinContent(i+1)) \
+            for i in fakeTypes_orderDict.keys()]
+    fakeStatsStack.update({process:fakeSortCounts})
+fakeStatsDF = pd.DataFrame(fakeStatsStack)
+fakeStatsDF.set_index('Fake_type', inplace = True) # keep Fake_Type as first column
+fakeStatsDF = fakeStatsDF[fakeStatsNamesList] # reorder columns
+if not os.path.exists(statsDir+"/fake_stats"): os.makedirs(statsDir+"/fake_stats")
+fakeStatsFileName = statsDir+"/fake_stats/fake_stats_"+channel+"_"+region
 
 # making cutflow pandas dataframe
 statsStack = {}
@@ -972,12 +998,14 @@ statsNamesList.append("data")
 statsDF = pd.DataFrame(statsStack)
 statsDF.set_index('Cut_name', inplace = True) # keep the Cut_name as first column
 statsDF = statsDF[statsNamesList] # reorder columns
-if not os.path.exists(statsDir): os.makedirs(statsDir)
-statsFileName = statsDir+"/cutflow_stats_"+channel+"_"+region
+if not os.path.exists(statsDir+"/cutflow_stats"):
+    os.makedirs(statsDir+"/cutflow_stats")
+statsFileName = statsDir+"/cutflow_stats/cutflow_stats_"+channel+"_"+region
 # if experimental: statsFileName += "_experimental"
 
 if displayMode:
     print statsDF
+    print fakeStatsDF
     print "Done. Press enter to finish (plots not saved)."
     raw_input()
 else:
@@ -1010,5 +1038,10 @@ else:
         statsDF.to_hdf(statsFileName+".hdf", key="statsDF")
         print "Saved file", statsFileName+".hdf"
     else: print statsDF
+
+    fakeStatsFile = open(fakeStatsFileName+".txt", "w")
+    fakeStatsFile.write(fakeStatsDF.to_string()+"\n")
+    fakeStatsFile.close()
+    print "Saved file", fakeStatsFileName+".txt"
 
     print "Done."

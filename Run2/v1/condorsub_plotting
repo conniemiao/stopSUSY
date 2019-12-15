@@ -1,11 +1,11 @@
-executable  = plot1D_qcdMC.py
-arguments   = all save muel nJet<4 D
+executable  = plot1D_fakeRegions.py
+arguments   = all save muel cr3
 
 universe    = vanilla
 initialdir  = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1
-output      = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/plot1D_qcdMC.$(ClusterId).out
-error       = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/plot1D_qcdMC.$(ClusterId).err
-log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/plot1D_qcdMC.$(ClusterId).log
+output      = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/plot1D_fakeRegions.$(ClusterId).out
+error       = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/plot1D_fakeRegions.$(ClusterId).err
+log         = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/condorLogs/plot1D_fakeRegions.$(ClusterId).log
 
 +MaxRuntime = 129500
 

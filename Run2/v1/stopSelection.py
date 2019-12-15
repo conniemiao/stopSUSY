@@ -1,7 +1,9 @@
+
 # Defines functions to perform object and event selection.
 
 import numpy as np
 from math import sqrt, cos, pi, sin, acos
+from ROOT import TLorentzVector
 
 #--------------------------------------------------------------------------------#
 
@@ -39,6 +41,26 @@ def dR2(eta1, phi1, eta2, phi2) :
     dEta = eta1 - eta2
     dR = sqrt(dPhi*dPhi+dEta*dEta)
     return dR
+
+#--------------------------------------------------------------------------------#
+
+def invmass(event, flav1, i1, flav2, i2):
+    obj1 = TLorentzVector()
+    pt1 = list(getattr(event, flav1+"_pt"))[i1]
+    pt2 = list(getattr(event, flav2+"_pt"))[i2]
+    phi1 = list(getattr(event, flav1+"_phi"))[i1]
+    phi2 = list(getattr(event, flav2+"_phi"))[i2]
+    eta1 = list(getattr(event, flav1+"_eta"))[i1]
+    eta2 = list(getattr(event, flav2+"_eta"))[i2]
+    m1 = list(getattr(event, flav1+"_mass"))[i1]
+    m2 = list(getattr(event, flav2+"_mass"))[i2]
+    obj1 = TLorentzVector()
+    obj2 = TLorentzVector()
+    obj1.SetPtEtaPhiM(pt1, eta1, phi1, m1)
+    obj2.SetPtEtaPhiM(pt2, eta2, phi2, m2)
+    totm = (obj1+obj2).M()
+    # print "m1+m2", m1+m2, "mll", totm
+    return totm
 
 #--------------------------------------------------------------------------------#
 
@@ -431,6 +453,97 @@ def isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
 
 #--------------------------------------------------------------------------------#
 
-# under construction
+# Regions for fake estimation
 
-#--------------------------------------------------------------------------------#
+# sr: Given the flav/index of 1st and 2nd leptons in pair from the baseline
+# selection, returns True if the event has nbtag < 2, nJet < 4, no 3rd lepton was
+# found, meets signal region iso and charge reqs, and |mll-mZ|>15. Otherwise returns
+# False.
+def isSR(event, l1Flav, l1Index, l2Flav, l2Index):
+    if event.nExtraMuon > 0 or event.nExtraMuon > 0: return False 
+    # if event.found3rdLept: return False
+    if event.nbtag > 1: return False 
+    if event.nJet >= 4: return False
+
+    if l1Flav[0] == l2Flav[0]: maxRelIso = 0.15
+    else: maxRelIso = 0.25
+    l1Charge = list(getattr(event, l1Flav+"_charge"))[l1Index]
+    l1RelIso = list(getattr(event, l1Flav+"_relIso"))[l1Index]
+    l2Charge = list(getattr(event, l2Flav+"_charge"))[l2Index]
+    l2RelIso = list(getattr(event, l2Flav+"_relIso"))[l2Index]
+    if not (l1Charge*l2Charge < 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso):
+        return False
+    mll = invmass(event, l1Flav, l1Index, l2Flav, l2Index)
+    if abs(mll-80) < 15: return False
+    return True 
+
+# cr1a: Given the flav/index of 1st lepton in pair and the flavor of the 2nd as 
+# found in the baseline selection, returns the index of a 2nd lepton for the event,
+# which is the highest pt 3rd lepton found (no iso cuts), if the event has nbtag < 2,
+# nJet < 4, meets signal region iso and charge reqs, and |mll-mZ|>15. If the event 
+# didn't pass the CR1a selection, returns -1.
+def getCR1al2Index(event, l1Flav, l1Index, l2Flav):
+    if getattr(event, "nExtra"+l2Flav) == 0: return -1
+    if event.nbtag > 1: return -1 
+    if event.nJet >= 4: return -1
+
+    if l1Flav[0] == l2Flav[0]: maxRelIso = 0.15
+    else: maxRelIso = 0.25
+    l1Charge = list(getattr(event, l1Flav+"_charge"))[l1Index]
+    l1RelIso = list(getattr(event, l1Flav+"_relIso"))[l1Index]
+    if l1RelIso >= maxRelIso: return -1
+
+    for extraLeptInd in list(getattr(event, "extra"+l2Flav[:2]+"Indices")):
+        l2Charge = list(getattr(event, l2Flav+"_charge"))[extraLeptInd]
+        mll = invmass(event, l1Flav, l1Index, l2Flav, extraLeptInd)
+        if l1Charge*l2Charge < 0 and abs(mll-80) > 15:
+            return extraLeptInd
+    return -1
+
+# cr1b: Given the flav/index of 1st lepton in pair and the flavor of the 2nd as 
+# found in the baseline selection, returns the index of a 2nd lepton for the event,
+# which is the highest pt 3rd lepton found with inverted iso, if the event has 
+# nbtag < 2, nJet < 4, meets signal region iso and charge reqs, and |mll-mZ|>15. 
+# If the event didn't pass the CR1b selection, returns -1.
+def getCR1bl2Index(event, l1Flav, l1Index, l2Flav):
+    if getattr(event, "nExtra"+l2Flav) == 0: return -1
+    if event.nbtag > 1: return -1 
+    if event.nJet >= 4: return -1
+
+    if l1Flav[0] == l2Flav[0]: maxRelIso = 0.15
+    else: maxRelIso = 0.25
+    l1Charge = list(getattr(event, l1Flav+"_charge"))[l1Index]
+    l1RelIso = list(getattr(event, l1Flav+"_relIso"))[l1Index]
+    if l1RelIso >= maxRelIso: return -1
+
+    for extraLeptInd in list(getattr(event, "extra"+l2Flav[:2]+"Indices")):
+        l2Charge = list(getattr(event, l2Flav+"_charge"))[extraLeptInd]
+        l2RelIso = list(getattr(event, l1Flav+"_relIso"))[extraLeptInd]
+        mll = invmass(event, l1Flav, l1Index, l2Flav, extraLeptInd)
+        if l1Charge*l2Charge < 0 and \
+                (l2RelIso > maxRelIso and l2RelIso < 2 * maxRelIso) and \
+                abs(mll-80) > 15:
+            return extraLeptInd
+    return -1
+
+# cr3: Given the flav/index of 1st and 2nd leptons in pair from the baseline
+# selection, returns True if the event has nbtag = 0, nJet < 4, a 3rd lepton was
+# found, meets signal region iso and charge reqs, and |mll-mZ|<15. Otherwise returns
+# False.
+def isCR3(event, l1Flav, l1Index, l2Flav, l2Index):
+    if not (event.nExtraMuon > 0 or event.nExtraMuon > 0): return False 
+    # if not event.found3rdLept: return False
+    if event.nbtag > 0: return False 
+    if event.nJet >= 4: return False
+
+    if l1Flav[0] == l2Flav[0]: maxRelIso = 0.15
+    else: maxRelIso = 0.25
+    l1Charge = list(getattr(event, l1Flav+"_charge"))[l1Index]
+    l1RelIso = list(getattr(event, l1Flav+"_relIso"))[l1Index]
+    l2Charge = list(getattr(event, l2Flav+"_charge"))[l2Index]
+    l2RelIso = list(getattr(event, l2Flav+"_relIso"))[l2Index]
+    if not (l1Charge*l2Charge < 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso):
+        return False
+    mll = invmass(event, l1Flav, l1Index, l2Flav, l2Index)
+    if abs(mll-80) > 15: return False
+    return True 

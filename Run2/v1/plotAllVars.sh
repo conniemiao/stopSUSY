@@ -8,7 +8,7 @@ if [[ "$testMode" == "test" ]]; then
     bkgdProcesses=("Diboson")
     cuts=("baseline")
     plotVars2D=("lep1_pt" "MET_pt""Jet_ht" "mt_tot")
-    regions=("A")
+    regionsQCD=("A")
 elif [[ "$testMode" == "all" ]]; then
     # channels=("mumu" "muel" "elel")
     channels=("muel")
@@ -16,8 +16,10 @@ elif [[ "$testMode" == "all" ]]; then
     cuts=("baseline" "nJet<4")
     plotVars2D=("lep1_pt" "lep2_pt" "lep1_mt" "lep2_mt" "MET_pt" "lep1_eta" \
         "lep2_eta" "Jet_ht" "mt_tot" "mt_sum" "m_eff")
-    regions=("A" "B" "C" "D")
-    # regions=("any")
+    regionsQCD=("A" "B" "C" "D")
+    # regionsQCD=("any")
+    regionsFakes=("sr" "cr1a" "cr1b" "cr3")
+    # regionsFakes=("sr")
 else
     echo "need {test, all} as 1st arg to plotAllVars.sh"
     exit 1
@@ -41,21 +43,21 @@ do
     # Args to plot1D_qcdMC.py: testMode {test, all}, displayMode {show, save}, channel
     # {mumu, elel, muel}, lastcut, region {A,B,C,D}
     echo "------------------ Normal 1d plots (QCD MC) ------------------"
-    for cut in "${cuts[@]}"
-    do
-        for region in "${regions[@]}"
-        do
-            bash createCondorsubPlotting.sh plot1D_qcdMC.py $testMode $displayMode \
-                $channel $cut $region
-            if [[ "$testMode" == "all" ]]; then 
-                condor_submit condorsub_plotting
-            else
-                ./plot1D_qcdMC.py $testMode $displayMode $channel $cut $region
-            fi
-            # ./plot1D_qcdMC.py $testMode $displayMode $channel $cut $region
-            echo
-        done
-    done
+#     for cut in "${cuts[@]}"
+#     do
+#         for region in "${regionsQCD[@]}"
+#         do
+#             bash createCondorsubPlotting.sh plot1D_qcdMC.py $testMode $displayMode \
+#                 $channel $cut $region
+#             if [[ "$testMode" == "all" ]]; then 
+#                 condor_submit condorsub_plotting
+#             else
+#                 ./plot1D_qcdMC.py $testMode $displayMode $channel $cut $region
+#             fi
+#             # ./plot1D_qcdMC.py $testMode $displayMode $channel $cut $region
+#             echo
+#         done
+#     done
 
     #--------------------------------------------------------------------------------#
     # SECTION 1B
@@ -101,6 +103,24 @@ do
 
     #--------------------------------------------------------------------------------#
 
+    # SECTION 5 
+
+    # Args to plot1D_fakeRegions.py: testMode {test, all}, displayMode {show, save},
+    # channel {mumu, elel, muel}, region {sr, cr1a, cr1b, cr3, any}
+    echo "------------------ Normal 1d plots (fake regions) ------------------"
+    for region in "${regionsFakes[@]}"
+    do
+        bash createCondorsubPlotting.sh plot1D_fakeRegions.py $testMode \
+            $displayMode $channel $region
+        if [[ "$testMode" == "all" ]]; then 
+            condor_submit condorsub_plotting
+        else
+            ./plot1D_fakeRegions.py $testMode $displayMode $channel $region
+        fi
+        # ./plot1D_fakeRegions.py $testMode $displayMode $channel $region
+        echo
+    done
+
     echo
 done
 
@@ -120,7 +140,7 @@ do
     echo "------------------ Get 1d plots from qcd MC ------------------"
 #     for cut in "${cuts[@]}"
 #     do
-#         for region in "${regions[@]}"
+#         for region in "${regionsQCD[@]}"
 #         do
 #             python getPlots.py $testMode $displayMode $channel $cut qcdMC $region
 #         done
@@ -145,12 +165,10 @@ do
     # channel {mumu, elel, muel}
     echo
     echo "------------------ Get cutflows and piecharts ------------------"
-#     for region in "${regions[@]}"
+#     for region in "${regionsQCD[@]}"
 #     do
 #         python plotCutflows.py $testMode $displayMode $channel $region
 #     done
-
-    #--------------------------------------------------------------------------------#
 
     echo
 done

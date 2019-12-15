@@ -900,7 +900,7 @@ for fileNum, subprocessLine in enumerate(data_redirector):
         # if findingSameFlavor, l1/l2Flav set at runtime
         if not findingSameFlavor: 
             if event.lep1_isMu: l1Flav = "Muon"
-           else: l1Flav = "Electron"
+            else: l1Flav = "Electron"
             if event.lep2_isMu: l1Flav = "Muon"
             else: l2Flav = "Electron"
         l1Index = event.lep1_index
