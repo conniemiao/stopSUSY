@@ -27,13 +27,13 @@ assert len(sys.argv) == 5, "need 4 command line args: testMode {test, all}, disp
 print "Importing modules."
 from ROOT import TFile, TTree, TH1D, TCanvas, TImage, TLegend, TText, THStack
 from ROOT import gSystem, gStyle, gROOT, kTRUE
-from stopSelection import deltaR
+from stopSelection import deltaR, invmass
 from stopSelection import isSR, getCR1al2Index, getCR1bl2Index, isCR3
 # full path needed for condor support
 gROOT.ProcessLine(".include /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1/mt2/")
 gROOT.ProcessLine(".L /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1/mt2/Davismt2.cc+" )
 sys.path.append('/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1/mt2')
-from mt2 import mt2
+from mt2 import mt2, mt2davis
 from collections import OrderedDict
 from math import sqrt, cos
 import numpy as np
@@ -114,7 +114,8 @@ plotSettings = { # [nBins,xMin,xMax,units]
         #"nbtagTight":[5,0.5,5.5,""],
         #"dR_lep1_jet":[100,0,7,""],
         #"dR_lep2_jet":[100,0,7,""],
-        "mt2":[100,0,500,"[GeV]"],
+        "mt2":[100,0,250,"[GeV]"],
+        "mll":[100,0,1000,"[GeV]"],
         "MET_pt":[100,0,500,"[GeV]"], 
         "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
         #"mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
@@ -123,6 +124,7 @@ plotSettings = { # [nBins,xMin,xMax,units]
         #"mt_tot_div_sqrt_MET":[100,0,200,""],
         #"m_eff_div_sqrt_MET":[100,0,200,""]
         }
+if region == "cr3": plotSettings["mll"] = [100, 60, 100,"[GeV]"]
 
 # produced particle -> labeled particle
 # heavy quarks (c,b,t), light quarks (d,u,s), g: gluon
@@ -190,6 +192,9 @@ hBkgdCutsCountDict = {}
 # hFakeSorting maps every subprocess to an hFakeSorting that contains the histogram
 # that sorts the events into different fake processes
 hFakeSortingDict = {}
+# hFakeSortingCountsDict maps each process to an array holding num evts in each fake
+# category for that process
+hFakeSortingCountsDict = {}
 # hBkgdSubprocessesPlotVarDict maps each bkgd subprocess to another dictionary,
 # which maps each plotVar to a hist.
 hBkgdSubprocessesPlotVarDict = {}
@@ -292,6 +297,7 @@ WIncl_totgenwt = 0
 DYIncl_totgenwt = 0
 for process in processes:
     hBkgdCutsCountDict.update({process:[0]*nCuts})
+    hFakeSortingCountsDict.update({process:[0]*nFakeTypes})
 
 for subprocessLine in bkgd_redirector:
     subprocessLine = subprocessLine.rstrip('\n').split(" ")
@@ -441,6 +447,8 @@ for subprocessLine in bkgd_redirector:
                 val = list(getattr(event, l2Flav+plotVar[4:]))[l2Index]
             elif plotVar == "mt2":
                 val = mt2(event, l1Flav, l1Index, l2Flav, l2Index) 
+            elif plotVar == "mll":
+                val = invmass(event, l1Flav, l1Index, l2Flav, l2Index) 
             # everything else
             else: val = getattr(event, plotVar)
 
@@ -491,6 +499,9 @@ for subprocessLine in bkgd_redirector:
                 hBkgdCutsCountDict[process][c]+=int(hBkgdCutflow.GetBinContent(c+1))
             hFakeSorting = hFakeSortingDict[name]
             hFakeSorting.Scale(norm)
+            for f in range(nFakeTypes):
+                hFakeSortingCountsDict[process][f] += int(hFakeSorting.\
+                        GetBinContent(f+1))
             hFakeSorting.SetFillColor(processes[process])
             hFakeSorting.SetLineColor(processes[process])
             hFakeSortingStack.Add(hFakeSorting)
@@ -524,6 +535,9 @@ for subprocessLine in bkgd_redirector:
                 hBkgdCutsCountDict[process][c] += int(hBkgdCutflow.GetBinContent(c+1))
             hFakeSorting = hFakeSortingDict[name]
             hFakeSorting.Scale(norm)
+            for f in range(nFakeTypes):
+                hFakeSortingCountsDict[process][f] += int(hFakeSorting.\
+                        GetBinContent(f+1))
             hFakeSorting.SetFillColor(processes[process])
             hFakeSorting.SetLineColor(processes[process])
             hFakeSortingStack.Add(hFakeSorting)
@@ -561,6 +575,9 @@ for subprocessLine in bkgd_redirector:
             if c >= nCuts: break
             hBkgdCutsCountDict[process][c] += int(hBkgdCutflow.GetBinContent(c+1))
         hFakeSorting.Scale(norm)
+        for f in range(nFakeTypes):
+            hFakeSortingCountsDict[process][f] += int(hFakeSorting.\
+                    GetBinContent(f+1))
         hFakeSorting.SetFillColor(processes[process])
         hFakeSorting.SetLineColor(processes[process])
         hFakeSortingStack.Add(hFakeSorting)
@@ -745,6 +762,8 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
                 val = list(getattr(event, l2Flav+plotVar[4:]))[l2Index]
             elif plotVar == "mt2":
                 val = mt2(event, l1Flav, l1Index, l2Flav, l2Index) 
+            elif plotVar == "mll":
+                val = invmass(event, l1Flav, l1Index, l2Flav, l2Index) 
             # everything else
             else: val = getattr(event, plotVar)
 
@@ -913,6 +932,8 @@ for fileNum, subprocessLine in enumerate(data_redirector):
                 val = list(getattr(event, l2Flav+plotVar[4:]))[l2Index]
             elif plotVar == "mt2":
                 val = mt2(event, l1Flav, l1Index, l2Flav, l2Index) 
+            elif plotVar == "mll":
+                val = invmass(event, l1Flav, l1Index, l2Flav, l2Index) 
             # everything else
             else: val = getattr(event, plotVar)
  
@@ -972,9 +993,7 @@ fakeStatsStack = {}
 fakeStatsStack.update({"Fake_type":fakeTypes_idDict.values()})
 fakeStatsNamesList = list(processes)
 for process in processes:
-    fakeSortCounts = [int(hFakeSortingDict[name].GetBinContent(i+1)) \
-            for i in fakeTypes_orderDict.keys()]
-    fakeStatsStack.update({process:fakeSortCounts})
+    fakeStatsStack.update({process:hFakeSortingCountsDict[process]})
 fakeStatsDF = pd.DataFrame(fakeStatsStack)
 fakeStatsDF.set_index('Fake_type', inplace = True) # keep Fake_Type as first column
 fakeStatsDF = fakeStatsDF[fakeStatsNamesList] # reorder columns
