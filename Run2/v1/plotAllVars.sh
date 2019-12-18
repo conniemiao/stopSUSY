@@ -11,7 +11,7 @@ if [[ "$testMode" == "test" ]]; then
     regionsQCD=("A")
 elif [[ "$testMode" == "all" ]]; then
     # channels=("mumu" "muel" "elel")
-    channels=("muel")
+    channels=("elel")
     bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top" "QCD")
     cuts=("baseline" "nJet<4")
     plotVars2D=("lep1_pt" "lep2_pt" "lep1_mt" "lep2_mt" "MET_pt" "lep1_eta" \
@@ -73,6 +73,26 @@ do
 #     done
 
     #--------------------------------------------------------------------------------#
+
+    # SECTION 5 
+
+    # Args to plot1D_fakeRegions.py: testMode {test, all}, displayMode {show, save},
+    # channel {mumu, elel, muel}, region {sr, cr1a, cr1b, cr3, any}
+    echo "------------------ Normal 1d plots (fake regions) ------------------"
+    for region in "${regionsFakes[@]}"
+    do
+        bash createCondorsubPlotting.sh plot1D_fakeRegions.py $testMode \
+            $displayMode $channel $region
+        if [[ "$testMode" == "all" ]]; then 
+            condor_submit condorsub_plotting
+        else
+            ./plot1D_fakeRegions.py $testMode $displayMode $channel $region
+        fi
+        # ./plot1D_fakeRegions.py $testMode $displayMode $channel $region
+        echo
+    done
+
+    #--------------------------------------------------------------------------------#
     # SECTION 2
 
     # Args to plot2D.py: testMode {test, all}, displayMode {show, save}, 
@@ -102,24 +122,6 @@ do
 #     done
 
     #--------------------------------------------------------------------------------#
-
-    # SECTION 5 
-
-    # Args to plot1D_fakeRegions.py: testMode {test, all}, displayMode {show, save},
-    # channel {mumu, elel, muel}, region {sr, cr1a, cr1b, cr3, any}
-    echo "------------------ Normal 1d plots (fake regions) ------------------"
-    for region in "${regionsFakes[@]}"
-    do
-        bash createCondorsubPlotting.sh plot1D_fakeRegions.py $testMode \
-            $displayMode $channel $region
-        if [[ "$testMode" == "all" ]]; then 
-            condor_submit condorsub_plotting
-        else
-            ./plot1D_fakeRegions.py $testMode $displayMode $channel $region
-        fi
-        # ./plot1D_fakeRegions.py $testMode $displayMode $channel $region
-        echo
-    done
 
     echo
 done

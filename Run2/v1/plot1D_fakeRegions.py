@@ -114,7 +114,7 @@ plotSettings = { # [nBins,xMin,xMax,units]
         #"nbtagTight":[5,0.5,5.5,""],
         #"dR_lep1_jet":[100,0,7,""],
         #"dR_lep2_jet":[100,0,7,""],
-        "mt2":[100,0,250,"[GeV]"],
+        "mt2":[100,0,150,"[GeV]"],
         "mll":[100,0,1000,"[GeV]"],
         "MET_pt":[100,0,500,"[GeV]"], 
         "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
@@ -124,7 +124,7 @@ plotSettings = { # [nBins,xMin,xMax,units]
         #"mt_tot_div_sqrt_MET":[100,0,200,""],
         #"m_eff_div_sqrt_MET":[100,0,200,""]
         }
-if region == "cr3": plotSettings["mll"] = [100, 60, 100,"[GeV]"]
+if region == "cr3": plotSettings["mll"] = [100, 60, 110,"[GeV]"]
 
 # produced particle -> labeled particle
 # heavy quarks (c,b,t), light quarks (d,u,s), g: gluon
@@ -1024,6 +1024,7 @@ statsFileName = statsDir+"/cutflow_stats/cutflow_stats_"+channel+"_"+region
 
 if displayMode:
     print statsDF
+    print
     print fakeStatsDF
     print "Done. Press enter to finish (plots not saved)."
     raw_input()
@@ -1053,7 +1054,6 @@ else:
         statsFile.write(statsDF.to_string()+"\n")
         statsFile.close()
         print "Saved file", statsFileName+".txt"
-        
         statsDF.to_hdf(statsFileName+".hdf", key="statsDF")
         print "Saved file", statsFileName+".hdf"
     else: print statsDF

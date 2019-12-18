@@ -460,7 +460,7 @@ def isRegionD(l1Charge, l2Charge, l1RelIso, l2RelIso, findSameFlav):
 # found, meets signal region iso and charge reqs, and |mll-mZ|>15. Otherwise returns
 # False.
 def isSR(event, l1Flav, l1Index, l2Flav, l2Index):
-    if event.nExtraMuon > 0 or event.nExtraMuon > 0: return False 
+    if event.nExtraMuon > 0 or event.nExtraElectron > 0: return False 
     # if event.found3rdLept: return False
     if event.nbtag > 1: return False 
     if event.nJet >= 4: return False
@@ -474,7 +474,7 @@ def isSR(event, l1Flav, l1Index, l2Flav, l2Index):
     if not (l1Charge*l2Charge < 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso):
         return False
     mll = invmass(event, l1Flav, l1Index, l2Flav, l2Index)
-    if abs(mll-80) < 15: return False
+    if abs(mll-90) < 15: return False
     return True 
 
 # cr1a: Given the flav/index of 1st lepton in pair and the flavor of the 2nd as 
@@ -496,7 +496,7 @@ def getCR1al2Index(event, l1Flav, l1Index, l2Flav):
     for extraLeptInd in list(getattr(event, "extra"+l2Flav[:2]+"Indices")):
         l2Charge = list(getattr(event, l2Flav+"_charge"))[extraLeptInd]
         mll = invmass(event, l1Flav, l1Index, l2Flav, extraLeptInd)
-        if l1Charge*l2Charge < 0 and abs(mll-80) > 15:
+        if l1Charge*l2Charge < 0 and abs(mll-90) > 15:
             return extraLeptInd
     return -1
 
@@ -522,7 +522,7 @@ def getCR1bl2Index(event, l1Flav, l1Index, l2Flav):
         mll = invmass(event, l1Flav, l1Index, l2Flav, extraLeptInd)
         if l1Charge*l2Charge < 0 and \
                 (l2RelIso > maxRelIso and l2RelIso < 2 * maxRelIso) and \
-                abs(mll-80) > 15:
+                abs(mll-90) > 15:
             return extraLeptInd
     return -1
 
@@ -531,7 +531,7 @@ def getCR1bl2Index(event, l1Flav, l1Index, l2Flav):
 # found, meets signal region iso and charge reqs, and |mll-mZ|<15. Otherwise returns
 # False.
 def isCR3(event, l1Flav, l1Index, l2Flav, l2Index):
-    if not (event.nExtraMuon > 0 or event.nExtraMuon > 0): return False 
+    if event.nExtraMuon > 0 or event.nExtraElectron > 0: return False 
     # if not event.found3rdLept: return False
     if event.nbtag > 0: return False 
     if event.nJet >= 4: return False
@@ -545,5 +545,5 @@ def isCR3(event, l1Flav, l1Index, l2Flav, l2Index):
     if not (l1Charge*l2Charge < 0 and l1RelIso < maxRelIso and l2RelIso < maxRelIso):
         return False
     mll = invmass(event, l1Flav, l1Index, l2Flav, l2Index)
-    if abs(mll-80) > 15: return False
+    if abs(mll-90) > 15: return False
     return True 
