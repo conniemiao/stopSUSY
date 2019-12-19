@@ -22,10 +22,9 @@ bash getDASNtuples.sh
 ```
 bash makeAllNtuples.py all
 ```
-3. (Fast) hadd the ntuples from step 2 so that there is only 1 ntuple for each subprocess. This will submit a condor job for each subprocess listed in bkgd_fileRedirector, for each channel.
+3. (Fast to very fast) hadd the ntuples from step 2 so that there is only 1 ntuple for each subprocess. This step runs locally. To make it faster, you can uncomment the zombie checking section in `haddSubprocess.sh`, but if hadd runs into any broken files it will simply skip hadding the rest of the files for that subprocess.
 - If necessary, change these variables for directories before running:
   - `myDataDir` in `haddSubprocess.sh`
-  - `baseDir` and `condorLogDir` in `createCondorsubHadd.sh`
 - Adjust which channels and processes to submit in `haddAllNtuples.sh`. Then execute:
 ```
 bash haddAllNtuples.sh all
@@ -52,17 +51,35 @@ python plot1D_qcdMC.py all save [mumu/muel/elel] [lastcut] [A/B/C/D/any]
 ```
 python plot1D_qcdData.py all save [mumu/muel/elel] [lastcut]
 ```
+6. (Slow to very slow) Plot 1D control plots for fake regions: `plot1D_fakeRegions.py`. For each of the fakes control regions (sr, cr1a, cr1b, cr3), it will produce a root file containing the canvases for all the control variables as well as each of the individual histograms. It will also save 2 files with the cutflow information (the txt file is human readable and the hdf (pandas dataframe) file is used as input when drawing the cutflow (step 7)), and 1 txt file with the fake sorting information.
+- If necessary, change these variables for directories before running:
+  - `myDataDir`, `statsDir`, `imgDir`, and addresses to mt2 scripts (see the import modules section) in `plot1D_fakeRegions.py`
+  - `baseDir` and `condorLogDir` in `createCondorsubPlotting.sh`
+- To submit all of these jobs to condor, uncomment section 2A "Normal 1d plots (fake regions)" and adjust regions and channels in `plotAllVars.sh` (note that both cr3 and sr for a particular channel need to have been completed before step 7 can be executed for that channel). Then execute: `bash plotAllVars.sh all save`
+- You can also run this on 1 specific channel and region by executing
+```
+python plot1D_fakeRegions.py all save [mumu/muel/elel] [sr/cr1a/cr1b/cr3/any]
+```
+7. (Very fast) Replot the SR control plots using DY rescaled using mll from CR3: `plot1D_scaleDY_SR.py`. This will produce the same structure of root file that step 6 produces, but will only plot in the SR.
+- If necessary, change these variables for directories before running:
+  - `imgDir` in `plot1D_scaleDY_SR.py`
+- This step is run locally. Uncomment section 2B and adjust channels in `plotAllVars.sh` as needed. Then execute: `bash plotAllVars.sh all save`
+- You can also run this on 1 specific channel by executing
+```
+python plot1D_scaleDY_SR.py all save [mumu/muel/elel]
+```
+
 #### Drawing/saving plots
 _The plots outputted by steps 4 and 5 can be viewed directly from the outputted plots root file, or:_  
-6. (Very fast) Save the plots as actual pngs from the root files outputted in steps 4 and 5.
+8. (Very fast) Save the plots as actual pngs from the root files outputted in steps 4-7.
 - If necessary, change these variables for directories before running:
-  - `imgDir` in `getPlots.py`
-- This step is run locally. Uncomment sections 3A and/or 3B in `plotAllVars.sh`, then execute `bash plotAllVars.sh all save`
+  - `imgDir` in `getPlotsQCD.py`
+- This step is run locally. Uncomment sections 4A and/or 4B in `plotAllVars.sh`, then execute `bash plotAllVars.sh all save`
 - You can also run this on 1 specific channel and last cut by executing
 ```
-python getPlots.py all save [mumu/muel/elel] [lastcut] [qcdMC/qcdData] [A/B/C/D (only needed for qcdMC)]
+python getPlotsQCD.py all save [mumu/muel/elel] [lastcut] [qcdMC/qcdData] [A/B/C/D (only needed for qcdMC)]
 ```
-7. (Very fast) Save the cutflow plots and piecharts (for baseline and nJet<4 cuts) from the cutflow stats outputted in step 4.
+9. (Very fast) Save the cutflow plots and piecharts (for baseline and nJet<4 cuts) from the cutflow stats outputted in step 4.
 - If necessary, change these variables for directories before running:
   - `statsDir`, `cutflowPlotsDir` in `plotCutflows.py`
 - This step is run locally. Uncomment section 4 in `plotAllVars.sh`, then execute `bash plotAllVars.sh all save` 
@@ -70,6 +87,11 @@ python getPlots.py all save [mumu/muel/elel] [lastcut] [qcdMC/qcdData] [A/B/C/D 
 ```
 python plotCutflows.py all save [mumu/muel/elel] [A/B/C/D]
 ```
+10. (Very fast) Alternatively, all plots saved as canvases in a root file can be saved directly. If necessary, change the `imgDir` variable in `getPlots.py`, then run:
+```
+python getPlots.py [filename]
+```
+where the filename is just the name of the root file containing the plots (and not the full path to the file).
 
 ## HLLHC
 v3CutSequence:
