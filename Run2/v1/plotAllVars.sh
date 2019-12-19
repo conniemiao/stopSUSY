@@ -74,7 +74,7 @@ do
 
     #--------------------------------------------------------------------------------#
 
-    # SECTION 5 
+    # SECTION 2A
 
     # Args to plot1D_fakeRegions.py: testMode {test, all}, displayMode {show, save},
     # channel {mumu, elel, muel}, region {sr, cr1a, cr1b, cr3, any}
@@ -93,7 +93,16 @@ do
     done
 
     #--------------------------------------------------------------------------------#
-    # SECTION 2
+    # SECTION 2B
+
+    # Args to plot1D_scaleDY_SR.py: testMode {test, all}, displayMode {show, save}, 
+    # channel {mumu, elel, muel}
+    echo "------------------ Normal 1d plots (rescaled SR with DY) ------------------"
+#     ./plot1D_scaleDY_SR.py $testMode $displayMode $channel
+#     echo
+
+    #--------------------------------------------------------------------------------#
+    # SECTION 3
 
     # Args to plot2D.py: testMode {test, all}, displayMode {show, save}, 
     # channel {mumu, elel, muel}, lastcut, process, plotVarX, plotVarY
@@ -134,9 +143,9 @@ do
     echo "------------------------------- $channel -------------------------------"
 
     #--------------------------------------------------------------------------------#
-    # SECTION 3A
+    # SECTION 4A
 
-    # Args to getPlots.py: testMode {test, all}, displayMode {show, save}, 
+    # Args to getPlotsQCD.py: testMode {test, all}, displayMode {show, save}, 
     # channel {mumu, elel, muel}, lastcut
     echo
     echo "------------------ Get 1d plots from qcd MC ------------------"
@@ -144,24 +153,24 @@ do
 #     do
 #         for region in "${regionsQCD[@]}"
 #         do
-#             python getPlots.py $testMode $displayMode $channel $cut qcdMC $region
+#             python getPlotsQCD.py $testMode $displayMode $channel $cut qcdMC $region
 #         done
 #     done
 
     #--------------------------------------------------------------------------------#
-    # SECTION 3B
+    # SECTION 4B
 
-    # Args to getPlots.py: testMode {test, all}, displayMode {show, save}, 
+    # Args to getPlotsQCD.py: testMode {test, all}, displayMode {show, save}, 
     # channel {mumu, elel, muel}, lastcut
     echo
     echo "------------------ Get 1d plots from qcd data ------------------"
 #     for cut in "${cuts[@]}"
 #     do
-#         python getPlots.py $testMode $displayMode $channel $cut qcdData
+#         python getPlotsQCD.py $testMode $displayMode $channel $cut qcdData
 #     done
 
     #--------------------------------------------------------------------------------#
-    # SECTION 4
+    # SECTION 6
 
     # Args to plotCutflows.py: testMode {test, all}, displayMode {show, save}, 
     # channel {mumu, elel, muel}
