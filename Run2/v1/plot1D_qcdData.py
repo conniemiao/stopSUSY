@@ -320,7 +320,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     hBkgdStack.GetXaxis().SetTitle(plotVar+" "+unitsLabel)
     hBkgdStack.GetYaxis().SetTitle("Number of Events, norm to 35921 /pb")
     hBkgdStack.SetMinimum(1)
-    hBkgdStack.SetMaximum(10**12)
+    hBkgdStack.SetMaximum(10**8)
 
     for subprocess in sigSubprocesses:
         histname = "sig_"+subprocess[10:27]+"_"+plotVar

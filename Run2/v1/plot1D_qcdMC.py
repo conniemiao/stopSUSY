@@ -600,7 +600,7 @@ for plotVar in plotSettings:
         hBkgdStack.GetXaxis().SetTitle(plotVar+" "+unitsLabel)
         hBkgdStack.GetYaxis().SetTitle("Number of Events, norm to 35921 /pb")
         hBkgdStack.SetMinimum(1)
-        hBkgdStack.SetMaximum(10**7)
+        hBkgdStack.SetMaximum(10**8)
     except:
         sys.stderr.write("WARNING: no hBkgds were filled!\n")
         continue
@@ -608,7 +608,7 @@ for plotVar in plotSettings:
 c_fakeSort.cd()
 hFakeSortingStack.Draw("hist")
 hFakeSortingStack.SetMinimum(1)
-hFakeSortingStack.SetMaximum(10**7)
+hFakeSortingStack.SetMaximum(10**8)
 
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal in a separate hist ***************

@@ -3,18 +3,18 @@
 # NOTE: NEEDS 4 CMD LINE ARGS with values:
 # testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}
 #
-# Using the plots drawn by plot1D_fakeRegions, estimates qcd from data for each of the
-# plotVars. Then, draws each of the plotVars (signal region only) onto canvases using
-# the data-estimated QCD and saves these and all of the individual hists into another
-# output root.
-#
+# Using the plots drawn by plot1D_fakeRegions, rescales the DY in the SR by the ratio
+# of mc to data from the mll plot in CR3.
+# 
 # Uses the cr3 root file outputted from plot1D_fakeRegions.py
 # Uses bkgd_fileRedirector
 # Uses sig_fileRedirector
 
 print "Importing modules."
 import sys
-from ROOT import TFile, TTree, TH1D, TCanvas, TImage, TLegend, TText, THStack
+assert len(sys.argv) == 4, "need 3 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}"
+
+from ROOT import TFile, TTree, TH1D, TCanvas, TPad, TLegend, TText, THStack, TLine
 from ROOT import gSystem, gStyle, gROOT, kTRUE
 from collections import OrderedDict
 print "Beginning execution of", sys.argv
@@ -22,10 +22,8 @@ print "Beginning execution of", sys.argv
 # location where the cutflow stats were saved
 statsDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/v1/cutflow_stats"
 # location where the root file with all the fakeRegions plots will be taken from, and also
-# where the new qcdData control plots will be saved
+# where the new  plots will be saved
 imgDir = "/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/plots/Run2/v1/plot1D"
-
-assert len(sys.argv) == 4, "need 3 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}"
 
 if sys.argv[1] == "test": testMode = True
 elif sys.argv[1] == "all": testMode = False
@@ -50,37 +48,37 @@ assert lastcut in cuts, "invalid last cut %s" % lastcut
 nCuts = cuts[lastcut]+1
 
 plotSettings = { # [nBins,xMin,xMax,units]
-        #"lep1_pt":[100,0,400,"[Gev]"],
-        #"lep1_eta":[100,-4,4,""],
-        #"lep1_phi":[100,-4,4,""],
-        #"lep1_relIso":[100,0,0.2,""],
-        #"lep1_mt":[100,0,500,"[GeV]"],
-        #"lep2_pt":[100,0,400,"[GeV]"],
-        #"lep2_eta":[100,-4,4,""],
-        #"lep2_phi":[100,-4,4,""],
-        #"lep2_relIso":[100,0,0.2,""],
-        #"lep2_mt":[100,0,500,"[GeV]"],
-        #"nJet":[10,0.5,10.5,""],
-        #"Jet_pt":[100,0,400,"[GeV]"], 
-        #"Jet_eta":[100,-3,3,""],
-        #"Jet_phi":[100,-4,4,""],
-        #"Jet_ht":[100,0,800,"[GeV]"],
-        #"nbtag":[5,0.5,5.5,""],
-        #"nbtagLoose":[10,0.5,10.5,""],
-        #"nbtagTight":[5,0.5,5.5,""],
-        #"dR_lep1_jet":[100,0,7,""],
-        #"dR_lep2_jet":[100,0,7,""],
-        "mt2":[100,0,150,"[GeV]"],
-        "mll":[100,0,1000,"[GeV]"],
-        # "MET_pt":[100,0,500,"[GeV]"], 
-        # "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
-        #"mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
-        #"m_eff":[100,0,1000,"[GeV]"], # ht + MET + pt1 + pt2
-        #"Jet_ht_div_sqrt_MET":[100,0,200,""],
-        #"mt_tot_div_sqrt_MET":[100,0,200,""],
-        #"m_eff_div_sqrt_MET":[100,0,200,""]
+        "lep1_pt":[100,0,400,"[Gev]"],
+        "lep1_eta":[100,-4,4,""],
+        "lep1_phi":[100,-4,4,""],
+        "lep1_relIso":[100,0,0.2,""],
+        "lep1_mt":[100,0,500,"[GeV]"],
+        "lep2_pt":[100,0,400,"[GeV]"],
+        "lep2_eta":[100,-4,4,""],
+        "lep2_phi":[100,-4,4,""],
+        "lep2_relIso":[100,0,0.2,""],
+        "lep2_mt":[100,0,500,"[GeV]"],
+        "nJet":[10,0.5,10.5,""],
+        "Jet_pt":[100,0,400,"[GeV]"], 
+        "Jet_eta":[100,-3,3,""],
+        "Jet_phi":[100,-4,4,""],
+        "Jet_ht":[100,0,800,"[GeV]"],
+        "nbtag":[5,0.5,5.5,""],
+        "nbtagLoose":[10,0.5,10.5,""],
+        "nbtagTight":[5,0.5,5.5,""],
+        "dR_lep1_jet":[100,0,7,""],
+        "dR_lep2_jet":[100,0,7,""],
+         "mt2":[100,0,150,"[GeV]"],
+         "mll":[100,0,1000,"[GeV]"],
+         "MET_pt":[100,0,500,"[GeV]"], 
+        "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
+        "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
+        "m_eff":[100,0,1000,"[GeV]"], # ht + MET + pt1 + pt2
+        "Jet_ht_div_sqrt_MET":[100,0,200,""],
+        "mt_tot_div_sqrt_MET":[100,0,200,""],
+        "m_eff_div_sqrt_MET":[100,0,200,""]
         }
-plotSettings["mll"] = [100, 60, 110,"[GeV]"]
+plotSettings["mll"] = [100, 75, 105,"[GeV]"]
 
 # color for plotting : bkgd process name 
 colorWJets = 38 # dark blue
@@ -120,8 +118,8 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     if testMode:
         if plotVarNum >= 2: break
     canvasDict.update({plotVar:TCanvas("c_"+plotVar,"c_"+plotVar,10,20,1000,700)})
-    legendDict.update({plotVar:TLegend(.45,.75,.90,.90)})
-    title = plotVar+" ("+channel+", cuts to "+lastcut+", region sr)"
+    legendDict.update({plotVar:TLegend(.5,.75,.95,.90)})
+    title = plotVar+" ("+channel+", cuts to "+lastcut+", sr with corrected DY)"
     hBkgdStacksDict.update({plotVar:THStack(plotVar+"_bkgdStack", title)})
 
 # hBkgdSubprocessesPlotVarDict maps each bkgd subprocess to another dictionary,
@@ -222,13 +220,40 @@ for plotVarNum, plotVar in enumerate(plotSettings):
         prevBkgdColor = hBkgdColor
 
     # ********** Drawing. ***********
+    plotPad = TPad("p_"+plotVar,"p_"+plotVar, 0.0, 0.3, 1.0, 1.0)
+    plotPad.SetTicks(0, 0)
+    plotPad.SetBottomMargin(0)
+    plotPad.SetLeftMargin(0.1)
+    plotPad.SetRightMargin(0.05)
+    plotPad.SetFillColor(4000) # transparent
+    c.cd()
+    ratioPad = TPad("pRatio_"+plotVar,"pRatio_"+plotVar, 0.0, 0.0, 1.0, 0.3)
+    ratioPad.SetTopMargin(0.03)
+    ratioPad.SetBottomMargin(0.25)
+    ratioPad.SetLeftMargin(0.1)
+    ratioPad.SetRightMargin(0.05)
+    ratioPad.SetFillColor(4000) # transparent
+    ratioPad.Draw()
+    plotPad.Draw()
+
+    plotPad.cd()
+    plotPad.SetLogy()
+
+    # ********** Background. ***********
     hBkgdStack.Draw("hist")
     unitsLabel = plotSettings[plotVar][3]
     hBkgdStack.GetXaxis().SetTitle(plotVar+" "+unitsLabel)
     hBkgdStack.GetYaxis().SetTitle("Number of Events, norm to 35921 /pb")
     hBkgdStack.SetMinimum(1)
-    hBkgdStack.SetMaximum(10**12)
+    hBkgdStack.SetMaximum(10**8)
+    nBins = plotSettings[plotVar][0]
+    xMin = plotSettings[plotVar][1]
+    xMax = plotSettings[plotVar][2]
+    hMC = TH1D("allMC_"+plotVar, "allMC_"+plotVar, nBins, xMin, xMax)
+    for hBkgdPlotVarDict in hBkgdSubprocessesPlotVarDict.values():
+        hMC.Add(hBkgdPlotVarDict[plotVar]) # for ratio canvas
 
+    # ********** Signal. ***********
     for subprocess in sigSubprocesses:
         histname = "sig_"+subprocess[10:27]+"_"+plotVar
         hSig = histFileSR.Get(histname)
@@ -237,6 +262,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
         legend.AddEntry(hSig, hSig.GetTitle())
         hSig.Draw("hist same") # same pad
 
+    # ********** Data. ***********
     histname = "data_"+plotVar
     if not histFileSR.GetListOfKeys().Contains(histname):
         assert False, "Something's wrong, you have no data hist in your hists file!"
@@ -247,10 +273,33 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     legend.AddEntry(hData, hData.GetTitle())
     hData.Draw("* hist same") # same pad
 
-    legend.SetTextSize(0.017)
+    legend.SetTextSize(0.025)
     legend.SetNColumns(3)
     legend.Draw("same")
-    c.SetLogy()
+
+    # ********** Ratio canvas. ***********
+    ratioPad.cd()
+    ratioPad.SetGridy(1)
+    hRatio = hData.Clone()
+    hRatio.Divide(hRatio, hMC)
+    hRatio.SetMarkerStyle(20)
+    hRatio.SetTitle("")
+    hRatio.SetLabelSize(0.08,"Y")
+    hRatio.SetLabelSize(0.08,"X")
+    hRatio.GetYaxis().SetRangeUser(0,5.5)
+    hRatio.GetYaxis().SetNdivisions(206)
+    hRatio.GetYaxis().SetTitle("Obs/Exp    ")
+    hRatio.SetTitle(";"+plotVar+" "+unitsLabel)
+    hRatio.SetTitleSize(0.08,"Y")
+    hRatio.SetTitleOffset(0.45,"Y")
+    hRatio.SetTitleSize(0.08,"X")
+    hRatio.SetTitleOffset(0.8,"X")
+    line = TLine(xMin, 1.0, xMax, 1.0)
+    line.SetLineWidth(2)
+    line.SetLineColor(1) # black
+    hRatio.Draw("P")
+    line.Draw()
+
     c.Update()
 
 histFileSR.Close()
@@ -259,7 +308,6 @@ histFileCR3.Close()
 #--------------------------------------------------------------------------------#
 # *************** Wrap up. *******************
 print
-print "Drawing."
 if displayMode:
     print "Done. Press enter to finish (plots not saved)."
     raw_input()

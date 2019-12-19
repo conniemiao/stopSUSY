@@ -140,7 +140,7 @@ hBkgdStack.Draw("hist")
 hBkgdStack.GetXaxis().SetTitle("cutflow")
 hBkgdStack.GetYaxis().SetTitle("Number of Events, norm to 3000 /fb")
 hBkgdStack.SetMinimum(1)
-hBkgdStack.SetMaximum(10**12)
+hBkgdStack.SetMaximum(10**8)
 
 # # show the number of events left over after each cut
 # processNum = 0
