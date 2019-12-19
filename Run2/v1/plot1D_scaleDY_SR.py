@@ -199,6 +199,8 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     if testMode:
         if plotVarNum >= 2: break
 
+    if not histFileSR.GetListOfKeys().Contains("bkgd_"+bkgdSubprocesses[0]+"_"+\
+            plotVar): continue
     hBkgdStack = hBkgdStacksDict[plotVar]
     c = canvasDict[plotVar]
     c.cd()
@@ -206,6 +208,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
 
     for subprocess in bkgdSubprocesses:
         histname = "bkgd_"+subprocess+"_"+plotVar
+        if not histFileSR.GetListOfKeys().Contains(histname): continue
         hBkgd = histFileSR.Get(histname)
         if subprocess[:2] == "DY":
             hBkgd_newDY = hBkgd.Clone()
@@ -286,8 +289,8 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     hRatio.SetTitle("")
     hRatio.SetLabelSize(0.08,"Y")
     hRatio.SetLabelSize(0.08,"X")
-    hRatio.GetYaxis().SetRangeUser(0,5.5)
-    hRatio.GetYaxis().SetNdivisions(206)
+    hRatio.GetYaxis().SetRangeUser(0,3.5)
+    hRatio.GetYaxis().SetNdivisions(204)
     hRatio.GetYaxis().SetTitle("Obs/Exp    ")
     hRatio.SetTitle(";"+plotVar+" "+unitsLabel)
     hRatio.SetTitleSize(0.08,"Y")

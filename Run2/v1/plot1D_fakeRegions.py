@@ -587,7 +587,6 @@ for subprocessLine in bkgd_redirector:
     # all subprocesses:
     bkgdFile.Close()
 
-
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal in a separate hist ***************
 print

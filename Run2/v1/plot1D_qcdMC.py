@@ -19,15 +19,21 @@
 # Uses sig_fileRedirector
 # Uses data_fileRedirector
 # Uses stopSelection.py
+# Uses everything in the mt2 folder
 
 import sys, os
 assert len(sys.argv) == 6, "need 5 command line args: testMode {test, all}, displayMode {show, save}, channel {mumu, elel, muel}, lastcut, region {A, B, C, D, any}"
 
 print "Importing modules."
-from ROOT import TFile, TTree, TH1D, TCanvas, TImage, TLegend, TText, THStack
+from ROOT import TFile, TTree, TH1D, TCanvas, TPad, TLegend, TText, THStack, TLine
 from ROOT import gSystem, gStyle, gROOT, kTRUE
 from stopSelection import deltaR
 from stopSelection import isRegionA, isRegionB, isRegionC, isRegionD
+# full path needed for condor support
+gROOT.ProcessLine(".include /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1/mt2/")
+gROOT.ProcessLine(".L /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1/mt2/Davismt2.cc+" )
+sys.path.append('/afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1/mt2')
+from mt2 import mt2, mt2davis
 from collections import OrderedDict
 from math import sqrt, cos
 import numpy as np
@@ -111,6 +117,7 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "nbtagTight":[5,0.5,5.5,""],
         "dR_lep1_jet":[100,0,7,""],
         "dR_lep2_jet":[100,0,7,""],
+        "mt2":[100,0,150,"[GeV]"],
         "MET_pt":[100,0,500,"[GeV]"], 
         "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
         "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
@@ -151,7 +158,7 @@ legendDict = {}
 hBkgdStacksDict = {} # maps plotVar to the stack of background
 for plotVar in plotSettings: # add an entry to the plotVar:hist dictionary
     canvasDict.update({plotVar:TCanvas("c_"+plotVar,"c_"+plotVar,10,20,1000,700)})
-    legendDict.update({plotVar:TLegend(.45,.75,.90,.90)})
+    legendDict.update({plotVar:TLegend(.5,.75,.95,.90)})
     title = plotVar+" ("+channel+", cuts to "+lastcut+", region "+region+")"
     hBkgdStacksDict.update({plotVar:THStack(plotVar+"_bkgdStack", title)})
 title = "cutflow ("+channel+", region "+region+")"
@@ -461,6 +468,8 @@ for subprocessLine in bkgd_redirector:
                 val = list(getattr(event, l1Flav+plotVar[4:]))[l1Index]
             elif plotVar[:4] == "lep2":
                 val = list(getattr(event, l2Flav+plotVar[4:]))[l2Index]
+            elif plotVar == "mt2":
+                val = mt2(event, l1Flav, l1Index, l2Flav, l2Index) 
             # everything else
             else: val = getattr(event, plotVar)
 
@@ -472,7 +481,7 @@ for subprocessLine in bkgd_redirector:
             if val <= xMax: hBkgd.Fill(val, evtwt)
             else: hBkgd.Fill(xMax - binwidth/2, evtwt) # overflow 
     
-    # ********** Drawing. ***********
+    # ********** Scaling. ***********
     newProcess = False
     if not prevProcess == process:
         processNum += 1
@@ -590,26 +599,6 @@ for subprocessLine in bkgd_redirector:
     # all subprocesses:
     bkgdFile.Close()
 
-for plotVar in plotSettings:
-    c = canvasDict[plotVar]
-    c.cd()
-    hBkgdStack = hBkgdStacksDict[plotVar]
-    hBkgdStack.Draw("hist")
-    unitsLabel = plotSettings[plotVar][3]
-    try:
-        hBkgdStack.GetXaxis().SetTitle(plotVar+" "+unitsLabel)
-        hBkgdStack.GetYaxis().SetTitle("Number of Events, norm to 35921 /pb")
-        hBkgdStack.SetMinimum(1)
-        hBkgdStack.SetMaximum(10**8)
-    except:
-        sys.stderr.write("WARNING: no hBkgds were filled!\n")
-        continue
-
-c_fakeSort.cd()
-hFakeSortingStack.Draw("hist")
-hFakeSortingStack.SetMinimum(1)
-hFakeSortingStack.SetMaximum(10**8)
-
 #--------------------------------------------------------------------------------#
 # *************** Filling each signal in a separate hist ***************
 print
@@ -692,7 +681,7 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
     sigTotGenweight = hSigGenweights.GetSumOfWeights()
 
     nMax = nentries
-    # if testMode: nMax = 1000
+    if testMode: nMax = 1000
 
     # ********** Looping over events. ***********
     for count, event in enumerate(tSig):
@@ -789,6 +778,8 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
                 val = list(getattr(event, l1Flav+plotVar[4:]))[l1Index]
             elif plotVar[:4] == "lep2":
                 val = list(getattr(event, l2Flav+plotVar[4:]))[l2Index]
+            elif plotVar == "mt2":
+                val = mt2(event, l1Flav, l1Index, l2Flav, l2Index) 
             # everything else
             else: val = getattr(event, plotVar)
 
@@ -800,27 +791,18 @@ for fileNum, subprocessLine in enumerate(sig_redirector):
             if val <= xMax: hSig.Fill(val, evtwt)
             else: hSig.Fill(xMax - binwidth/2, evtwt) # overflow 
 
-    # ********** Drawing. ***********
+    # ********** Scaling. ***********
     hcolor = coloropts[fileNum % len(coloropts)]
     hmarkerstyle = markeropts[(fileNum/len(coloropts)) % len(markeropts)]
 
     norm = xsec*lumi/sigTotGenweight
 
     for plotVar in plotSettings:
-        c = canvasDict[plotVar]
-        c.cd()
         hSig = hSigPlotVarDict[plotVar]
         hSig.SetLineColor(hcolor) 
-        hSig.SetMarkerStyle(hmarkerstyle)
-        hSig.SetMarkerColor(hcolor)
-        hlinestyle = linestyleopts[(fileNum/len(coloropts)/len(markeropts)) % \
-                len(linestyleopts)]
-        hSig.SetLineStyle(hlinestyle)
-
         hSig.Scale(norm)
         legend = legendDict[plotVar]
         legend.AddEntry(hSig, hSig.GetTitle())
-        hSig.Draw("hist same") # same pad
 
     hSigCutflow.Scale(norm)
     for c, cut in enumerate(cuts):
@@ -838,6 +820,8 @@ data_redirector = open("data_fileRedirector")
 # hDataPlotVarDict maps each plotVar to a hist (which contains all the data from the
 # process)
 hDataPlotVarDict = {}
+hcolor = 1 # black
+hmarkerstyle = 3 # asterisk (to match with the *H draw option)
 for plotVar in plotSettings:
     nBins = plotSettings[plotVar][0]
     xMin = plotSettings[plotVar][1]
@@ -845,6 +829,11 @@ for plotVar in plotSettings:
     hData = TH1D("data_"+plotVar, "data", nBins, xMin, xMax)
     hData.SetDirectory(0)
     hData.SetDefaultSumw2() # automatically sum w^2 while filling
+    hData.SetLineColor(hcolor) 
+    hData.SetMarkerStyle(hmarkerstyle)
+    hData.SetMarkerColor(hcolor)
+    legend = legendDict[plotVar]
+    legend.AddEntry(hData, hData.GetTitle())
     hDataPlotVarDict.update({plotVar:hData})
 
 hDataCutflow = TH1D("data", "data", nCuts, 0, nCuts)
@@ -981,6 +970,8 @@ for fileNum, subprocessLine in enumerate(data_redirector):
                 val = list(getattr(event, l1Flav+plotVar[4:]))[l1Index]
             elif plotVar[:4] == "lep2":
                 val = list(getattr(event, l2Flav+plotVar[4:]))[l2Index]
+            elif plotVar == "mt2":
+                val = mt2(event, l1Flav, l1Index, l2Flav, l2Index) 
             # everything else
             else: val = getattr(event, plotVar)
  
@@ -998,24 +989,8 @@ for c, cut in enumerate(cuts):
     if c >= nCuts: break
     hDataCutCountArr[c] += int(hDataCutflow.GetBinContent(c+1))
 
-# ********** Drawing. ***********
-hcolor = 1 # black
-hmarkerstyle = 3 # asterisk (to match with the *H draw option)
-
-for plotVar in plotSettings:
-    c = canvasDict[plotVar]
-    c.cd()
-    hData = hDataPlotVarDict[plotVar]
-    hData.SetLineColor(hcolor) 
-    hData.SetMarkerStyle(hmarkerstyle)
-    hData.SetMarkerColor(hcolor)
-
-    legend = legendDict[plotVar]
-    legend.AddEntry(hData, hData.GetTitle())
-    hData.Draw("* hist same") # same pad
-
 #--------------------------------------------------------------------------------#
-# *************** Wrap up. *******************
+# ********** Drawing. ***********
 print
 print int(time.time()-start_time), "secs of processing."
 print "Drawing."
@@ -1023,19 +998,90 @@ print "Drawing."
 for plotVar in plotSettings:
     c = canvasDict[plotVar]
     c.cd()
+    plotPad = TPad("p_"+plotVar,"p_"+plotVar, 0.0, 0.3, 1.0, 1.0)
+    plotPad.SetTicks(0, 0)
+    plotPad.SetBottomMargin(0)
+    plotPad.SetLeftMargin(0.1)
+    plotPad.SetRightMargin(0.05)
+    plotPad.SetFillColor(4000) # transparent
+    c.cd()
+    ratioPad = TPad("pRatio_"+plotVar,"pRatio_"+plotVar, 0.0, 0.0, 1.0, 0.3)
+    ratioPad.SetTopMargin(0.03)
+    ratioPad.SetBottomMargin(0.25)
+    ratioPad.SetLeftMargin(0.1)
+    ratioPad.SetRightMargin(0.05)
+    ratioPad.SetFillColor(4000) # transparent
+    ratioPad.Draw()
+    plotPad.Draw()
+
+    plotPad.cd()
+    plotPad.SetLogy()
+
+    # ********** Background. ***********
+    hBkgdStack = hBkgdStacksDict[plotVar]
+    hBkgdStack.Draw("hist")
+    unitsLabel = plotSettings[plotVar][3]
+    hBkgdStack.GetYaxis().SetTitle("Number of Events, norm to 35921 /pb")
+    hBkgdStack.SetMinimum(1)
+    hBkgdStack.SetMaximum(10**8)
+    nBins = plotSettings[plotVar][0]
+    xMin = plotSettings[plotVar][1]
+    xMax = plotSettings[plotVar][2]
+    hMC = TH1D("allMC_"+plotVar, "allMC_"+plotVar, nBins, xMin, xMax)
+    for hBkgdPlotVarDict in hBkgdSubprocessesPlotVarDict.values():
+        hMC.Add(hBkgdPlotVarDict[plotVar]) # for ratio canvas
+
+    # ********** Signal. ***********
+    for hSigPlotVarDict in hSigSubprocessesPlotVarDict.values():
+        hSig = hSigPlotVarDict[plotVar]
+        hSig.Draw("hist same") # same pad
+
+    # ********** Data. ***********
+    hData = hDataPlotVarDict[plotVar]
+    hData.Draw("* hist same") # same pad
+
     legend = legendDict[plotVar]
-    legend.SetTextSize(0.017)
+    legend.SetTextSize(0.025)
     legend.SetNColumns(3)
     legend.Draw("same")
-    c.SetLogy()
+
+    # ********** Ratio canvas. ***********
+    ratioPad.cd()
+    ratioPad.SetGridy(1)
+    hRatio = hData.Clone()
+    hRatio.Divide(hRatio, hMC)
+    hRatio.SetMarkerStyle(20)
+    hRatio.SetTitle("")
+    hRatio.SetLabelSize(0.08,"Y")
+    hRatio.SetLabelSize(0.08,"X")
+    hRatio.GetYaxis().SetRangeUser(0,5.5)
+    hRatio.GetYaxis().SetNdivisions(206)
+    hRatio.GetYaxis().SetTitle("Obs/Exp    ")
+    hRatio.SetTitle(";"+plotVar+" "+unitsLabel)
+    hRatio.SetTitleSize(0.08,"Y")
+    hRatio.SetTitleOffset(0.45,"Y")
+    hRatio.SetTitleSize(0.08,"X")
+    hRatio.SetTitleOffset(0.8,"X")
+    line = TLine(xMin, 1.0, xMax, 1.0)
+    line.SetLineWidth(2)
+    line.SetLineColor(1) # black
+    hRatio.Draw("P")
+    line.Draw()
+
     c.Update()
+
 c_fakeSort.cd()
+hFakeSortingStack.Draw("hist")
+hFakeSortingStack.SetMinimum(1)
+hFakeSortingStack.SetMaximum(10**8)
 legend_fakeSorting.SetTextSize(0.017)
 legend_fakeSorting.SetNColumns(3)
 legend_fakeSorting.Draw("same")
 c_fakeSort.SetLogy()
 c_fakeSort.Update()
 
+#--------------------------------------------------------------------------------#
+# *************** Wrap up. *******************
 # making cutflow pandas dataframe
 statsStack = {}
 thisCuts = list(cuts)[:nCuts]

@@ -36,7 +36,7 @@ bash plotAllVars.sh all save
 ```
 4. (Slow to very slow) Plot with QCD from MC (aka round 1 of plotting): `plot1D_qcdMC.py`. For each of the ABCD regions, it will produce a root file containing the canvases for all the control variables which uses MC for QCD as well as each of the individual histograms. It will also save 2 files with the cutflow information: the txt file is human readable and the hdf (pandas dataframe) file is used as input when drawing the cutflow (step 7).
 - If necessary, change these variables for directories before running:
-  - `myDataDir`, `statsDir`, `imgDir` in `plot1D_qcdMC.py`
+  - `myDataDir`, `statsDir`, `imgDir`, and addresses to mt2 scripts (see the import modules section) in `plot1D_qcdMC.py`
   - `baseDir` and `condorLogDir` in `createCondorsubPlotting.sh`
 - To submit all of these jobs to condor, uncomment section 1A "Normal 1d plots (QCD MC)" and adjust cuts, regions, and channels in `plotAllVars.sh` (note that all 4 regions for a particular cut + channel need to have been completed before step 5 can be executed for that cut + channel). Then execute: `bash plotAllVars.sh all save`
 - You can also run this on 1 specific channel, last cut, and region by executing

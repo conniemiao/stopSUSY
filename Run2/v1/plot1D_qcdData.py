@@ -59,17 +59,18 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "lep2_phi":[100,-4,4,""],
         "lep2_relIso":[100,0,0.2,""],
         "lep2_mt":[100,0,500,"[GeV]"],
-        "nJet":[10,0,10,""],
+        "nJet":[10,0.5,10.5,""],
         "Jet_pt":[100,0,400,"[GeV]"], 
         "Jet_eta":[100,-3,3,""],
         "Jet_phi":[100,-4,4,""],
         "Jet_ht":[100,0,800,"[GeV]"],
-        "nbtag":[5,0,5,""],
-        "nbtagLoose":[10,0,10,""],
-        "nbtagTight":[5,0,5,""],
+        "nbtag":[5,0.5,5.5,""],
+        "nbtagLoose":[10,0.5,10.5,""],
+        "nbtagTight":[5,0.5,5.5,""],
         "dR_lep1_jet":[100,0,7,""],
         "dR_lep2_jet":[100,0,7,""],
-        "MET_pt":[100,0,500,"[GeV]"],
+        "mt2":[100,0,150,"[GeV]"],
+        "MET_pt":[100,0,500,"[GeV]"], 
         "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
         "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
         "m_eff":[100,0,1000,"[GeV]"], # ht + MET + pt1 + pt2
@@ -315,13 +316,42 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     hBkgdStack.Add(hQCD)
 
     # ********** Drawing. ***********
+    plotPad = TPad("p_"+plotVar,"p_"+plotVar, 0.0, 0.3, 1.0, 1.0)
+    plotPad.SetTicks(0, 0)
+    plotPad.SetBottomMargin(0)
+    plotPad.SetLeftMargin(0.1)
+    plotPad.SetRightMargin(0.05)
+    plotPad.SetFillColor(4000) # transparent
+    c.cd()
+    ratioPad = TPad("pRatio_"+plotVar,"pRatio_"+plotVar, 0.0, 0.0, 1.0, 0.3)
+    ratioPad.SetTopMargin(0.03)
+    ratioPad.SetBottomMargin(0.25)
+    ratioPad.SetLeftMargin(0.1)
+    ratioPad.SetRightMargin(0.05)
+    ratioPad.SetFillColor(4000) # transparent
+    ratioPad.Draw()
+    plotPad.Draw()
+
+    plotPad.cd()
+    plotPad.SetLogy()
+
+    # ********** Background. ***********
     hBkgdStack.Draw("hist")
     unitsLabel = plotSettings[plotVar][3]
     hBkgdStack.GetXaxis().SetTitle(plotVar+" "+unitsLabel)
     hBkgdStack.GetYaxis().SetTitle("Number of Events, norm to 35921 /pb")
     hBkgdStack.SetMinimum(1)
     hBkgdStack.SetMaximum(10**8)
+    nBins = plotSettings[plotVar][0]
+    xMin = plotSettings[plotVar][1]
+    xMax = plotSettings[plotVar][2]
+    # for ratio canvas:
+    hMC = TH1D("allMC_"+plotVar, "allMC_"+plotVar, nBins, xMin, xMax)
+    for hBkgdPlotVarDict in hBkgdSubprocessesPlotVarDict.values():
+        hMC.Add(hBkgdPlotVarDict[plotVar])
+    hMC.Add(hQCD)
 
+    # ********** Signal. ***********
     for subprocess in sigSubprocesses:
         histname = "sig_"+subprocess[10:27]+"_"+plotVar
         hSig = histFileB.Get(histname)
@@ -330,6 +360,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
         legend.AddEntry(hSig, hSig.GetTitle())
         hSig.Draw("hist same") # same pad
 
+    # ********** Data. ***********
     histname = "data_"+plotVar
     if not histFileB.GetListOfKeys().Contains(histname):
         assert False, "Something's wrong, you have no data hist in your hists file!"
@@ -343,7 +374,30 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     legend.SetTextSize(0.017)
     legend.SetNColumns(3)
     legend.Draw("same")
-    c.SetLogy()
+
+    # ********** Ratio canvas. ***********
+    ratioPad.cd()
+    ratioPad.SetGridy(1)
+    hRatio = hData.Clone()
+    hRatio.Divide(hRatio, hMC)
+    hRatio.SetMarkerStyle(20)
+    hRatio.SetTitle("")
+    hRatio.SetLabelSize(0.08,"Y")
+    hRatio.SetLabelSize(0.08,"X")
+    hRatio.GetYaxis().SetRangeUser(0,3.5)
+    hRatio.GetYaxis().SetNdivisions(204)
+    hRatio.GetYaxis().SetTitle("Obs/Exp    ")
+    hRatio.SetTitle(";"+plotVar+" "+unitsLabel)
+    hRatio.SetTitleSize(0.08,"Y")
+    hRatio.SetTitleOffset(0.45,"Y")
+    hRatio.SetTitleSize(0.08,"X")
+    hRatio.SetTitleOffset(0.8,"X")
+    line = TLine(xMin, 1.0, xMax, 1.0)
+    line.SetLineWidth(2)
+    line.SetLineColor(1) # black
+    hRatio.Draw("P")
+    line.Draw()
+
     c.Update()
 
 histFileA.Close()
