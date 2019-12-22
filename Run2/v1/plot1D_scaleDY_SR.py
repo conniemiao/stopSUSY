@@ -231,7 +231,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     plotPad.SetFillColor(4000) # transparent
     c.cd()
     ratioPad = TPad("pRatio_"+plotVar,"pRatio_"+plotVar, 0.0, 0.0, 1.0, 0.3)
-    ratioPad.SetTopMargin(0.03)
+    ratioPad.SetTopMargin(0.01)
     ratioPad.SetBottomMargin(0.25)
     ratioPad.SetLeftMargin(0.1)
     ratioPad.SetRightMargin(0.05)

@@ -44,12 +44,12 @@ fi
 
 echo Num in files: $numInFiles
 
-echo "Checking for zombie files."
-for file in $inDir/stopCut_$testMode*$channel".root"; do
-    [ -e "$file" ] || continue
-    python checkRootFile.py $file
-done
-echo "Done checking for zombie files."
+#echo "Checking for zombie files."
+#for file in $inDir/stopCut_$testMode*$channel".root"; do
+#    [ -e "$file" ] || continue
+#    python checkRootFile.py $file
+#done
+#echo "Done checking for zombie files."
 
 # -f: compression; -k: skip corrupt/missing files; -j: parallelize
 

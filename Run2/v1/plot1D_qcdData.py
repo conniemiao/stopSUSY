@@ -15,7 +15,7 @@
 
 print "Importing modules."
 import sys
-from ROOT import TFile, TTree, TH1D, TCanvas, TImage, TLegend, TText, THStack
+from ROOT import TFile, TTree, TH1D, TCanvas, TPad, TLegend, TText, THStack, TLine
 from ROOT import gSystem, gStyle, gROOT, kTRUE
 from collections import OrderedDict
 print "Beginning execution of", sys.argv
@@ -141,7 +141,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     if testMode:
         if plotVarNum >= 2: break
     canvasDict.update({plotVar:TCanvas("c_"+plotVar,"c_"+plotVar,10,20,1000,700)})
-    legendDict.update({plotVar:TLegend(.45,.75,.90,.90)})
+    legendDict.update({plotVar:TLegend(.5,.75,.95,.90)})
     title = plotVar+" ("+channel+", cuts to "+lastcut+", region B)"
     hBkgdStacksDict.update({plotVar:THStack(plotVar+"_bkgdStack", title)})
 
@@ -185,7 +185,7 @@ with open("bkgd_fileRedirector") as bkgd_redirector:
             for i in range(5):
                 name = subprocess+"_"+str(i)+"Parton"
                 # make sure all the npartons were actually run in plot1D_qcdMC
-                histname = "bkgd_"+name+"_m_eff"
+                histname = "bkgd_"+name+"_mt2"
                 useNPartons = histFileB.GetListOfKeys().Contains(histname) and \
                         useNPartons
             if useNPartons:
@@ -195,13 +195,13 @@ with open("bkgd_fileRedirector") as bkgd_redirector:
                     hBkgdSubprocessesPlotVarDict.update({name:{}})
             else: # W/DY Jets incl only
                 # make sure this process was actually run in plot1D_qcdMC
-                histname = "bkgd_"+subprocess+"_m_eff"
+                histname = "bkgd_"+subprocess+"_mt2"
                 if not histFileB.GetListOfKeys().Contains(histname): continue
                 bkgdSubprocesses.append(subprocess)
                 hBkgdSubprocessesPlotVarDict.update({subprocess:{}})
         else: 
             # make sure this process was actually run in plot1D_qcdMC
-            histname = "bkgd_"+subprocess+"_m_eff"
+            histname = "bkgd_"+subprocess+"_mt2"
             if not histFileB.GetListOfKeys().Contains(histname): continue
             bkgdSubprocesses.append(subprocess)
             hBkgdSubprocessesPlotVarDict.update({subprocess:{}})
@@ -217,7 +217,7 @@ with open("sig_fileRedirector") as sig_redirector:
         if subprocess[0] == "#": continue
 
         # make sure this process was actually run in plot1D_qcdMC
-        histname = "sig_"+subprocess[10:27]+"_m_eff"
+        histname = "sig_"+subprocess[10:27]+"_mt2"
         if not histFileB.GetListOfKeys().Contains(histname): continue
 
         sigSubprocesses.append(subprocess)
@@ -271,6 +271,10 @@ for plotVarNum, plotVar in enumerate(plotSettings):
         hBkgd_B.SetDirectory(0)
         # hBkgd_B.Scale(0.5) # lol this is definitely not ok (!!!)
         hBkgdSubprocessesPlotVarDict[subprocess].update({plotVar:hBkgd_B})
+        if hBkgd_B.GetSumOfWeights() <= 0:
+            if plotVarNum == 0: # just print once
+                sys.stderr.write("WARNING: Region B sum of weights "+subprocess+\
+                        " <= 0! ("+str(hBkgd_B.GetSumOfWeights())+")\n")
         hBkgdStack.Add(hBkgd_B) 
         hBkgdColor = hBkgd_B.GetFillColor() # colors/styles determined in plot1D_qcdMC
         if hBkgdColor == 0: continue # probably file not looped on in plot1D_qcdMC
@@ -324,7 +328,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     plotPad.SetFillColor(4000) # transparent
     c.cd()
     ratioPad = TPad("pRatio_"+plotVar,"pRatio_"+plotVar, 0.0, 0.0, 1.0, 0.3)
-    ratioPad.SetTopMargin(0.03)
+    ratioPad.SetTopMargin(0.01)
     ratioPad.SetBottomMargin(0.25)
     ratioPad.SetLeftMargin(0.1)
     ratioPad.SetRightMargin(0.05)
@@ -371,7 +375,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     legend.AddEntry(hData, hData.GetTitle())
     hData.Draw("* hist same") # same pad
 
-    legend.SetTextSize(0.017)
+    legend.SetTextSize(0.025)
     legend.SetNColumns(3)
     legend.Draw("same")
 
