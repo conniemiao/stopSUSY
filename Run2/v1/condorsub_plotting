@@ -1,5 +1,5 @@
 executable  = plot1D_fakeRegions.py
-arguments   = all save elel cr3
+arguments   = all save muel cr3
 
 universe    = vanilla
 initialdir  = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1

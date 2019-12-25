@@ -939,6 +939,7 @@ for plotVar in plotSettings:
     c = canvasDict[plotVar]
     c.cd()
     plotPad = TPad("p_"+plotVar,"p_"+plotVar, 0.0, 0.3, 1.0, 1.0)
+    plotPad.SetNumber(0)
     plotPad.SetTicks(0, 0)
     plotPad.SetBottomMargin(0)
     plotPad.SetLeftMargin(0.1)
@@ -946,6 +947,7 @@ for plotVar in plotSettings:
     plotPad.SetFillColor(4000) # transparent
     c.cd()
     ratioPad = TPad("pRatio_"+plotVar,"pRatio_"+plotVar, 0.0, 0.0, 1.0, 0.3)
+    ratioPad.SetNumber(1)
     ratioPad.SetTopMargin(0.01)
     ratioPad.SetBottomMargin(0.25)
     ratioPad.SetLeftMargin(0.1)
@@ -1034,6 +1036,7 @@ fakeStatsDF.set_index('Fake_type', inplace = True) # keep Fake_Type as first col
 fakeStatsDF = fakeStatsDF[fakeStatsNamesList] # reorder columns
 if not os.path.exists(statsDir+"/fake_stats"): os.makedirs(statsDir+"/fake_stats")
 fakeStatsFileName = statsDir+"/fake_stats/fake_stats_"+channel+"_"+region
+if testMode: fakeStatsFileName += "_test"
 
 # making cutflow pandas dataframe
 statsStack = {}
@@ -1055,7 +1058,7 @@ statsDF = statsDF[statsNamesList] # reorder columns
 if not os.path.exists(statsDir+"/cutflow_stats"):
     os.makedirs(statsDir+"/cutflow_stats")
 statsFileName = statsDir+"/cutflow_stats/cutflow_stats_"+channel+"_"+region
-# if experimental: statsFileName += "_experimental"
+if testMode: statsFileName += "_test"
 
 if displayMode:
     print statsDF
@@ -1073,6 +1076,7 @@ else:
     outHistFile = TFile(outHistFileAdr, "recreate")
     for plotVar in plotSettings:
         canvasDict[plotVar].Write()
+        canvasDict[plotVar].GetPad(1).Write() # write ratio canvas
         for subprocess in hBkgdSubprocessesPlotVarDict:
             hBkgdSubprocessesPlotVarDict[subprocess][plotVar].Write()
         for subprocess in hSigSubprocessesPlotVarDict:

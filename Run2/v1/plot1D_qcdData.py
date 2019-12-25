@@ -321,6 +321,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
 
     # ********** Drawing. ***********
     plotPad = TPad("p_"+plotVar,"p_"+plotVar, 0.0, 0.3, 1.0, 1.0)
+    plotPad.SetNumber(0)
     plotPad.SetTicks(0, 0)
     plotPad.SetBottomMargin(0)
     plotPad.SetLeftMargin(0.1)
@@ -328,6 +329,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     plotPad.SetFillColor(4000) # transparent
     c.cd()
     ratioPad = TPad("pRatio_"+plotVar,"pRatio_"+plotVar, 0.0, 0.0, 1.0, 0.3)
+    ratioPad.SetNumber(1)
     ratioPad.SetTopMargin(0.01)
     ratioPad.SetBottomMargin(0.25)
     ratioPad.SetLeftMargin(0.1)
@@ -427,6 +429,7 @@ else:
         if testMode:
             if plotVarNum >= 2: break
         canvasDict[plotVar].Write()
+        canvasDict[plotVar].GetPad(1).Write() # write ratio canvas
         for subprocess in hBkgdSubprocessesPlotVarDict:
             hBkgdSubprocessesPlotVarDict[subprocess][plotVar].Write()
         hQCDPlotVarDict[plotVar].Write()
