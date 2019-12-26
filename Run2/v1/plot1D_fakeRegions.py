@@ -115,7 +115,7 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "dR_lep1_jet":[100,0,7,""],
         "dR_lep2_jet":[100,0,7,""],
         "mt2":[100,0,150,"[GeV]"],
-        "mll":[100, 75, 105,"[GeV]"],
+        "mll":[100,0,1000,"[GeV]"],
         "MET_pt":[100,0,500,"[GeV]"], 
         "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
         "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
@@ -124,6 +124,7 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "mt_tot_div_sqrt_MET":[100,0,200,""],
         "m_eff_div_sqrt_MET":[100,0,200,""]
         }
+if region == "cr3": plotSettings["mll"] = [100, 75, 105,"[GeV]"]
 
 # produced particle -> labeled particle
 # heavy quarks (c,b,t), light quarks (d,u,s), g: gluon
@@ -937,6 +938,7 @@ print "Drawing."
 hRatioDict = {} # maps each plotVar to the ratio histogram
 plotPadDict = {}
 ratioPadDict = {}
+ratioLineDict = {}
 
 for plotVar in plotSettings:
     c = canvasDict[plotVar]
@@ -1012,6 +1014,7 @@ for plotVar in plotSettings:
     hRatio.SetTitleSize(0.08,"X")
     hRatio.SetTitleOffset(0.8,"X")
     line = TLine(xMin, 1.0, xMax, 1.0)
+    ratioLineDict[plotVar] = line
     line.SetLineWidth(2)
     line.SetLineColor(2) # red
     hRatio.Draw("P")
@@ -1031,7 +1034,6 @@ c_fakeSort.Update()
 
 #--------------------------------------------------------------------------------#
 # *************** Wrap up. *******************
-
 # fake sorting pandas dataframe
 fakeStatsStack = {}
 fakeStatsStack.update({"Fake_type":fakeTypes_idDict.values()})
@@ -1084,7 +1086,6 @@ else:
     outHistFileAdr += channel+"_"+lastcut+"_"+region+".root"
     outHistFile = TFile(outHistFileAdr, "recreate")
     for plotVar in plotSettings:
-        print plotVar, canvasDict[plotVar].GetPad(0), canvasDict[plotVar].GetPad(1)
         canvasDict[plotVar].Write()
         for subprocess in hBkgdSubprocessesPlotVarDict:
             hBkgdSubprocessesPlotVarDict[subprocess][plotVar].Write()

@@ -44,21 +44,21 @@ do
     # Args to plot1D_qcdMC.py: testMode {test, all}, displayMode {show, save}, channel
     # {mumu, elel, muel}, lastcut, region {A,B,C,D}
     echo "------------------ Normal 1d plots (QCD MC) ------------------"
-    for cut in "${cuts[@]}"
-    do
-        for region in "${regionsQCD[@]}"
-        do
-            bash createCondorsubPlotting.sh plot1D_qcdMC.py $testMode $displayMode \
-                $channel $cut $region
-            if [[ "$testMode" == "all" ]]; then 
-                condor_submit condorsub_plotting
-            else
-                ./plot1D_qcdMC.py $testMode $displayMode $channel $cut $region
-            fi
-            # ./plot1D_qcdMC.py $testMode $displayMode $channel $cut $region
-            echo
-        done
-    done
+#     for cut in "${cuts[@]}"
+#     do
+#         for region in "${regionsQCD[@]}"
+#         do
+#             bash createCondorsubPlotting.sh plot1D_qcdMC.py $testMode $displayMode \
+#                 $channel $cut $region
+#             if [[ "$testMode" == "all" ]]; then 
+#                 condor_submit condorsub_plotting
+#             else
+#                 ./plot1D_qcdMC.py $testMode $displayMode $channel $cut $region
+#             fi
+#             # ./plot1D_qcdMC.py $testMode $displayMode $channel $cut $region
+#             echo
+#         done
+#     done
 
     #--------------------------------------------------------------------------------#
     # SECTION 1B
@@ -66,12 +66,12 @@ do
     # Args to plot1D_qcdData.py: testMode {test, all}, displayMode {show, save}, 
     # channel {mumu, elel, muel}, lastcut
     echo "------------------ Normal 1d plots (QCD Data) ------------------"
-#     for cut in "${cuts[@]}"
-#     do
-#         # faster to just run locally than to submit to condor
-#         ./plot1D_qcdData.py $testMode $displayMode $channel $cut
-#         echo
-#     done
+    for cut in "${cuts[@]}"
+    do
+        # faster to just run locally than to submit to condor
+        ./plot1D_qcdData.py $testMode $displayMode $channel $cut
+        echo
+    done
 
     #--------------------------------------------------------------------------------#
 
@@ -80,18 +80,18 @@ do
     # Args to plot1D_fakeRegions.py: testMode {test, all}, displayMode {show, save},
     # channel {mumu, elel, muel}, region {sr, cr1a, cr1b, cr3, any}
     echo "------------------ Normal 1d plots (fake regions) ------------------"
-    for region in "${regionsFakes[@]}"
-    do
-        bash createCondorsubPlotting.sh plot1D_fakeRegions.py $testMode \
-            $displayMode $channel $region
-        if [[ "$testMode" == "all" ]]; then 
-            condor_submit condorsub_plotting
-        else
-            ./plot1D_fakeRegions.py $testMode $displayMode $channel $region
-        fi
-        # ./plot1D_fakeRegions.py $testMode $displayMode $channel $region
-        echo
-    done
+#     for region in "${regionsFakes[@]}"
+#     do
+#         bash createCondorsubPlotting.sh plot1D_fakeRegions.py $testMode \
+#             $displayMode $channel $region
+#         if [[ "$testMode" == "all" ]]; then 
+#             condor_submit condorsub_plotting
+#         else
+#             ./plot1D_fakeRegions.py $testMode $displayMode $channel $region
+#         fi
+#         # ./plot1D_fakeRegions.py $testMode $displayMode $channel $region
+#         echo
+#     done
 
     #--------------------------------------------------------------------------------#
     # SECTION 2B
@@ -99,8 +99,8 @@ do
     # Args to plot1D_scaleDY_SR.py: testMode {test, all}, displayMode {show, save}, 
     # channel {mumu, elel, muel}
     echo "------------------ Normal 1d plots (rescaled SR with DY) ------------------"
-#     ./plot1D_scaleDY_SR.py $testMode $displayMode $channel
-#     echo
+    ./plot1D_scaleDY_SR.py $testMode $displayMode $channel
+    echo
 
     #--------------------------------------------------------------------------------#
     # SECTION 3

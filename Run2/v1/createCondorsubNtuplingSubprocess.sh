@@ -28,7 +28,7 @@ output      = $condorLogDir/makeNtuple_${channel}_${subprocess}.\$(ClusterId).\$
 error       = $condorLogDir/makeNtuple_${channel}_${subprocess}.\$(ClusterId).\$(ProcId).err
 log         = $condorLogDir/makeNtuple_${channel}_${subprocess}.\$(ClusterId).\$(ProcId).log
 
-+MaxRuntime = 129600
++MaxRuntime = 259200 
 
 x509userproxy = $x509Adr
 

@@ -6,7 +6,7 @@
 # Using the plots drawn by plot1D_fakeRegions, rescales the DY in the SR by the ratio
 # of mc to data from the mll plot in CR3.
 # 
-# Uses the cr3 root file outputted from plot1D_fakeRegions.py
+# Uses the cr3 and sr root files outputted from plot1D_fakeRegions.py
 # Uses bkgd_fileRedirector
 # Uses sig_fileRedirector
 
@@ -69,7 +69,6 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "dR_lep1_jet":[100,0,7,""],
         "dR_lep2_jet":[100,0,7,""],
         "mt2":[100,0,150,"[GeV]"],
-        "mll":[100, 75, 105,"[GeV]"],
         "MET_pt":[100,0,500,"[GeV]"], 
         "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
         "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
@@ -113,6 +112,7 @@ canvasDict = {}
 hRatioDict = {} # maps each plotVar to the ratio histogram
 plotPadDict = {}
 ratioPadDict = {}
+ratioLineDict = {}
 legendDict = {}
 # hBkgdStacksDict maps plotVar to the stack of background
 hBkgdStacksDict = {}
@@ -216,7 +216,9 @@ for plotVarNum, plotVar in enumerate(plotSettings):
             hBkgd_newDY = hBkgd.Clone()
             hBkgd_newDY.Scale(dyScaleFactor)
             hBkgd = hBkgd_newDY
+        hBkgd.SetDirectory(0)
         hBkgdSubprocessesPlotVarDict[subprocess].update({plotVar:hBkgd})
+        if plotVarNum == 0: print "Adding", subprocess
         hBkgdStack.Add(hBkgd) 
         hBkgdColor = hBkgd.GetFillColor() # colors/styles determined in plot1D_fakeRegions
         if hBkgdColor == 0: continue # probably file not looped on in plot1D_fakeRegions
@@ -306,6 +308,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     hRatio.SetTitleSize(0.08,"X")
     hRatio.SetTitleOffset(0.8,"X")
     line = TLine(xMin, 1.0, xMax, 1.0)
+    ratioLineDict[plotVar] = line
     line.SetLineWidth(2)
     line.SetLineColor(2) # red
     hRatio.Draw("P")

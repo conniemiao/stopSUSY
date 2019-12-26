@@ -137,6 +137,7 @@ canvasDict = {}
 hRatioDict = {} # maps each plotVar to the ratio histogram
 plotPadDict = {}
 ratioPadDict = {}
+ratioLineDict = {}
 legendDict = {}
 # hBkgdStacksDict maps plotVar to the stack of background
 hBkgdStacksDict = {}
@@ -406,6 +407,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     hRatio.SetTitleSize(0.08,"X")
     hRatio.SetTitleOffset(0.8,"X")
     line = TLine(xMin, 1.0, xMax, 1.0)
+    ratioLineDict[plotVar] = line
     line.SetLineWidth(2)
     line.SetLineColor(2) # red
     hRatio.Draw("P")

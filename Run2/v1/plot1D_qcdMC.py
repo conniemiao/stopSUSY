@@ -998,6 +998,7 @@ print "Drawing."
 hRatioDict = {} # maps each plotVar to the ratio histogram
 plotPadDict = {}
 ratioPadDict = {}
+ratioLineDict = {}
 
 for plotVar in plotSettings:
     c = canvasDict[plotVar]
@@ -1073,6 +1074,7 @@ for plotVar in plotSettings:
     hRatio.SetTitleSize(0.08,"X")
     hRatio.SetTitleOffset(0.8,"X")
     line = TLine(xMin, 1.0, xMax, 1.0)
+    ratioLineDict[plotVar] = line
     line.SetLineWidth(2)
     line.SetLineColor(2) # red
     hRatio.Draw("P")

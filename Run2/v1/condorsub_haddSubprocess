@@ -1,5 +1,5 @@
 executable  = haddSubprocess.sh
-arguments   = all bkgd muel WJetsToLNu W-Jets
+arguments   = all data elel Run2016B_ver1-Nano1June2019_ver1-v1 DoubleEG
 
 universe    = vanilla
 initialdir  = /afs/cern.ch/user/c/cmiao/private/CMSSW_9_4_9/s2019_SUSY/stopSUSY/Run2/v1
