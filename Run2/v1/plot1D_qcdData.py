@@ -135,6 +135,8 @@ hQCDPlotVarDict = {}
 
 canvasDict = {}
 hRatioDict = {} # maps each plotVar to the ratio histogram
+plotPadDict = {}
+ratioPadDict = {}
 legendDict = {}
 # hBkgdStacksDict maps plotVar to the stack of background
 hBkgdStacksDict = {}
@@ -322,6 +324,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
 
     # ********** Drawing. ***********
     plotPad = TPad("p_"+plotVar,"p_"+plotVar, 0.0, 0.3, 1.0, 1.0)
+    plotPadDict[plotVar] = plotPad
     plotPad.SetNumber(0)
     plotPad.SetTicks(0, 0)
     plotPad.SetBottomMargin(0)
@@ -330,6 +333,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     plotPad.SetFillColor(4000) # transparent
     c.cd()
     ratioPad = TPad("pRatio_"+plotVar,"pRatio_"+plotVar, 0.0, 0.0, 1.0, 0.3)
+    ratioPadDict[plotVar] = ratioPad
     ratioPad.SetNumber(1)
     ratioPad.SetTopMargin(0.01)
     ratioPad.SetBottomMargin(0.25)
@@ -403,7 +407,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     hRatio.SetTitleOffset(0.8,"X")
     line = TLine(xMin, 1.0, xMax, 1.0)
     line.SetLineWidth(2)
-    line.SetLineColor(1) # black
+    line.SetLineColor(2) # red
     hRatio.Draw("P")
     line.Draw()
 

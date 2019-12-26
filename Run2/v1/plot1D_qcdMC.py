@@ -154,7 +154,6 @@ processes = OrderedDict([("W-Jets",colorWJets), ("Drell-Yan",colorDY), \
         ("Diboson",colorDiboson), ("QCD", colorQCD)])
 
 canvasDict = {}
-hRatioDict = {} # maps each plotVar to the ratio histogram
 legendDict = {}
 hBkgdStacksDict = {} # maps plotVar to the stack of background
 for plotVar in plotSettings: # add an entry to the plotVar:hist dictionary
@@ -996,10 +995,15 @@ print
 print int(time.time()-start_time), "secs of processing."
 print "Drawing."
 
+hRatioDict = {} # maps each plotVar to the ratio histogram
+plotPadDict = {}
+ratioPadDict = {}
+
 for plotVar in plotSettings:
     c = canvasDict[plotVar]
     c.cd()
     plotPad = TPad("p_"+plotVar,"p_"+plotVar, 0.0, 0.3, 1.0, 1.0)
+    plotPadDict[plotVar] = plotPad
     plotPad.SetNumber(0)
     plotPad.SetTicks(0, 0)
     plotPad.SetBottomMargin(0)
@@ -1008,6 +1012,7 @@ for plotVar in plotSettings:
     plotPad.SetFillColor(4000) # transparent
     c.cd()
     ratioPad = TPad("pRatio_"+plotVar,"pRatio_"+plotVar, 0.0, 0.0, 1.0, 0.3)
+    ratioPadDict[plotVar] = ratioPad
     ratioPad.SetNumber(1)
     ratioPad.SetTopMargin(0.01)
     ratioPad.SetBottomMargin(0.25)
@@ -1069,7 +1074,7 @@ for plotVar in plotSettings:
     hRatio.SetTitleOffset(0.8,"X")
     line = TLine(xMin, 1.0, xMax, 1.0)
     line.SetLineWidth(2)
-    line.SetLineColor(1) # black
+    line.SetLineColor(2) # red
     hRatio.Draw("P")
     line.Draw()
 
@@ -1109,7 +1114,6 @@ statsFileName = statsDir+"/cutflow_stats_"+channel+"_"+region
 if testMode: statsFileName += "_test"
 
 if displayMode:
-    print statsDF
     print "Done. Press enter to finish (plots not saved)."
     raw_input()
 else:

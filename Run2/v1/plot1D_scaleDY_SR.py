@@ -68,9 +68,9 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "nbtagTight":[5,0.5,5.5,""],
         "dR_lep1_jet":[100,0,7,""],
         "dR_lep2_jet":[100,0,7,""],
-         "mt2":[100,0,150,"[GeV]"],
-         "mll":[100,0,1000,"[GeV]"],
-         "MET_pt":[100,0,500,"[GeV]"], 
+        "mt2":[100,0,150,"[GeV]"],
+        "mll":[100, 75, 105,"[GeV]"],
+        "MET_pt":[100,0,500,"[GeV]"], 
         "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
         "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
         "m_eff":[100,0,1000,"[GeV]"], # ht + MET + pt1 + pt2
@@ -78,7 +78,6 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "mt_tot_div_sqrt_MET":[100,0,200,""],
         "m_eff_div_sqrt_MET":[100,0,200,""]
         }
-plotSettings["mll"] = [100, 75, 105,"[GeV]"]
 
 # color for plotting : bkgd process name 
 colorWJets = 38 # dark blue
@@ -112,6 +111,8 @@ except:
 
 canvasDict = {}
 hRatioDict = {} # maps each plotVar to the ratio histogram
+plotPadDict = {}
+ratioPadDict = {}
 legendDict = {}
 # hBkgdStacksDict maps plotVar to the stack of background
 hBkgdStacksDict = {}
@@ -225,6 +226,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
 
     # ********** Drawing. ***********
     plotPad = TPad("p_"+plotVar,"p_"+plotVar, 0.0, 0.3, 1.0, 1.0)
+    plotPadDict[plotVar] = plotPad
     plotPad.SetNumber(0)
     plotPad.SetTicks(0, 0)
     plotPad.SetBottomMargin(0)
@@ -233,6 +235,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     plotPad.SetFillColor(4000) # transparent
     c.cd()
     ratioPad = TPad("pRatio_"+plotVar,"pRatio_"+plotVar, 0.0, 0.0, 1.0, 0.3)
+    ratioPadDict[plotVar] = ratioPad
     ratioPad.SetNumber(1)
     ratioPad.SetTopMargin(0.01)
     ratioPad.SetBottomMargin(0.25)
@@ -304,7 +307,7 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     hRatio.SetTitleOffset(0.8,"X")
     line = TLine(xMin, 1.0, xMax, 1.0)
     line.SetLineWidth(2)
-    line.SetLineColor(1) # black
+    line.SetLineColor(2) # red
     hRatio.Draw("P")
     line.Draw()
 

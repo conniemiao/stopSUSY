@@ -115,7 +115,7 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "dR_lep1_jet":[100,0,7,""],
         "dR_lep2_jet":[100,0,7,""],
         "mt2":[100,0,150,"[GeV]"],
-        "mll":[100,0,1000,"[GeV]"],
+        "mll":[100, 75, 105,"[GeV]"],
         "MET_pt":[100,0,500,"[GeV]"], 
         "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
         "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
@@ -124,7 +124,6 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "mt_tot_div_sqrt_MET":[100,0,200,""],
         "m_eff_div_sqrt_MET":[100,0,200,""]
         }
-if region == "cr3": plotSettings["mll"] = [100, 75, 105,"[GeV]"]
 
 # produced particle -> labeled particle
 # heavy quarks (c,b,t), light quarks (d,u,s), g: gluon
@@ -153,7 +152,6 @@ processes = OrderedDict([("W-Jets",colorWJets), ("Drell-Yan",colorDY), \
         ("Diboson",colorDiboson), ("QCD", colorQCD)])
 
 canvasDict = {}
-hRatioDict = {} # maps each plotVar to the ratio histogram
 legendDict = {}
 hBkgdStacksDict = {} # maps plotVar to the stack of background
 for plotVar in plotSettings: # add an entry to the plotVar:hist dictionary
@@ -936,10 +934,15 @@ print
 print int(time.time()-start_time), "secs of processing."
 print "Drawing."
 
+hRatioDict = {} # maps each plotVar to the ratio histogram
+plotPadDict = {}
+ratioPadDict = {}
+
 for plotVar in plotSettings:
     c = canvasDict[plotVar]
     c.cd()
     plotPad = TPad("p_"+plotVar,"p_"+plotVar, 0.0, 0.3, 1.0, 1.0)
+    plotPadDict[plotVar] = plotPad
     plotPad.SetNumber(0)
     plotPad.SetTicks(0, 0)
     plotPad.SetBottomMargin(0)
@@ -948,6 +951,7 @@ for plotVar in plotSettings:
     plotPad.SetFillColor(4000) # transparent
     c.cd()
     ratioPad = TPad("pRatio_"+plotVar,"pRatio_"+plotVar, 0.0, 0.0, 1.0, 0.3)
+    ratioPadDict[plotVar] = ratioPad
     ratioPad.SetNumber(1)
     ratioPad.SetTopMargin(0.01)
     ratioPad.SetBottomMargin(0.25)
@@ -1009,7 +1013,7 @@ for plotVar in plotSettings:
     hRatio.SetTitleOffset(0.8,"X")
     line = TLine(xMin, 1.0, xMax, 1.0)
     line.SetLineWidth(2)
-    line.SetLineColor(1) # black
+    line.SetLineColor(2) # red
     hRatio.Draw("P")
     line.Draw()
 
@@ -1031,15 +1035,17 @@ c_fakeSort.Update()
 # fake sorting pandas dataframe
 fakeStatsStack = {}
 fakeStatsStack.update({"Fake_type":fakeTypes_idDict.values()})
-fakeStatsNamesList = list(processes)
+fakeStatsNamesList = []
 for process in processes:
     fakeStatsStack.update({process:hFakeSortingCountsDict[process]})
+    fakeStatsNamesList.append(process)
 fakeStatsDF = pd.DataFrame(fakeStatsStack)
 fakeStatsDF.set_index('Fake_type', inplace = True) # keep Fake_Type as first column
 fakeStatsDF = fakeStatsDF[fakeStatsNamesList] # reorder columns
 if not os.path.exists(statsDir+"/fake_stats"): os.makedirs(statsDir+"/fake_stats")
 fakeStatsFileName = statsDir+"/fake_stats/fake_stats_"+channel+"_"+region
 if testMode: fakeStatsFileName += "_test"
+
 
 # making cutflow pandas dataframe
 statsStack = {}
@@ -1078,6 +1084,7 @@ else:
     outHistFileAdr += channel+"_"+lastcut+"_"+region+".root"
     outHistFile = TFile(outHistFileAdr, "recreate")
     for plotVar in plotSettings:
+        print plotVar, canvasDict[plotVar].GetPad(0), canvasDict[plotVar].GetPad(1)
         canvasDict[plotVar].Write()
         for subprocess in hBkgdSubprocessesPlotVarDict:
             hBkgdSubprocessesPlotVarDict[subprocess][plotVar].Write()
@@ -1099,9 +1106,9 @@ else:
         print "Saved file", statsFileName+".hdf"
     else: print statsDF
 
-    fakeStatsFile = open(fakeStatsFileName+".txt", "w")
-    fakeStatsFile.write(fakeStatsDF.to_string()+"\n")
-    fakeStatsFile.close()
-    print "Saved file", fakeStatsFileName+".txt"
+    # fakeStatsFile = open(fakeStatsFileName+".txt", "w")
+    # fakeStatsFile.write(fakeStatsDF.to_string()+"\n")
+    # fakeStatsFile.close()
+    # print "Saved file", fakeStatsFileName+".txt"
 
     print "Done."
