@@ -134,6 +134,7 @@ hDataPlotVarDictD = {}
 hQCDPlotVarDict = {}
 
 canvasDict = {}
+hRatioDict = {} # maps each plotVar to the ratio histogram
 legendDict = {}
 # hBkgdStacksDict maps plotVar to the stack of background
 hBkgdStacksDict = {}
@@ -385,6 +386,8 @@ for plotVarNum, plotVar in enumerate(plotSettings):
     ratioPad.cd()
     ratioPad.SetGridy(1)
     hRatio = hData.Clone()
+    hRatio.SetDirectory(0)
+    hRatioDict[plotVar] = hRatio
     hRatio.Divide(hRatio, hMC)
     hRatio.SetMarkerStyle(20)
     hRatio.SetTitle("")
@@ -429,7 +432,6 @@ else:
         if testMode:
             if plotVarNum >= 2: break
         canvasDict[plotVar].Write()
-        canvasDict[plotVar].GetPad(1).Write() # write ratio canvas
         for subprocess in hBkgdSubprocessesPlotVarDict:
             hBkgdSubprocessesPlotVarDict[subprocess][plotVar].Write()
         hQCDPlotVarDict[plotVar].Write()

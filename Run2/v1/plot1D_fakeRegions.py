@@ -153,6 +153,7 @@ processes = OrderedDict([("W-Jets",colorWJets), ("Drell-Yan",colorDY), \
         ("Diboson",colorDiboson), ("QCD", colorQCD)])
 
 canvasDict = {}
+hRatioDict = {} # maps each plotVar to the ratio histogram
 legendDict = {}
 hBkgdStacksDict = {} # maps plotVar to the stack of background
 for plotVar in plotSettings: # add an entry to the plotVar:hist dictionary
@@ -991,6 +992,8 @@ for plotVar in plotSettings:
     ratioPad.cd()
     ratioPad.SetGridy(1)
     hRatio = hData.Clone()
+    hRatio.SetDirectory(0)
+    hRatioDict[plotVar] = hRatio
     hRatio.Divide(hRatio, hMC)
     hRatio.SetMarkerStyle(20)
     hRatio.SetTitle("")
@@ -1076,7 +1079,6 @@ else:
     outHistFile = TFile(outHistFileAdr, "recreate")
     for plotVar in plotSettings:
         canvasDict[plotVar].Write()
-        canvasDict[plotVar].GetPad(1).Write() # write ratio canvas
         for subprocess in hBkgdSubprocessesPlotVarDict:
             hBkgdSubprocessesPlotVarDict[subprocess][plotVar].Write()
         for subprocess in hSigSubprocessesPlotVarDict:

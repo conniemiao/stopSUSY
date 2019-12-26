@@ -97,34 +97,34 @@ assert region == "any" or region == "A" or region == "B" or region == "C" or reg
 #--------------------------------------------------------------------------------#
 
 plotSettings = { # [nBins,xMin,xMax,units]
-#        "lep1_pt":[100,0,400,"[Gev]"],
-#        "lep1_eta":[100,-4,4,""],
-#        "lep1_phi":[100,-4,4,""],
-#        "lep1_relIso":[100,0,0.2,""],
-#        "lep1_mt":[100,0,500,"[GeV]"],
-#        "lep2_pt":[100,0,400,"[GeV]"],
-#        "lep2_eta":[100,-4,4,""],
-#        "lep2_phi":[100,-4,4,""],
-#        "lep2_relIso":[100,0,0.2,""],
-#        "lep2_mt":[100,0,500,"[GeV]"],
-#        "nJet":[10,0.5,10.5,""],
-#        "Jet_pt":[100,0,400,"[GeV]"], 
-#        "Jet_eta":[100,-3,3,""],
-#        "Jet_phi":[100,-4,4,""],
-#        "Jet_ht":[100,0,800,"[GeV]"],
-#        "nbtag":[5,0.5,5.5,""],
-#        "nbtagLoose":[10,0.5,10.5,""],
-#        "nbtagTight":[5,0.5,5.5,""],
-#        "dR_lep1_jet":[100,0,7,""],
-#        "dR_lep2_jet":[100,0,7,""],
+        "lep1_pt":[100,0,400,"[Gev]"],
+        "lep1_eta":[100,-4,4,""],
+        "lep1_phi":[100,-4,4,""],
+        "lep1_relIso":[100,0,0.2,""],
+        "lep1_mt":[100,0,500,"[GeV]"],
+        "lep2_pt":[100,0,400,"[GeV]"],
+        "lep2_eta":[100,-4,4,""],
+        "lep2_phi":[100,-4,4,""],
+        "lep2_relIso":[100,0,0.2,""],
+        "lep2_mt":[100,0,500,"[GeV]"],
+        "nJet":[10,0.5,10.5,""],
+        "Jet_pt":[100,0,400,"[GeV]"], 
+        "Jet_eta":[100,-3,3,""],
+        "Jet_phi":[100,-4,4,""],
+        "Jet_ht":[100,0,800,"[GeV]"],
+        "nbtag":[5,0.5,5.5,""],
+        "nbtagLoose":[10,0.5,10.5,""],
+        "nbtagTight":[5,0.5,5.5,""],
+        "dR_lep1_jet":[100,0,7,""],
+        "dR_lep2_jet":[100,0,7,""],
         "mt2":[100,0,150,"[GeV]"],
-#        "MET_pt":[100,0,500,"[GeV]"], 
-#        "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
-#        "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
-#        "m_eff":[100,0,1000,"[GeV]"], # ht + MET + pt1 + pt2
-#        "Jet_ht_div_sqrt_MET":[100,0,200,""],
-#        "mt_tot_div_sqrt_MET":[100,0,200,""],
-#        "m_eff_div_sqrt_MET":[100,0,200,""]
+        "MET_pt":[100,0,500,"[GeV]"], 
+        "mt_tot":[100,0,1000,"[GeV]"], # sqrt(mt1^2 + mt2^2)
+        "mt_sum":[100,0,1000,"[GeV]"], # mt1 + mt2
+        "m_eff":[100,0,1000,"[GeV]"], # ht + MET + pt1 + pt2
+        "Jet_ht_div_sqrt_MET":[100,0,200,""],
+        "mt_tot_div_sqrt_MET":[100,0,200,""],
+        "m_eff_div_sqrt_MET":[100,0,200,""]
         }
 
 # produced particle -> labeled particle
@@ -154,6 +154,7 @@ processes = OrderedDict([("W-Jets",colorWJets), ("Drell-Yan",colorDY), \
         ("Diboson",colorDiboson), ("QCD", colorQCD)])
 
 canvasDict = {}
+hRatioDict = {} # maps each plotVar to the ratio histogram
 legendDict = {}
 hBkgdStacksDict = {} # maps plotVar to the stack of background
 for plotVar in plotSettings: # add an entry to the plotVar:hist dictionary
@@ -1051,6 +1052,8 @@ for plotVar in plotSettings:
     ratioPad.cd()
     ratioPad.SetGridy(1)
     hRatio = hData.Clone()
+    hRatio.SetDirectory(0)
+    hRatioDict[plotVar] = hRatio
     hRatio.Divide(hRatio, hMC)
     hRatio.SetMarkerStyle(20)
     hRatio.SetTitle("")
@@ -1119,7 +1122,6 @@ else:
     outHistFile = TFile(outHistFileAdr, "recreate")
     for plotVar in plotSettings:
         canvasDict[plotVar].Write()
-        canvasDict[plotVar].GetPad(1).Write() # write ratio canvas
         for subprocess in hBkgdSubprocessesPlotVarDict:
             hBkgdSubprocessesPlotVarDict[subprocess][plotVar].Write()
         for subprocess in hSigSubprocessesPlotVarDict:
