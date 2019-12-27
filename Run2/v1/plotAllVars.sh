@@ -11,7 +11,7 @@ if [[ "$testMode" == "test" ]]; then
     regionsQCD=("A")
 elif [[ "$testMode" == "all" ]]; then
     # channels=("mumu" "muel" "elel")
-    channels=("muel")
+    channels=("elel")
     bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top" "QCD")
     # cuts=("baseline" "nJet<4")
     cuts=("nJet<4")
