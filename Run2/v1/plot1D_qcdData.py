@@ -292,10 +292,10 @@ for plotVarNum, plotVar in enumerate(plotSettings):
 
     # ********** hQCD calculation. ***********
     hQCD = hQCDPlotVarDict[plotVar]
-    hQCD.Add(hData_C, hBkgdMC_C, 1, -1) # hQCD = hDataC - hBkgdMC_C
+    hQCD.Add(hData_A, hBkgdMC_A, 1, -1) # hQCD = hDataA - hBkgdMC_A
     if hQCD.GetSumOfWeights() < 0:
         if plotVarNum == 0: # just print once
-            sys.stderr.write("WARNING: Sum of weights hData_C - hBkgdMC_C < 0! ("+\
+            sys.stderr.write("WARNING: Sum of weights hData_A - hBkgdMC_A < 0! ("+\
                     str(hQCD.GetSumOfWeights())+")\n")
 
     hDiffD = hData_D.Clone()
@@ -306,13 +306,13 @@ for plotVarNum, plotVar in enumerate(plotSettings):
                     str(hDiffD.GetSumOfWeights())+")\n")
     hQCD.Divide(hDiffD) # hQCD = hQCD/hDiffD
 
-    hDiffA = hData_A.Clone()
-    hDiffA.Add(hBkgdMC_A, -1) # hDiffA = hData_A - hBkgdMC_A
-    if hDiffA.GetSumOfWeights() < 0:
+    hDiffC = hData_C.Clone()
+    hDiffC.Add(hBkgdMC_C, -1) # hDiffC = hData_C - hBkgdMC_C
+    if hDiffC.GetSumOfWeights() < 0:
         if plotVarNum == 0: # don't keep printing this
-            sys.stderr.write("WARNING: Sum of weights hData_A - hBkgdMC_A < 0! ("+\
-                    str(hDiffA.GetSumOfWeights())+")\n")
-    hQCD.Multiply(hDiffA) # hQCD = hQCD * hDiffA
+            sys.stderr.write("WARNING: Sum of weights hData_C - hBkgdMC_C < 0! ("+\
+                    str(hDiffC.GetSumOfWeights())+")\n")
+    hQCD.Multiply(hDiffC) # hQCD = hQCD * hDiffC
 
     hQCD.SetFillColor(colorQCD)
     hQCD.SetLineColor(colorQCD)

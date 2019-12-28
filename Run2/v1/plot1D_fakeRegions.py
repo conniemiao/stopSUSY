@@ -1107,9 +1107,9 @@ else:
         print "Saved file", statsFileName+".hdf"
     else: print statsDF
 
-    # fakeStatsFile = open(fakeStatsFileName+".txt", "w")
-    # fakeStatsFile.write(fakeStatsDF.to_string()+"\n")
-    # fakeStatsFile.close()
-    # print "Saved file", fakeStatsFileName+".txt"
+    fakeStatsFile = open(fakeStatsFileName+".txt", "w")
+    fakeStatsFile.write(fakeStatsDF.to_string()+"\n")
+    fakeStatsFile.close()
+    print "Saved file", fakeStatsFileName+".txt"
 
     print "Done."
