@@ -494,6 +494,7 @@ def getCR1al2Index(event, l1Flav, l1Index, l2Flav):
     if l1RelIso >= maxRelIso: return -1
 
     for extraLeptInd in list(getattr(event, "extra"+l2Flav[:2]+"Indices")):
+        if extraLeptInd >= 10: continue
         l2Charge = list(getattr(event, l2Flav+"_charge"))[extraLeptInd]
         mll = invmass(event, l1Flav, l1Index, l2Flav, extraLeptInd)
         if l1Charge*l2Charge < 0 and abs(mll-90) > 15:
@@ -517,8 +518,9 @@ def getCR1bl2Index(event, l1Flav, l1Index, l2Flav):
     if l1RelIso >= maxRelIso: return -1
 
     for extraLeptInd in list(getattr(event, "extra"+l2Flav[:2]+"Indices")):
+        if extraLeptInd >= 10: continue
         l2Charge = list(getattr(event, l2Flav+"_charge"))[extraLeptInd]
-        l2RelIso = list(getattr(event, l1Flav+"_relIso"))[extraLeptInd]
+        l2RelIso = list(getattr(event, l2Flav+"_relIso"))[extraLeptInd]
         mll = invmass(event, l1Flav, l1Index, l2Flav, extraLeptInd)
         if l1Charge*l2Charge < 0 and \
                 (l2RelIso > maxRelIso and l2RelIso < 2 * maxRelIso) and \

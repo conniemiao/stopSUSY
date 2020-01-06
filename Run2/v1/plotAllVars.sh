@@ -14,13 +14,13 @@ elif [[ "$testMode" == "all" ]]; then
     # channels=("mumu")
     bkgdProcesses=("TTBar" "TT+X" "Diboson" "W-Jets" "Drell-Yan" "Single-Top" "QCD")
     # cuts=("baseline" "nJet<4")
-    cuts=("baseline")
+    cuts=("nJet<4")
     plotVars2D=("lep1_pt" "lep2_pt" "lep1_mt" "lep2_mt" "MET_pt" "lep1_eta" \
         "lep2_eta" "Jet_ht" "mt_tot" "mt_sum" "m_eff")
     regionsQCD=("A" "B" "C" "D")
-    # regionsQCD=("any")
+    # regionsQCD=()
     regionsFakes=("sr" "cr1a" "cr1b" "cr3")
-    # regionsFakes=("sr")
+    # regionsFakes=("cr1a")
 else
     echo "need {test, all} as 1st arg to plotAllVars.sh"
     exit 1

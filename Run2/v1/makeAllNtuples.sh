@@ -14,10 +14,10 @@ if [[ "$testMode" == "test" ]]; then
     channels=("elel")
     bkgdProcesses=("QCD")
 elif [[ "$testMode" == "all" ]]; then
-    # channels=("muel" "elel" "mumu")
-    channels=("mumu")
-    # bkgdProcesses=("W-Jets" "Drell-Yan" "Diboson" "Single-Top" "TTBar" "TT+X" "QCD")
-    bkgdProcesses=("Drell-Yan")
+    channels=("muel" "elel" "mumu")
+    # channels=("mumu")
+    bkgdProcesses=("W-Jets" "Drell-Yan" "Diboson" "Single-Top" "TTBar" "TT+X" "QCD")
+    # bkgdProcesses=("Drell-Yan")
 else
     echo "need {test, all} as arg to makeAllNtuples.sh"
     exit 1
@@ -26,19 +26,19 @@ fi
 
 for channel in "${channels[@]}"
 do
-    # echo ------------------ "$channel" ------------------
-    # # Bkgd
-    # echo --- bkgd ---
-    # for process in "${bkgdProcesses[@]}"
-    # do
-    #     bash makeAllNtuplesProcess.sh $testMode bkgd "$channel" "$process"
-    #     echo
-    # done
+    echo ------------------ "$channel" ------------------
+    # Bkgd
+    echo --- bkgd ---
+    for process in "${bkgdProcesses[@]}"
+    do
+        bash makeAllNtuplesProcess.sh $testMode bkgd "$channel" "$process"
+        echo
+    done
 
-    # # Sig
-    # echo --- sig ---
-    # bash makeAllNtuplesProcess.sh $testMode sig "$channel"
-    # echo
+    # Sig
+    echo --- sig ---
+    bash makeAllNtuplesProcess.sh $testMode sig "$channel"
+    echo
 
     # Data 
     echo --- data ---
